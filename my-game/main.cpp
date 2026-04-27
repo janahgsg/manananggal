@@ -33,7 +33,7 @@ int main() {
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
     //load frames
     for(int i = 1; i <= 110; i++){
-        videoFrames.push_back(LoadTexture(TextFormat("assets/videos/ezgif-frame-%03d.png", i)));
+        videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
     }
     Texture2D bombTex   = LoadTexture("assets/images/bomb.png");
     Texture2D babyTex   = LoadTexture("assets/images/baby.png");
