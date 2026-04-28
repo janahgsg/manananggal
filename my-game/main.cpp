@@ -35,8 +35,15 @@ int main() {
     for(int i = 1; i <= 110; i++){
         videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
     }
-    Texture2D bombTex   = LoadTexture("assets/images/bomb.png");
-    Texture2D babyTex   = LoadTexture("assets/images/baby.png");
+    //load images
+    //bg
+    Texture2D bgTex = LoadTexture("assets/images/bg.png");
+    Texture2D groundTex = LoadTexture("assets/images/ground.png");
+    Texture2D wallTex = LoadTexture("assets/images/wall.png");
+
+    //items
+    Texture2D bombTex = LoadTexture("assets/images/bomb.png");
+    Texture2D babyTex = LoadTexture("assets/images/baby.png");
     Texture2D medkitTex = LoadTexture("assets/images/med_kit.png");
     Texture2D bandageTex = LoadTexture("assets/images/bandage.png");
     Texture2D trollFaceTex = LoadTexture("assets/images/trollFace.png");
@@ -50,21 +57,35 @@ int main() {
     Rectangle player;
     player.width = 50;
     player.height = 50;
-    
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    //center horizontally
+    player.x = (screenWidth - player.width) / 2;
+    player.y = screenHeight * 0.85f;
     int score = 0;
-    int point = 0;
     int hp = 3;
     float move = 1.0f;
     vector<Item> items;
     float spawnTimer = 0;
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
 
-    //center horizontally
-    player.x = (screenWidth - player.width) / 2;
-    player.y = screenHeight - player.height;
+    //camera pov cutie
+    Camera2D camera = {0};
+    camera.offset = {
+        screenWidth / 2.0f,
+        screenHeight * 0.85f
+    };
+    camera.target = {
+        player.x + player.width / 2,
+        player.y + player.height / 2
+    };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.30f;
 
     while(!WindowShouldClose()){
+        if (IsKeyPressed(KEY_Q)) {
+        CloseWindow();
+        return 0;   // exit program 
+    }
         //menu
         if(state == MENU){
             if(IsKeyPressed(KEY_ENTER)) state = PLAYING;
@@ -76,21 +97,29 @@ int main() {
             //movements
             if(IsKeyDown(KEY_LEFT)) player.x -= moveSpeed;
             if(IsKeyDown(KEY_RIGHT)) player.x += moveSpeed;
-
+        
             //left and right boundaries
             if(player.x < 0) player.x = 0;
             if(player.x + player.width > screenWidth)
                 player.x = screenWidth - player.width;
 
-            // spawn items every 1 second
-            spawnTimer += GetFrameTime(); // Add time per frame
+                float wantedX = player.x + player.width / 2;
+
+                // smooth follow
+                camera.target.x += (wantedX - camera.target.x) * 0.12f;
+
+                // keep Y fixed so player remains bottom
+                camera.target.y = player.y + player.height / 2;
+                         
+                 // spawn items every 1 second
+                spawnTimer += GetFrameTime(); // Add time per frame
             if(spawnTimer > 1.0f){
                 spawnTimer = 0;
                 Item it;
-                it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
-                it.rect.y = 0; // y starts at top
                 it.rect.width = 80;
                 it.rect.height = 80;
+                it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
+                it.rect.y = 0; // y starts at top
                 it.speed = 2 + rand() % 3;
                 it.active = true;
                 it.type = rand() % 7;
@@ -152,11 +181,25 @@ int main() {
 
         //drawing
         BeginDrawing();
+        ClearBackground(BLACK);
         //character
         if(state == MENU) DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
         //game
         if(state == PLAYING){
-            ClearBackground(SKYBLUE);
+            ClearBackground(SKYBLUE); // or anything
+
+            
+            
+            //camera
+            BeginMode2D(camera);
+            DrawTexturePro(
+                bgTex,
+                {0,0,(float)bgTex.width,(float)bgTex.height},
+                {0,0,(float)screenWidth,(float)screenHeight},
+                {0,0},
+                0,
+                WHITE
+            );
             DrawRectangleRec(player, RED);
             //draw items
             for(auto &it : items){
@@ -169,11 +212,14 @@ int main() {
                 if(it.type == 4) DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if(it.type == 5) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if(it.type == 6) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-
             }
 
+            EndMode2D();  
+
+            //UI
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20,  WHITE);
             DrawText(TextFormat("score: %d", score), 20, 20, 40,  WHITE);
+
         }else if(state == TROLL_VIDEO){
             ClearBackground(WHITE);
             if(!videoFrames.empty() && currentFrame < videoFrames.size()){
@@ -207,5 +253,4 @@ int main() {
     CloseWindow();
     return 0;
 }
-//run it 
-// g++ raylib-proj/my-game/main.cpp -o game.exe -I"C:/Users/norja/Documents/PUP-Subs/COMP PROG/C++/raylib-proj/raylib/raylib-6.0_win64_mingw-w64/include" -L"C:/Users/norja/Documents/PUP-Subs/COMP PROG/C++/raylib-proj/raylib/raylib-6.0_win64_mingw-w64/lib" -lraylib -lopengl32 -lgdi32 -lwinmm
+
