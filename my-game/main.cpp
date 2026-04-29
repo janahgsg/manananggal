@@ -18,6 +18,12 @@ struct Item{
     float speed;
     bool active;
 };
+
+enum Difficulty {
+    EASY,
+    MEDIUM,
+    HARD
+};
 //stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
@@ -68,6 +74,7 @@ int main() {
     vector<Item> items;
     float spawnTimer = 0;
 
+    Difficulty diff = EASY;
     //camera pov cutie
     Camera2D camera = {0};
     camera.offset = {
@@ -103,29 +110,53 @@ int main() {
             if(player.x + player.width > screenWidth)
                 player.x = screenWidth - player.width;
 
-                float wantedX = player.x + player.width / 2;
+            float wantedX = player.x + player.width / 2;
 
-                // smooth follow
-                camera.target.x += (wantedX - camera.target.x) * 0.12f;
+            // smooth follow
+            camera.target.x += (wantedX - camera.target.x) * 0.12f;
 
-                // keep Y fixed so player remains bottom
-                camera.target.y = player.y + player.height / 2;
+            // keep Y fixed so player remains bottom
+            camera.target.y = player.y + player.height / 2;
                          
-                 // spawn items every 1 second
-                spawnTimer += GetFrameTime(); // Add time per frame
-            if(spawnTimer > 1.0f){
-                spawnTimer = 0;
-                Item it;
-                it.rect.width = 80;
-                it.rect.height = 80;
-                it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
-                it.rect.y = 0; // y starts at top
-                it.speed = 2 + rand() % 3;
-                it.active = true;
-                it.type = rand() % 7;
 
-                items.push_back(it); //add item to vector
+            //difficulty
+            if(score >= 120) diff = HARD;
+            else if(score >= 50) diff = MEDIUM;
+            else diff = EASY;
+
+            // spawn items every 1 second
+            spawnTimer += GetFrameTime(); // Add time per frame
+            float spawnDelay;
+            int spawnAmount;
+            if(diff == EASY){
+                spawnDelay = 1.0f;
+                spawnAmount = 1;
+            }else if(diff == MEDIUM){
+                spawnDelay = 0.65f;
+                spawnAmount = 2;
+            }else if(diff == HARD){
+                spawnDelay = 0.40f;
+                spawnAmount = 3;
             }
+
+            if(spawnTimer > spawnDelay){
+                spawnTimer = 0;
+                for(int i = 0; i < spawnAmount; i++){
+                    Item it;
+                    it.rect.width = 90;
+                    it.rect.height = 90;
+                    it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
+                    it.rect.y = 0; // y starts at top
+                    if(diff == EASY) it.speed = 2 + rand() % 3;
+                    else if(diff == MEDIUM) it.speed = 4 + rand() % 3;
+                    else if(diff == HARD) it.speed = 6 + rand() % 4;
+                    it.active = true;
+                    it.type = rand() % 7;
+        
+                    items.push_back(it); //add item to vector
+                }
+            }
+            
 
             //update items
             for (auto &it : items){
@@ -223,8 +254,28 @@ int main() {
         }else if(state == TROLL_VIDEO){
             ClearBackground(WHITE);
             if(!videoFrames.empty() && currentFrame < videoFrames.size()){
-                DrawTexture(videoFrames[currentFrame], 0, 0, WHITE);
-                DrawText("RELAPSE KA MUNA BOI", 250, 500, 30, RED);
+                DrawTexturePro(
+                    videoFrames[currentFrame],
+                    {0,0,
+                    (float)videoFrames[currentFrame].width,
+                    (float)videoFrames[currentFrame].height},
+        
+                    {0,0,
+                    (float)screenWidth,
+                    (float)screenHeight},
+        
+                    {0,0},
+                    0,
+                    WHITE
+                );
+        
+                DrawText(
+                    "RELAPSE KA MUNA BOI",
+                    screenWidth/2 - 220,
+                    screenHeight - 100,
+                    40,
+                    RED
+                );
             }
         }
         else if(state == GAMEOVER){
