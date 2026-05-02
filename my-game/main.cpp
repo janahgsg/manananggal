@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <climits>
 #include <ctime>
+#include <cmath>
 using namespace std;
 
 enum GameState{
@@ -10,6 +11,26 @@ enum GameState{
     PLAYING,
     TROLL_VIDEO,
     GAMEOVER
+};
+
+enum ItemType{
+    BOMB,
+    BABY,
+    GARLIC,
+    BANDAGE,
+    MEDKIT,
+    CHILI,
+    POO,
+    SALT,
+    HEART,
+    BLOOD, 
+    POISON,
+    MEAT,
+    DICE,
+    MUSHROOM,
+    PRIZE,
+    STAR,
+    TROLLFACE
 };
 
 struct Item{
@@ -69,13 +90,24 @@ int main() {
     player.x = (screenWidth - player.width) / 2;
     player.y = screenHeight * 0.85f;
     int score = 0;
+    int highScore = 0;
     int hp = 3;
     float move = 1.0f;
     vector<Item> items;
-    float spawnTimer = 0;
+    float spawnTimer = 0; // time has spawned
+
+    // movements
+    float velocityX = 0;      // player movement momentum
+    
+
+    
+    //shake effect
+    float shakeTime = 0;     // how long screen shakes
+    float shakePower = 0;     // strength of shake
+    float hitFlash = 0;       // red flash when damaged
 
     Difficulty diff = EASY;
-    //camera pov cutie
+    //camera 
     Camera2D camera = {0};
     camera.offset = {
         screenWidth / 2.0f,
@@ -99,11 +131,24 @@ int main() {
         }
         //during play
         if(state == PLAYING){
-            float moveSpeed =  5 * move;
+            float moveSpeed = 400 * move;
+
+            float accel = 2200.0f;      // how fast player gains speed
+            float friction = 0.92f;     // slows naturally
+            float maxSpeed = 520.0f * move;
 
             //movements
-            if(IsKeyDown(KEY_LEFT)) player.x -= moveSpeed;
-            if(IsKeyDown(KEY_RIGHT)) player.x += moveSpeed;
+            if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime();
+            if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
+
+            //slow down
+            velocityX *= friction;
+
+            //limt max
+            if(velocityX > maxSpeed) velocityX = maxSpeed;
+            if(velocityX < -maxSpeed) velocityX = -maxSpeed;
+
+            player.x += velocityX * GetFrameTime();
         
             //left and right boundaries
             if(player.x < 0) player.x = 0;
@@ -117,12 +162,33 @@ int main() {
 
             // keep Y fixed so player remains bottom
             camera.target.y = player.y + player.height / 2;
-                         
+            
+            //camera shake
+            if (shakeTime > 0) {
+                shakeTime -= GetFrameTime();
+                if (shakeTime < 0) shakeTime = 0;
+            }
+
+            Vector2 shakeOffset = {0,0};
+
+            if (shakeTime > 0) {
+                float intensity = shakePower * (shakeTime / 0.25f);
+
+                shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+                shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+            }
+
+            camera.offset = {
+                screenWidth / 2.0f + shakeOffset.x,
+                screenHeight * 0.85f + shakeOffset.y
+            };
 
             //difficulty
             if(score >= 120) diff = HARD;
             else if(score >= 50) diff = MEDIUM;
             else diff = EASY;
+
+            //SPAWNING------------
 
             // spawn items every 1 second
             spawnTimer += GetFrameTime(); // Add time per frame
@@ -134,58 +200,126 @@ int main() {
             }else if(diff == MEDIUM){
                 spawnDelay = 0.65f;
                 spawnAmount = 2;
+                move = 1.2f;
             }else if(diff == HARD){
                 spawnDelay = 0.40f;
                 spawnAmount = 3;
+                move = 1.4f;
             }
 
             if(spawnTimer > spawnDelay){
                 spawnTimer = 0;
+                //spawnn items
                 for(int i = 0; i < spawnAmount; i++){
                     Item it;
                     it.rect.width = 90;
                     it.rect.height = 90;
                     it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
-                    it.rect.y = 0; // y starts at top
-                    if(diff == EASY) it.speed = 2 + rand() % 3;
-                    else if(diff == MEDIUM) it.speed = 4 + rand() % 3;
-                    else if(diff == HARD) it.speed = 6 + rand() % 4;
+                    it.rect.y = 0;  
+
+                    if(diff == EASY) it.speed = 140.0f;
+                    else if(diff == MEDIUM) it.speed = 200.0f;
+                    else if(diff == HARD)it.speed = 320.0f;
+
                     it.active = true;
-                    it.type = rand() % 7;
-        
+
+                    static bool prizeSpawn = false;
+                    if(score >= 500 && rand()%100 < 15){
+                        prizeSpawn = true;
+                        it.type = PRIZE;
+                    }else if(hp == 1 && rand()%100 < 10) it.type = MEDKIT;
+                    else if(diff == EASY){
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
+                        int randomIndex =  rand() % 6;
+                        it.type = pool[randomIndex];
+                    }else if(diff == MEDIUM){
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
+                        int randomIndex =  rand() % 10;
+                        it.type = pool[randomIndex];
+                    }else if(diff == HARD){
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART,TROLLFACE};
+
+                        int chance = rand() % 100;
+                        if(chance < 70){
+                            int randomIndex =  rand() % 10;
+                            it.type = pool[randomIndex];
+                        }else if(chance < 85) it.type = MUSHROOM;
+                        else if(chance < 95) it.type = DICE;
+                        else it.type = STAR;
+                    }
+
                     items.push_back(it); //add item to vector
                 }
             }
             
 
-            //update items
+            //UPDATE ITEMS & COLLISION -----------------
             for (auto &it : items){
                 if(!it.active) continue;
-                it.rect.y += it.speed;
+                it.rect.y += it.speed * GetFrameTime();
+
                 //remove if off-screen
                 if(it.rect.y > screenHeight) it.active = false;
 
                 if(CheckCollisionRecs(player, it.rect)){
-                    if(it.type == 0){ //bomb
-                        hp -= 1;
-                    }else if(it.type == 1){ //food
-                            score += 5;
-                            if(hp > 3) hp = 3;
-                        }else if(it.type == 2){ //medkit
-                                hp = 3; 
-                            }else if(it.type == 3){//bandage
-                                    hp += 1;
-                                    if(hp > 3) hp = 3;
-                                }else if(it.type == 4){//poison
-                                        hp -= 1;
-                                    }else if(it.type == 5){//chili
-                                            move = 2.0f;
-                                        }else if(it.type == 6){
-                                            state = TROLL_VIDEO;
-                                            currentFrame = 0;
-                                            frameTimer = 0;
-                                            PlaySound(trollSound);
-                                        }
+                    //BAD ITEMS
+                    if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC) {
+                        hp--;
+                        shakeTime = 0.25f;
+                        shakePower = 12.0f;
+                    }else if(it.type == CHILI){//
+                        move += 1.0f;
+                    }
+                    //SCORE++
+                    else if(it.type == BABY || it.type == HEART){ //baby
+                        score += 5;
+                    }else if(it.type == BLOOD || it.type == MEAT){ //blood
+                        score += 3;
+                    }
+                    //HEAL
+                    else if(it.type == BANDAGE){//bandage
+                        hp += 1;
+                        if(hp > 3) hp = 3;
+                    }else if(it.type == MEDKIT){ //medkit
+                        hp = 3; 
+                    }
+                    //RANDOMNESS
+                    else if(it.type == TROLLFACE){
+                        state = TROLL_VIDEO;
+                        currentFrame = 0;
+                        frameTimer = 0;
+                        PlaySound(trollSound);
+
+                    }else if(it.type == POISON){//poison
+                        move -= 2.0f;
+                    }   
+                    //SPECIAL ITEMS
+                    else if(it.type == DICE){//dice(good effects)
+                        int randomIndex = rand() % 4;
+                        if(randomIndex == 1){
+                            score += 10;
+                            DrawText("STAR!", screenWidth/2 - 220, screenHeight - 100, 40, WHITE);
+                        }
+                    }
+                    else if(it.type == MUSHROOM){//mushroom(bad effects)
+                        int randomIndex = rand() % 4;
+                        if(randomIndex == 1){
+                            score -= 10;
+                            DrawText("MINUS 10 HUHU", screenWidth/2 - 220, screenHeight - 100, 40, WHITE);
+                        }else if(randomIndex == 2){
+                            move -= 2.0f;
+                            DrawText("SLOW MO", screenWidth/2 - 220, screenHeight - 100, 40, WHITE);
+                        }
+                    }
+                    else if(it.type == STAR){//star 
+                        score += 10;
+                    }
+
+                    //special prize(super rare)
+                    else if(it.type == PRIZE){ //gift?
+                        
+                    }
+
                     it.active = false; //remove item after collision
                 }
             }
@@ -193,10 +327,10 @@ int main() {
             if(hp <= 0) state = GAMEOVER;
         }
         if(state == TROLL_VIDEO){
-            // add time every frame (Raylib gives delta time)
+            // add time every frame 
             frameTimer += GetFrameTime();
 
-            // when enough time passed → next frame
+            // when enough time passed, next frame
             if(frameTimer >= 0.2f){
                 frameTimer = 0;
                 currentFrame++;
@@ -213,14 +347,14 @@ int main() {
         //drawing
         BeginDrawing();
         ClearBackground(BLACK);
-        //character
-        if(state == MENU) DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
+        //menu
+        if(state == MENU){
+            DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
+            DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40,  WHITE);
+        }
         //game
         if(state == PLAYING){
-            ClearBackground(SKYBLUE); // or anything
-
-            
-            
+            ClearBackground(SKYBLUE); 
             //camera
             BeginMode2D(camera);
             DrawTexturePro(
@@ -236,13 +370,21 @@ int main() {
             for(auto &it : items){
                 if(!it.active) continue;
                 Color col = WHITE;
-                if(it.type == 0) DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 1) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 2) DrawTexturePro(medkitTex, {0, 0, (float)medkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 3) DrawTexturePro(bandageTex, {0, 0, (float)bandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 4) DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 5) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if(it.type == 6) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == BOMB) DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == BABY) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == MEDKIT) DrawTexturePro(medkitTex, {0, 0, (float)medkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == BANDAGE) DrawTexturePro(bandageTex, {0, 0, (float)bandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == GARLIC) DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == CHILI) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == TROLLFACE) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if(it.type == HEART) DrawRectangleRec(it.rect, PINK);
+                if(it.type == BLOOD) DrawRectangleRec(it.rect, RED);
+                if(it.type == POO) DrawRectangleRec(it.rect, BROWN);
+                if(it.type == DICE) DrawRectangleRec(it.rect, WHITE);
+                if(it.type == MUSHROOM) DrawRectangleRec(it.rect, GREEN);
+                if(it.type == POISON) DrawRectangleRec(it.rect, BLACK);
+                if(it.type == SALT) DrawRectangleRec(it.rect, LIGHTGRAY);
+            
             }
 
             EndMode2D();  
@@ -259,11 +401,9 @@ int main() {
                     {0,0,
                     (float)videoFrames[currentFrame].width,
                     (float)videoFrames[currentFrame].height},
-        
                     {0,0,
                     (float)screenWidth,
                     (float)screenHeight},
-        
                     {0,0},
                     0,
                     WHITE
@@ -278,6 +418,16 @@ int main() {
                 );
             }
         }
+
+        if(hitFlash > 0) DrawRectangle(0,0, screenWidth,screenHeight,Fade(RED, hitFlash));
+
+        //heartbeat
+        if(hp == 1){
+            int pulse = 20 + sin(GetTime()*8)*10;
+            DrawText("WARNING!", screenWidth/2 - 100, 50, pulse, RED);
+        }
+
+
         else if(state == GAMEOVER){
             DrawText("GAME OVER", 300, 250, 40, RED);
             DrawText("Press enter to restart", 230, 320, 20, WHITE);
@@ -288,6 +438,7 @@ int main() {
                 items.clear();
                 player.x = 400;    // Reset player position
                 move = 1.0f; // Reset speed
+                if(highScore < score) highScore = score;
             }
         }
         
