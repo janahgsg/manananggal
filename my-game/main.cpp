@@ -76,6 +76,13 @@ int main() {
     Texture2D trollFaceTex = LoadTexture("assets/images/trollFace.png");
     Texture2D chiliTex = LoadTexture("assets/images/chili.png");
     Texture2D garlicTex = LoadTexture("assets/images/garlic.png");
+    Texture2D fetusTex = LoadTexture("assets/images/fetus1.png");
+    Texture2D poisonTex     = LoadTexture("assets/images/poison.png");
+    Texture2D saltTex       = LoadTexture("assets/images/salt.png");
+    Texture2D potionBandageTex = LoadTexture("assets/images/potion-bandage (2).png");
+    Texture2D potionMedkitTex  = LoadTexture("assets/images/potion-medkit (2).png");
+    Texture2D garlic1Tex    = LoadTexture("assets/images/garlic-1.png");
+
 
     srand(time(NULL));
     SetTargetFPS(60);
