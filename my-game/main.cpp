@@ -93,18 +93,26 @@ int main() {
     int highScore = 0;
     int hp = 3;
     float move = 1.0f;
+    float baseMove = 1.0f;
     vector<Item> items;
     float spawnTimer = 0; // time has spawned
 
     // movements
     float velocityX = 0;      // player movement momentum
+    //slow effect
+    float slowTime = 0;
     
-
+    //combo
+    int combo = 0;
+    float comboTime = 0;
+    int comboPop = 0;
     
     //shake effect
     float shakeTime = 0;     // how long screen shakes
     float shakePower = 0;     // strength of shake
     float hitFlash = 0;       // red flash when damaged
+
+    float medkitCooldown = 0;
 
     Difficulty diff = EASY;
     //camera 
@@ -133,11 +141,11 @@ int main() {
         if(state == PLAYING){
             float moveSpeed = 400 * move;
 
+            //movements
             float accel = 2200.0f;      // how fast player gains speed
             float friction = 0.92f;     // slows naturally
             float maxSpeed = 520.0f * move;
 
-            //movements
             if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime();
             if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
 
@@ -197,23 +205,27 @@ int main() {
             if(diff == EASY){
                 spawnDelay = 1.0f;
                 spawnAmount = 1;
+                baseMove = 1.0f;
             }else if(diff == MEDIUM){
                 spawnDelay = 0.65f;
                 spawnAmount = 2;
-                move = 1.2f;
+                baseMove = 1.2f;
             }else if(diff == HARD){
                 spawnDelay = 0.40f;
                 spawnAmount = 3;
-                move = 1.4f;
+                baseMove = 1.4f;
             }
 
             if(spawnTimer > spawnDelay){
                 spawnTimer = 0;
                 //spawnn items
+
+                if(medkitCooldown > 0) medkitCooldown -= GetFrameTime();
+
                 for(int i = 0; i < spawnAmount; i++){
                     Item it;
-                    it.rect.width = 90;
-                    it.rect.height = 90;
+                    it.rect.width = 50;
+                    it.rect.height = 50;
                     it.rect.x = rand() % (screenWidth - (int)it.rect.width); //random x position
                     it.rect.y = 0;  
 
@@ -223,25 +235,32 @@ int main() {
 
                     it.active = true;
 
+                    if(hp == 1 && medkitCooldown <= 0 && rand()%100 < 12){
+                        it.type = MEDKIT;
+                        medkitCooldown = 8.0f; 
+                    }     
+
                     static bool prizeSpawn = false;
                     if(score >= 500 && rand()%100 < 15){
                         prizeSpawn = true;
                         it.type = PRIZE;
-                    }else if(hp == 1 && rand()%100 < 10) it.type = MEDKIT;
+                    }               
                     else if(diff == EASY){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
-                        int randomIndex =  rand() % 6;
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, TROLLFACE};
+                        int randomIndex =  rand() % 5;
                         it.type = pool[randomIndex];
+                        if(rand()%100 < 8) it.type = BANDAGE;
                     }else if(diff == MEDIUM){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
-                        int randomIndex =  rand() % 10;
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
+                        int randomIndex =  rand() % 9;
                         it.type = pool[randomIndex];
+                        if(rand()%100 < 6) it.type = BANDAGE;
                     }else if(diff == HARD){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART,TROLLFACE};
-
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, MEAT, HEART,TROLLFACE};
                         int chance = rand() % 100;
+                        if(rand()%100 < 4) it.type = BANDAGE;
                         if(chance < 70){
-                            int randomIndex =  rand() % 10;
+                            int randomIndex =  rand() % 9;
                             it.type = pool[randomIndex];
                         }else if(chance < 85) it.type = MUSHROOM;
                         else if(chance < 95) it.type = DICE;
@@ -251,6 +270,20 @@ int main() {
                     items.push_back(it); //add item to vector
                 }
             }
+            //combo timer
+            if(combo > 0){
+                comboTime -= GetFrameTime();
+                if(comboTime <= 0) combo = 0;
+            }
+
+            //slow timer
+            if(slowTime > 0){ 
+                slowTime -= GetFrameTime();
+                move = baseMove * 0.5f;
+            }
+            else move += (baseMove - move) * 0.05f;
+            
+            
             
 
             //UPDATE ITEMS & COLLISION -----------------
@@ -267,14 +300,23 @@ int main() {
                         hp--;
                         shakeTime = 0.25f;
                         shakePower = 12.0f;
+                        combo = 0;
                     }else if(it.type == CHILI){//
                         move += 1.0f;
                     }
                     //SCORE++
                     else if(it.type == BABY || it.type == HEART){ //baby
-                        score += 5;
+                        combo++;
+                        comboTime = 3.0f;
+                        comboPop = combo;
+
+                        score+= 5 * combo;
                     }else if(it.type == BLOOD || it.type == MEAT){ //blood
-                        score += 3;
+                        combo++;
+                        comboTime = 3.0f;
+                        comboPop = combo;
+
+                        score+= 3 * combo;
                     }
                     //HEAL
                     else if(it.type == BANDAGE){//bandage
@@ -291,7 +333,8 @@ int main() {
                         PlaySound(trollSound);
 
                     }else if(it.type == POISON){//poison
-                        move -= 2.0f;
+                        move = 0.5f;
+                        slowTime = 3.0f;
                     }   
                     //SPECIAL ITEMS
                     else if(it.type == DICE){//dice(good effects)
@@ -384,6 +427,7 @@ int main() {
                 if(it.type == MUSHROOM) DrawRectangleRec(it.rect, GREEN);
                 if(it.type == POISON) DrawRectangleRec(it.rect, BLACK);
                 if(it.type == SALT) DrawRectangleRec(it.rect, LIGHTGRAY);
+                if(it.type == STAR) DrawRectangleRec(it.rect, YELLOW);
             
             }
 
@@ -421,11 +465,17 @@ int main() {
 
         if(hitFlash > 0) DrawRectangle(0,0, screenWidth,screenHeight,Fade(RED, hitFlash));
 
-        //heartbeat
+        //heartbeat text
         if(hp == 1){
             int pulse = 20 + sin(GetTime()*8)*10;
             DrawText("WARNING!", screenWidth/2 - 100, 50, pulse, RED);
         }
+
+        //combo text
+        if(combo > 1) DrawText(TextFormat("COMBO x%d", combo), screenWidth/2 - 100, 20, 35, YELLOW);
+        if(combo == 5) DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth/2 - 100, 20, 35, ORANGE);
+        if(combo == 10) DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth/2 - 100, 20, 35, RED);
+        
 
 
         else if(state == GAMEOVER){
