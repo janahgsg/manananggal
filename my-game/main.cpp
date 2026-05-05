@@ -432,11 +432,11 @@ int main(){
                 if (it.type == BABY)
                     DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(medkitTex, {0, 0, (float)medkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(bandageTex, {0, 0, (float)bandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
                     DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
@@ -452,9 +452,9 @@ int main(){
                 if (it.type == MUSHROOM)
                     DrawRectangleRec(it.rect, GREEN);
                 if (it.type == POISON)
-                    DrawRectangleRec(it.rect, BLACK);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
-                    DrawRectangleRec(it.rect, LIGHTGRAY);
+                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
             }
 
             EndMode2D();
