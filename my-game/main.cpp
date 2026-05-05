@@ -1,3 +1,4 @@
+#include "intro.h"
 #include "raylib.h"
 #include <vector>
 #include <cstdlib>
@@ -146,8 +147,9 @@ int main(){
         UpdateMusicStream(bgMusic);
         // menu
         if (state == MENU){
-            if (IsKeyPressed(KEY_ENTER))
-                state = PLAYING;
+            if (UpdateIntro()){
+            state = PLAYING;
+            }
         }
         // during play
         if (state == PLAYING){
@@ -402,12 +404,7 @@ int main(){
         ClearBackground(BLACK);
         // menu
         if (state == MENU){
-            DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
-            DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
-            if (!IsMusicStreamPlaying(bgMusic))
-            {
-                DrawText("Music not playing!", 10, 50, 20, RED);
-            }
+            DrawIntro(highScore);
         }
         // game
         if (state == PLAYING){
@@ -500,8 +497,6 @@ int main(){
         if(combo > 1) DrawText(TextFormat("COMBO x%d", combo), screenWidth/2 - 100, 20, 35, YELLOW);
         if(combo == 5) DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth/2 - 100, 20, 35, ORANGE);
         if(combo == 10) DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth/2 - 100, 20, 35, RED);
-        
-
 
         else if(state == GAMEOVER){
             DrawText("GAME OVER", 300, 250, 40, RED);
