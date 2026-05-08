@@ -154,10 +154,14 @@ int main(){
 
         UpdateMusicStream(bgMusic);
         // menu
-        if (state == MENU){
-            if (IsKeyPressed(KEY_ENTER))
-                state = PLAYING;
-        }
+        if (state == MENU) {
+
+        if (UpdateIntro()) {
+        state = PLAYING;}
+
+        DrawIntro(highScore);   
+}
+        
         // during play
         if (state == PLAYING){
             float moveSpeed = 400 * move;
@@ -430,14 +434,14 @@ int main(){
         BeginDrawing();
         ClearBackground(BLACK);
         // menu
-        if (state == MENU){
-            DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
-            DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
-            if (!IsMusicStreamPlaying(bgMusic))
-            {
-                DrawText("Music not playing!", 10, 50, 20, RED);
-            }
-        }
+        //if (state == MENU){
+           // DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
+            //DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
+            //if (!IsMusicStreamPlaying(bgMusic))
+            //{
+               // DrawText("Music not playing!", 10, 50, 20, RED);
+           // }
+        //}
         // game
         if (state == PLAYING){
             ClearBackground(SKYBLUE);
