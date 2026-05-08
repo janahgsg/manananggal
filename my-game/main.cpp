@@ -91,6 +91,9 @@ int main(){
     Texture2D potionBandageTex = LoadTexture("assets/images/potion-bandage (2).png");
     Texture2D potionMedkitTex = LoadTexture("assets/images/potion-medkit (2).png");
     Texture2D garlic1Tex = LoadTexture("assets/images/garlic-1.png");
+    Texture2D bloodTex = LoadTexture("assets/images/blood.png");
+    Texture2D pooTex = LoadTexture("assets/images/poo.png");
+    Texture2D heartTex = LoadTexture("assets/images/heart.png");
 
     srand(time(NULL));
     SetTargetFPS(60);
@@ -147,9 +150,8 @@ int main(){
         UpdateMusicStream(bgMusic);
         // menu
         if (state == MENU){
-            if (UpdateIntro()){
-            state = PLAYING;
-            }
+            if (IsKeyPressed(KEY_ENTER))
+                state = PLAYING;
         }
         // during play
         if (state == PLAYING){
@@ -404,7 +406,12 @@ int main(){
         ClearBackground(BLACK);
         // menu
         if (state == MENU){
-            DrawIntro(highScore);
+            DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
+            DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
+            if (!IsMusicStreamPlaying(bgMusic))
+            {
+                DrawText("Music not playing!", 10, 50, 20, RED);
+            }
         }
         // game
         if (state == PLAYING){
@@ -439,11 +446,11 @@ int main(){
                 if (it.type == TROLLFACE)
                     DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
-                    DrawRectangleRec(it.rect, PINK);
+                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BLOOD)
-                    DrawRectangleRec(it.rect, RED);
+                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawRectangleRec(it.rect, BROWN);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
                     DrawRectangleRec(it.rect, WHITE);
                 if (it.type == MUSHROOM)
@@ -497,6 +504,8 @@ int main(){
         if(combo > 1) DrawText(TextFormat("COMBO x%d", combo), screenWidth/2 - 100, 20, 35, YELLOW);
         if(combo == 5) DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth/2 - 100, 20, 35, ORANGE);
         if(combo == 10) DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth/2 - 100, 20, 35, RED);
+        
+
 
         else if(state == GAMEOVER){
             DrawText("GAME OVER", 300, 250, 40, RED);
