@@ -131,6 +131,11 @@ int main(){
     float hitFlash = 0;       // red flash when damaged
 
     float medkitCooldown = 0;
+    
+    float velocityY = 0;     // vertical speed
+    float gravity = 1800.0f; // pull down
+    float jumpForce = -700.0f; // jump strength (negative = up)
+    bool isGrounded = true;
 
     Difficulty diff = EASY;
     // camera
@@ -162,8 +167,25 @@ int main(){
             float friction = 0.92f;     // slows naturally
             float maxSpeed = 520.0f * move;
 
+            
+
             if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime();
             if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
+            if (IsKeyPressed(KEY_SPACE) && isGrounded){
+                velocityY = jumpForce;
+                isGrounded = false;}
+
+            // Gravity
+            velocityY += gravity * GetFrameTime();
+
+             // Update player position
+            player.y += velocityY * GetFrameTime();
+
+             // Ground collision
+             if (player.y >= screenHeight * 0.85f) {
+             player.y = screenHeight * 0.85f;
+             velocityY = 0;
+             isGrounded = true;}
 
             // slow down
             velocityX *= friction;
@@ -195,6 +217,9 @@ int main(){
                 shakeTime -= GetFrameTime();
                 if (shakeTime < 0)
                     shakeTime = 0;
+
+           
+
             }
 
             Vector2 shakeOffset = {0, 0};
