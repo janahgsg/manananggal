@@ -5,6 +5,7 @@
 #include <climits>
 #include <ctime>
 #include <cmath>
+#include "raymath.h"
 using namespace std;
 
 enum GameState{
@@ -46,6 +47,16 @@ enum Difficulty{
     MEDIUM,
     HARD
 };
+
+struct Smoke{
+    float x;
+    float y;
+    float size;
+    float speed;
+    float alpha;
+};
+
+
 // stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
@@ -97,6 +108,8 @@ int main(){
 
     srand(time(NULL));
     SetTargetFPS(60);
+
+    
     GameState state = MENU;
     // player
     Rectangle player;
@@ -104,34 +117,50 @@ int main(){
     player.height = 50;
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-    // center horizontally
+
+    //CAMERA
     player.x = (screenWidth - player.width) / 2;
     player.y = screenHeight * 0.85f;
-    int score = 0;
+
+    //SCORE & HEALTH
+    int score = 50;
     int highScore = 0;
     int hp = 3;
-    float move = 1.0f;
-    float baseMove = 1.0f;
+    
+    //ITEMS
     vector<Item> items;
     float spawnTimer = 0; // time has spawned
-
-    // movements
-    float velocityX = 0;      // player movement momentum
-    //slow effect
-    float slowTime = 0;
     
-    //combo
+    //COMBO
     int combo = 0;
     float comboTime = 0;
     int comboPop = 0;
     
-    //shake effect
+    //SHAKE EFFECT
     float shakeTime = 0;     // how long screen shakes
     float shakePower = 0;     // strength of shake
     float hitFlash = 0;       // red flash when damaged
 
     float medkitCooldown = 0;
-    
+
+    //FOG EFFECT
+    float fogAlpha = 0.0f;
+float fogTimer = 0.0f;
+float fogMoveX = -900.0f;
+
+bool fogActive = false;
+bool fogLeaving = false;
+
+float fogCooldown = 0.0f; // wait 1 min first
+float nextFogTime = 3.0; // random 60-100 sec
+
+
+    //MOVEMENTS
+    float velocityX = 0;      // player movement momentum
+    //slow effect
+    float slowTime = 0;
+    float move = 1.0f;
+    float baseMove = 1.0f;
     float velocityY = 0;     // vertical speed
     float gravity = 1800.0f; // pull down
     float jumpForce = -700.0f; // jump strength (negative = up)
@@ -171,7 +200,7 @@ int main(){
 
             if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime();
             if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
-            if (IsKeyPressed(KEY_SPACE) && isGrounded){
+            if (IsKeyDown(KEY_UP) && isGrounded){
                 velocityY = jumpForce;
                 isGrounded = false;}
 
@@ -236,9 +265,9 @@ int main(){
                 screenHeight * 0.85f + shakeOffset.y};
 
             // difficulty
-            if (score >= 120)
+            if (score >= 50)
                 diff = HARD;
-            else if (score >= 50)
+            else if (score >= 20)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -249,33 +278,22 @@ int main(){
             spawnTimer += GetFrameTime(); // Add time per frame
             float spawnDelay;
             int spawnAmount;
-            if (diff == EASY)
-            {
+            if (diff == EASY){
                 spawnDelay = 1.0f;
                 spawnAmount = 1;
                 baseMove = 1.0f;
-            }else if(diff == MEDIUM){
-                spawnDelay = 0.65f;
-                spawnAmount = 2;
-                baseMove = 1.2f;
-            }else if(diff == HARD){
-
-            }
-            else if (diff == MEDIUM)
-            {
+            }else if (diff == MEDIUM){
                 spawnDelay = 0.65f;
                 spawnAmount = 2;
                 move = 1.2f;
             }
-            else if (diff == HARD)
-            {
+            else if (diff == HARD){
                 spawnDelay = 0.40f;
                 spawnAmount = 3;
                 baseMove = 1.4f;
             }
 
-            if (spawnTimer > spawnDelay)
-            {
+            if (spawnTimer > spawnDelay){
                 spawnTimer = 0;
                 // spawnn items
                 for (int i = 0; i < spawnAmount; i++){
@@ -309,11 +327,16 @@ int main(){
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
                         int randomIndex = rand() % 6;
                         it.type = pool[randomIndex];
+
+                       
                     }
+                    //DITO MO I- ADD IVAN
                     else if (diff == MEDIUM){
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
                         int randomIndex = rand() % 10;
                         it.type = pool[randomIndex];
+                       
+
                     }
                     else if (diff == HARD){
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
@@ -326,11 +349,46 @@ int main(){
                         else if (chance < 85) it.type = MUSHROOM;
                         else if (chance < 95) it.type = DICE;
                         else it.type = STAR;
+
                     }
 
                     items.push_back(it); // add item to vector
                 }
             }
+
+            // FOG EFFECT APPEARANCE -----
+            if(diff == HARD){
+                float dt = GetFrameTime();
+
+                fogCooldown += dt;
+
+                if(!fogActive && fogCooldown >= nextFogTime){
+                    fogActive = true;
+                    fogTimer = 0;
+                    fogAlpha = 0;
+                    fogCooldown = 0;
+                }
+
+                if(fogActive){
+                    fogTimer += dt;
+
+                    // Fade in 
+                    if(fogTimer < 10.0f) fogAlpha = Lerp(fogAlpha, 0.40f, 0.30f * dt);
+                    // Stay foggy
+                    else if(fogTimer < 28.0f) fogAlpha = Lerp(fogAlpha, 0.42f, 0.6f * dt);
+                    // Fade out 
+                    else fogAlpha = Lerp(fogAlpha, 0.0f, 0.22f * dt);
+                    // End 
+                    if(fogTimer >= 28.0f  && fogAlpha <= 0.01f){ 
+                        fogActive = false;
+                        fogAlpha = 0.0f;
+                        fogCooldown = 0.0f;
+                        nextFogTime = 280 + rand()%41;    // around 280 to 320 sec 
+                    }  
+                }
+            }
+            else fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
+
 
             // UPDATE ITEMS & COLLISION -----------------
             for (auto &it : items){
@@ -433,8 +491,7 @@ int main(){
         if (state == MENU){
             DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
             DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
-            if (!IsMusicStreamPlaying(bgMusic))
-            {
+            if (!IsMusicStreamPlaying(bgMusic)){
                 DrawText("Music not playing!", 10, 50, 20, RED);
             }
         }
@@ -443,6 +500,7 @@ int main(){
             ClearBackground(SKYBLUE);
             // camera
             BeginMode2D(camera);
+            
             DrawTexturePro(
                 bgTex,
                 {0, 0, (float)bgTex.width, (float)bgTex.height},
@@ -486,7 +544,36 @@ int main(){
                     DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
             }
 
+            //TEXTURE OF FOG EFFECT
+            if(diff == HARD && fogAlpha > 0){
+                float camLeft  = camera.target.x - screenWidth / (2 * camera.zoom);
+                float camRight = camera.target.x + screenWidth / (2 * camera.zoom);
+
+                for(int row = 0; row < 6; row++){
+                    for(float x = camLeft - 300; x < camRight + 300; x += 240){
+                        float y = row * 160;
+
+                        DrawCircleGradient(
+                            {x, y},
+                            220,
+                            Fade(LIGHTGRAY, fogAlpha),
+                            Fade(WHITE, 0.0f)
+                        );
+
+                        DrawCircleGradient(
+                            {x + 100, y + 50},
+                            260,
+                            Fade(GRAY, fogAlpha * 0.8f),
+                            Fade(WHITE, 0.0f)
+                        );
+                    }
+                }
+            }
+            
+
             EndMode2D();
+
+            
 
             // UI
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
@@ -549,13 +636,14 @@ int main(){
 
         EndDrawing();
     }
-    for (auto &t : videoFrames){
-        UnloadTexture(t);
-    }
+
+    for (auto &t : videoFrames)UnloadTexture(t);
+    
 
     currentFrame = 0;
     frameTimer = 0;
 
+    //unload
     UnloadSound(trollSound);
     UnloadMusicStream(bgMusic);
 
