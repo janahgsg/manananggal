@@ -113,6 +113,7 @@ int main()
     Texture2D bloodTex = LoadTexture("assets/images/blood.png");
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
+    Texture2D introTex = LoadTexture("assets/images/intro.png");
 
     srand(time(NULL));
     SetTargetFPS(60);
@@ -196,7 +197,7 @@ int main()
                 state = PLAYING;
             }
 
-            DrawIntro(highScore);
+            DrawIntro(highScore, introTex);
         }
 
         // during play
@@ -536,13 +537,13 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
         // menu
-        if (state == MENU){
-            DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
-            DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
-            if (!IsMusicStreamPlaying(bgMusic)){
-                DrawText("Music not playing!", 10, 50, 20, RED);
-            }
-        }
+       // if (state == MENU){
+            //DrawText("Welcome, Type ENTER to play", 190, 200, 20, LIGHTGRAY);
+            //DrawText(TextFormat("High Score: %d", highScore), 20, 20, 40, WHITE);
+        //if (!IsMusicStreamPlaying(bgMusic)){
+               // DrawText("Music not playing!", 10, 50, 20, RED);
+           // }
+        //}
         // game
         if (state == PLAYING)
         {
@@ -701,8 +702,9 @@ int main()
     }
 
     for (auto &t : videoFrames)UnloadTexture(t);
-    
 
+    UnloadTexture(introTex);
+    
     currentFrame = 0;
     frameTimer = 0;
 

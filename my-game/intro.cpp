@@ -1,4 +1,7 @@
 #include "intro.h"
+#include "raylib.h"
+
+
 
 // ================= UPDATE =================
 bool UpdateIntro() {
@@ -26,9 +29,13 @@ bool UpdateIntro() {
 }
 
 // ================= DRAW =================
-void DrawIntro(int highScore) {
+void DrawIntro(int highScore, Texture2D introTex) {
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
+
+     // ===== BACKGROUND =====
+    DrawTextureEx(introTex, {0, 0}, 0.0f, 
+        (float)screenWidth / introTex.width, WHITE);
 
     float buttonWidth = 300;
     float buttonHeight = 80;
