@@ -8,14 +8,16 @@
 #include "raymath.h"
 using namespace std;
 
-enum GameState{
+enum GameState
+{
     MENU,
     PLAYING,
     TROLL_VIDEO,
     GAMEOVER
 };
 
-enum ItemType{
+enum ItemType
+{
     BOMB,
     BABY,
     GARLIC,
@@ -32,17 +34,22 @@ enum ItemType{
     MUSHROOM,
     PRIZE,
     STAR,
-    TROLLFACE
+    TROLLFACE,
+    HOLYWATER, // bad - damages
+    KRUS,      // bad - slows player
+    ATAY       // good - +8 points
 };
 
-struct Item{
+struct Item
+{
     Rectangle rect; // items
     int type;
     float speed;
     bool active;
 };
 
-enum Difficulty{
+enum Difficulty
+{
     EASY,
     MEDIUM,
     HARD
@@ -64,7 +71,8 @@ float frameTimer = 0;
 Sound trollSound;
 Music bgMusic;
 
-int main(){
+int main()
+{
     SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
     InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "Raylib - Wings of the Curse");
 
@@ -145,14 +153,11 @@ int main(){
 
     //FOG EFFECT
     float fogAlpha = 0.0f;
-float fogTimer = 0.0f;
-float fogMoveX = -900.0f;
-
-bool fogActive = false;
-bool fogLeaving = false;
-
-float fogCooldown = 0.0f; // wait 1 min first
-float nextFogTime = 3.0; // random 60-100 sec
+    float fogTimer = 0.0f;
+    float fogMoveX = -900.0f;
+    bool fogActive = false;
+    float fogCooldown = 0.0f; 
+    float nextFogTime = 3.0; 
 
 
     //MOVEMENTS
@@ -183,12 +188,20 @@ float nextFogTime = 3.0; // random 60-100 sec
 
         UpdateMusicStream(bgMusic);
         // menu
-        if (state == MENU){
-            if (IsKeyPressed(KEY_ENTER))
+        if (state == MENU)
+        {
+
+            if (UpdateIntro())
+            {
                 state = PLAYING;
+            }
+
+            DrawIntro(highScore);
         }
+
         // during play
-        if (state == PLAYING){
+        if (state == PLAYING)
+        {
             float moveSpeed = 400 * move;
 
             //movements
@@ -202,19 +215,22 @@ float nextFogTime = 3.0; // random 60-100 sec
             if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
             if (IsKeyDown(KEY_UP) && isGrounded){
                 velocityY = jumpForce;
-                isGrounded = false;}
+                isGrounded = false;
+            }
 
             // Gravity
             velocityY += gravity * GetFrameTime();
 
-             // Update player position
+            // Update player position
             player.y += velocityY * GetFrameTime();
 
-             // Ground collision
-             if (player.y >= screenHeight * 0.85f) {
-             player.y = screenHeight * 0.85f;
-             velocityY = 0;
-             isGrounded = true;}
+            // Ground collision
+            if (player.y >= screenHeight * 0.85f)
+            {
+                player.y = screenHeight * 0.85f;
+                velocityY = 0;
+                isGrounded = true;
+            }
 
             // slow down
             velocityX *= friction;
@@ -242,18 +258,17 @@ float nextFogTime = 3.0; // random 60-100 sec
             camera.target.y = player.y + player.height / 2;
 
             // camera shake
-            if (shakeTime > 0){
+            if (shakeTime > 0)
+            {
                 shakeTime -= GetFrameTime();
                 if (shakeTime < 0)
                     shakeTime = 0;
-
-           
-
             }
 
             Vector2 shakeOffset = {0, 0};
 
-            if (shakeTime > 0){
+            if (shakeTime > 0)
+            {
                 float intensity = shakePower * (shakeTime / 0.25f);
 
                 shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
@@ -285,7 +300,7 @@ float nextFogTime = 3.0; // random 60-100 sec
             }else if (diff == MEDIUM){
                 spawnDelay = 0.65f;
                 spawnAmount = 2;
-                move = 1.2f;
+                baseMove = 1.2f;
             }
             else if (diff == HARD){
                 spawnDelay = 0.40f;
@@ -296,7 +311,8 @@ float nextFogTime = 3.0; // random 60-100 sec
             if (spawnTimer > spawnDelay){
                 spawnTimer = 0;
                 // spawnn items
-                for (int i = 0; i < spawnAmount; i++){
+                for (int i = 0; i < spawnAmount; i++)
+                {
                     Item it;
                     it.rect.width = 40;
                     it.rect.height = 40;
@@ -312,44 +328,46 @@ float nextFogTime = 3.0; // random 60-100 sec
 
                     it.active = true;
 
-                    if(hp == 1 && medkitCooldown <= 0 && rand()%100 < 12){
+                    if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 12)
+                    {
                         it.type = MEDKIT;
-                        medkitCooldown = 8.0f; 
-                    }     
+                        medkitCooldown = 8.0f;
+                    }
 
                     static bool prizeSpawn = false;
-                    if (score >= 500 && rand() % 100 < 15){
+                    if (score >= 500 && rand() % 100 < 15)
+                    {
                         prizeSpawn = true;
                         it.type = PRIZE;
                     }
-                    else if (hp == 1 && rand() % 100 < 10) it.type = MEDKIT;
-                    else if (diff == EASY){
+                    else if (hp == 1 && rand() % 100 < 10)
+                        it.type = MEDKIT;
+                    else if (diff == EASY)
+                    {
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
                         int randomIndex = rand() % 6;
                         it.type = pool[randomIndex];
 
                        
                     }
-                    //DITO MO I- ADD IVAN
                     else if (diff == MEDIUM){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
-                        int randomIndex = rand() % 10;
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB,
+                                      POISON, MEAT, HEART, TROLLFACE,
+                                      HOLYWATER, KRUS, ATAY};
+                        int randomIndex = rand() % 13;
                         it.type = pool[randomIndex];
-                       
-
                     }
                     else if (diff == HARD){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE};
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, HOLYWATER, KRUS, ATAY};
 
                         int chance = rand() % 100;
                         if (chance < 70){
-                            int randomIndex = rand() % 10;
+                            int randomIndex = rand() % 13;
                             it.type = pool[randomIndex];
                         }
                         else if (chance < 85) it.type = MUSHROOM;
                         else if (chance < 95) it.type = DICE;
                         else it.type = STAR;
-
                     }
 
                     items.push_back(it); // add item to vector
@@ -391,71 +409,103 @@ float nextFogTime = 3.0; // random 60-100 sec
 
 
             // UPDATE ITEMS & COLLISION -----------------
-            for (auto &it : items){
+            for (auto &it : items)
+            {
                 if (!it.active)
                     continue;
                 it.rect.y += it.speed * GetFrameTime();
 
                 // remove if off-screen
-                if (it.rect.y > screenHeight) it.active = false;
+                if (it.rect.y > screenHeight)
+                    it.active = false;
 
-                if (CheckCollisionRecs(player, it.rect)){
+                if (CheckCollisionRecs(player, it.rect))
+                {
                     // BAD ITEMS
-                    if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC){
+                    if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
+                    {
                         hp--;
                         shakeTime = 0.25f;
                         shakePower = 12.0f;
                     }
-                    else if (it.type == CHILI){
+                    else if (it.type == CHILI)
+                    {
                         move += 1.0f;
                     }
                     // SCORE++
-                    else if (it.type == BABY || it.type == HEART){ // baby
+                    else if (it.type == BABY || it.type == HEART)
+                    { // baby
                         score += 5;
                     }
-                    else if (it.type == BLOOD || it.type == MEAT){ // blood
+                    else if (it.type == BLOOD || it.type == MEAT)
+                    { // blood
                         score += 3;
                     }
                     // HEAL
-                    else if (it.type == BANDAGE){ // bandage
+                    else if (it.type == BANDAGE)
+                    { // bandage
                         hp += 1;
                         if (hp > 3)
                             hp = 3;
                     }
-                    else if (it.type == MEDKIT) hp = 3;
+                    else if (it.type == MEDKIT)
+                        hp = 3;
                     // RANDOMNESS
-                    else if (it.type == TROLLFACE){
+                    else if (it.type == TROLLFACE)
+                    {
                         state = TROLL_VIDEO;
                         currentFrame = 0;
                         frameTimer = 0;
                         PlaySound(trollSound);
                     }
-                    else if (it.type == POISON){ // poison
+                    else if (it.type == POISON)
+                    { // poison
                         move -= 2.0f;
                     }
                     // SPECIAL ITEMS
-                    else if (it.type == DICE){ // dice(good effects)
+                    else if (it.type == DICE)
+                    { // dice(good effects)
                         int randomIndex = rand() % 4;
-                        if (randomIndex == 1){
+                        if (randomIndex == 1)
+                        {
                             score += 10;
                             DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
                         }
                     }
-                    else if (it.type == MUSHROOM){ // mushroom(bad effects)
+                    else if (it.type == MUSHROOM)
+                    { // mushroom(bad effects)
                         int randomIndex = rand() % 4;
-                        if (randomIndex == 1){
+                        if (randomIndex == 1)
+                        {
                             score -= 10;
                             DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
                         }
-                        else if (randomIndex == 2){
+                        else if (randomIndex == 2)
+                        {
                             move -= 2.0f;
                             DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
                         }
                     }
-                    else if (it.type == STAR) score += 10;
+                    else if (it.type == STAR)
+                        score += 10;
 
                     // special prize(super rare)
-                    else if (it.type == PRIZE){ // gift?
+                    else if (it.type == PRIZE)
+                    { // gift?
+                    }
+                    else if (it.type == HOLYWATER)
+                    {
+                        hp--;
+                        shakeTime = 0.25f;
+                        shakePower = 12.0f;
+                    }
+                    else if (it.type == KRUS)
+                    {
+                        slowTime = 3.0f;
+                    }
+                    else if (it.type == ATAY)
+                    {
+                        score += 8;
                     }
 
                     it.active = false; // remove item after collision
@@ -464,8 +514,7 @@ float nextFogTime = 3.0; // random 60-100 sec
             move += (1.0f - move) * 0.01f;
             if (hp <= 0) state = GAMEOVER;
         }
-        if (state == TROLL_VIDEO)
-        {
+        if (state == TROLL_VIDEO){
             // add time every frame
             frameTimer += GetFrameTime();
 
@@ -476,8 +525,7 @@ float nextFogTime = 3.0; // random 60-100 sec
             }
 
             // if video ended, go back to game
-            if (currentFrame >= videoFrames.size())
-            {
+            if (currentFrame >= videoFrames.size()){
                 StopSound(trollSound); // stop audio
                 currentFrame = 0;      // reset video
                 state = PLAYING;       // resume game
@@ -496,7 +544,8 @@ float nextFogTime = 3.0; // random 60-100 sec
             }
         }
         // game
-        if (state == PLAYING){
+        if (state == PLAYING)
+        {
             ClearBackground(SKYBLUE);
             // camera
             BeginMode2D(camera);
@@ -510,7 +559,8 @@ float nextFogTime = 3.0; // random 60-100 sec
                 WHITE);
             DrawRectangleRec(player, RED);
             // draw items
-            for (auto &it : items){
+            for (auto &it : items)
+            {
                 if (!it.active)
                     continue;
                 Color col = WHITE;
@@ -542,6 +592,12 @@ float nextFogTime = 3.0; // random 60-100 sec
                     DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
                     DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == HOLYWATER)
+                    DrawRectangleRec(it.rect, BLUE);
+                if (it.type == KRUS)
+                    DrawRectangleRec(it.rect, YELLOW);
+                if (it.type == ATAY)
+                    DrawRectangleRec(it.rect, MAROON);
             }
 
             //TEXTURE OF FOG EFFECT
@@ -579,7 +635,8 @@ float nextFogTime = 3.0; // random 60-100 sec
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
         }
-        else if (state == TROLL_VIDEO){
+        else if (state == TROLL_VIDEO)
+        {
             ClearBackground(WHITE);
             if (!videoFrames.empty() && currentFrame < videoFrames.size())
             {
@@ -604,33 +661,39 @@ float nextFogTime = 3.0; // random 60-100 sec
             }
         }
 
-        if (hitFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
+        if (hitFlash > 0)
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
-        //heartbeat text
-        if(hp == 1){
-            int pulse = 20 + sin(GetTime()*8)*10;
-            DrawText("WARNING!", screenWidth/2 - 100, 50, pulse, RED);
+        // heartbeat text
+        if (hp == 1)
+        {
+            int pulse = 20 + sin(GetTime() * 8) * 10;
+            DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
-        //combo text
-        if(combo > 1) DrawText(TextFormat("COMBO x%d", combo), screenWidth/2 - 100, 20, 35, YELLOW);
-        if(combo == 5) DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth/2 - 100, 20, 35, ORANGE);
-        if(combo == 10) DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth/2 - 100, 20, 35, RED);
-        
+        // combo text
+        if (combo > 1)
+            DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
+        if (combo == 5)
+            DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 100, 20, 35, ORANGE);
+        if (combo == 10)
+            DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 100, 20, 35, RED);
 
-
-        else if(state == GAMEOVER){
+        else if (state == GAMEOVER)
+        {
             DrawText("GAME OVER", 300, 250, 40, RED);
             DrawText("Press enter to restart", 230, 320, 20, WHITE);
             // restart
-            if (IsKeyPressed(KEY_ENTER)){
-                state = MENU;
-                hp = 3;
-                items.clear();
-                player.x = 400; // Reset player position
-                move = 1.0f;    // Reset speed
+            if (IsKeyPressed(KEY_ENTER))
+            {
                 if (highScore < score)
                     highScore = score;
+                state = MENU;
+                hp = 3;
+                score = 0; // ✅ added
+                items.clear();
+                player.x = 400;
+                move = 1.0f;
             }
         }
 
