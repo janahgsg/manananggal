@@ -1,5 +1,6 @@
 #include "intro.h"
 #include "raylib.h"
+#include <cmath>
 
 
 
@@ -56,16 +57,42 @@ void DrawIntro(int highScore, Texture2D introTex) {
 
     int titleWidth = MeasureText(title, titleSize);
 
-    DrawText(
-        title,
-        screenWidth / 2 - titleWidth / 2,
-        screenHeight / 2 - 150,
-        titleSize,
-        RED
-    );
+    //DrawText(
+       // title,
+        //screenWidth / 2 - titleWidth / 2,
+       // screenHeight / 2 - 150,
+       // titleSize,
+       // RED
+   //);
+
+   float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f); // fade in over ~2 seconds
+
+   //shadow
+   DrawText(title, 
+         screenWidth / 2 - titleWidth / 2 + 2,
+         screenHeight / 2 - 150 + 2,
+         titleSize,
+         BLACK);
+
+    // main title wl fade effect
+    DrawText(title,
+         screenWidth / 2 - titleWidth / 2,
+         screenHeight / 2 - 150,
+         titleSize,
+         Fade(Color{255, 215, 0, 255}, fadeAlpha)); //fade in gold color
+
 
     // ===== BUTTON =====
-    Color buttonColor = hovered ? SKYBLUE : RED;
+    if (hovered) {
+    Rectangle glowRect = {
+            playButton.x - 5,
+            playButton.y - 5,
+            playButton.width + 10,
+            playButton.height + 10
+         };
+         DrawRectangleRounded(glowRect, 0.3f, 10, Fade(SKYBLUE, 0.5f));
+    }
+    Color buttonColor = hovered ? Color{50, 205, 50, 255} : Color{34, 139, 34, 255};
 
     DrawRectangleRounded(playButton, 0.3f, 10, buttonColor);
 
@@ -83,12 +110,16 @@ void DrawIntro(int highScore, Texture2D introTex) {
         WHITE
     );
 
-    // ===== HIGH SCORE =====
-    DrawText(
-        TextFormat("High Score: %d", highScore),
-        20,
-        20,
-        30,
-        WHITE
-    );
+
+    const char* scoreText = TextFormat("High Score: %d", highScore);
+       int scoreWidth = MeasureText(scoreText, 30);
+
+     DrawRectangle(0, 0, screenWidth, 60, Fade(BLACK, 0.5f)); // semi-transparent bar
+
+     DrawText(scoreText,
+         screenWidth / 2 - scoreWidth / 2,
+         screenHeight - 50,
+         30,
+         Color{245, 245, 220, 255});
+
 }

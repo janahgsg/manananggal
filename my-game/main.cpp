@@ -132,7 +132,7 @@ int main()
     player.y = screenHeight * 0.85f;
 
     //SCORE & HEALTH
-    int score = 50;
+    int score = 0;
     int highScore = 0;
     int hp = 3;
     
@@ -568,31 +568,31 @@ int main()
                 if (it.type == BOMB)
                     DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
-                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
-                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BLOOD)
-                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
                     DrawRectangleRec(it.rect, WHITE);
                 if (it.type == MUSHROOM)
                     DrawRectangleRec(it.rect, GREEN);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
-                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HOLYWATER)
                     DrawRectangleRec(it.rect, BLUE);
                 if (it.type == KRUS)
