@@ -544,8 +544,7 @@ int main()
             }
         }
         // game
-        if (state == PLAYING)
-        {
+        if (state == PLAYING){
             ClearBackground(SKYBLUE);
             // camera
             BeginMode2D(camera);
@@ -564,40 +563,23 @@ int main()
                 if (!it.active)
                     continue;
                 Color col = WHITE;
-                if (it.type == BOMB)
-                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == TROLLFACE)
-                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == HEART)
-                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BLOOD)
-                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == DICE)
-                    DrawRectangleRec(it.rect, WHITE);
-                if (it.type == MUSHROOM)
-                    DrawRectangleRec(it.rect, GREEN);
-                if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == SALT)
-                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == HOLYWATER)
-                    DrawRectangleRec(it.rect, BLUE);
-                if (it.type == KRUS)
-                    DrawRectangleRec(it.rect, YELLOW);
-                if (it.type == ATAY)
-                    DrawRectangleRec(it.rect, MAROON);
+                if (it.type == BOMB) DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == BABY) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == MEDKIT) DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == BANDAGE) DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == GARLIC) DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == CHILI) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == TROLLFACE) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == HEART) DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == BLOOD) DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == POO) DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == DICE) DrawRectangleRec(it.rect, WHITE);
+                if (it.type == MUSHROOM) DrawRectangleRec(it.rect, GREEN);
+                if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == HOLYWATER) DrawRectangleRec(it.rect, BLUE);
+                if (it.type == KRUS) DrawRectangleRec(it.rect, YELLOW);
+                if (it.type == ATAY) DrawRectangleRec(it.rect, MAROON);
             }
 
             //TEXTURE OF FOG EFFECT
@@ -609,19 +591,8 @@ int main()
                     for(float x = camLeft - 300; x < camRight + 300; x += 240){
                         float y = row * 160;
 
-                        DrawCircleGradient(
-                            {x, y},
-                            220,
-                            Fade(LIGHTGRAY, fogAlpha),
-                            Fade(WHITE, 0.0f)
-                        );
-
-                        DrawCircleGradient(
-                            {x + 100, y + 50},
-                            260,
-                            Fade(GRAY, fogAlpha * 0.8f),
-                            Fade(WHITE, 0.0f)
-                        );
+                        DrawCircleGradient({x, y},220,Fade(LIGHTGRAY, fogAlpha),Fade(WHITE, 0.0f));
+                        DrawCircleGradient({x + 100, y + 50},260,Fade(GRAY, fogAlpha * 0.8f),Fade(WHITE, 0.0f));
                     }
                 }
             }
@@ -635,11 +606,9 @@ int main()
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
         }
-        else if (state == TROLL_VIDEO)
-        {
+        else if (state == TROLL_VIDEO){
             ClearBackground(WHITE);
-            if (!videoFrames.empty() && currentFrame < videoFrames.size())
-            {
+            if (!videoFrames.empty() && currentFrame < videoFrames.size()){
                 DrawTexturePro(
                     videoFrames[currentFrame],
                     {0, 0,
@@ -661,36 +630,29 @@ int main()
             }
         }
 
-        if (hitFlash > 0)
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
+        if (hitFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
         // heartbeat text
-        if (hp == 1)
-        {
+        if (hp == 1){
             int pulse = 20 + sin(GetTime() * 8) * 10;
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
         // combo text
-        if (combo > 1)
-            DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
-        if (combo == 5)
-            DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 100, 20, 35, ORANGE);
-        if (combo == 10)
-            DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 100, 20, 35, RED);
+        if (combo > 1)DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
+        if (combo == 5)DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 100, 20, 35, ORANGE);
+        if (combo == 10)DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 100, 20, 35, RED);
 
-        else if (state == GAMEOVER)
-        {
+        else if (state == GAMEOVER){
             DrawText("GAME OVER", 300, 250, 40, RED);
             DrawText("Press enter to restart", 230, 320, 20, WHITE);
             // restart
-            if (IsKeyPressed(KEY_ENTER))
-            {
+            if (IsKeyPressed(KEY_ENTER)){
                 if (highScore < score)
                     highScore = score;
                 state = MENU;
                 hp = 3;
-                score = 0; // ✅ added
+                score = 0; 
                 items.clear();
                 player.x = 400;
                 move = 1.0f;
