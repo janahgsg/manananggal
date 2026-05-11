@@ -8,16 +8,14 @@
 #include "raymath.h"
 using namespace std;
 
-enum GameState
-{
+enum GameState{
     MENU,
     PLAYING,
     TROLL_VIDEO,
     GAMEOVER
 };
 
-enum ItemType
-{
+enum ItemType{
     BOMB,
     BABY,
     GARLIC,
@@ -34,14 +32,11 @@ enum ItemType
     MUSHROOM,
     PRIZE,
     STAR,
-    TROLLFACE,
-    HOLYWATER, // bad - damages
-    KRUS,      // bad - slows player
-    ATAY       // good - +8 points
+    TROLLFACE,  
+    ATAY       
 };
 
-struct Item
-{
+struct Item{
     Rectangle rect; // items
     int type;
     float speed;
@@ -352,17 +347,16 @@ int main()
                     }
                     else if (diff == MEDIUM){
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB,
-                                      POISON, MEAT, HEART, TROLLFACE,
-                                      HOLYWATER, KRUS, ATAY};
-                        int randomIndex = rand() % 13;
+                                      POISON, MEAT, HEART, TROLLFACE, ATAY};
+                        int randomIndex = rand() % 11;
                         it.type = pool[randomIndex];
                     }
                     else if (diff == HARD){
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, HOLYWATER, KRUS, ATAY};
+                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, ATAY};
 
                         int chance = rand() % 100;
                         if (chance < 70){
-                            int randomIndex = rand() % 13;
+                            int randomIndex = rand() % 11;
                             it.type = pool[randomIndex];
                         }
                         else if (chance < 85) it.type = MUSHROOM;
@@ -437,34 +431,29 @@ int main()
                     { // baby
                         score += 5;
                     }
-                    else if (it.type == BLOOD || it.type == MEAT)
-                    { // blood
+                    else if (it.type == ATAY) score += 8;
+
+                    else if (it.type == BLOOD || it.type == MEAT){ // blood
                         score += 3;
                     }
                     // HEAL
-                    else if (it.type == BANDAGE)
-                    { // bandage
+                    else if (it.type == BANDAGE){ // bandage
                         hp += 1;
                         if (hp > 3)
                             hp = 3;
                     }
-                    else if (it.type == MEDKIT)
-                        hp = 3;
+                    else if (it.type == MEDKIT) hp = 3;
                     // RANDOMNESS
-                    else if (it.type == TROLLFACE)
-                    {
+                    else if (it.type == TROLLFACE){
                         state = TROLL_VIDEO;
                         currentFrame = 0;
                         frameTimer = 0;
                         PlaySound(trollSound);
                     }
-                    else if (it.type == POISON)
-                    { // poison
-                        move -= 2.0f;
-                    }
+                    else if (it.type == POISON) move -= 2.0f;
+                    
                     // SPECIAL ITEMS
-                    else if (it.type == DICE)
-                    { // dice(good effects)
+                    else if (it.type == DICE){ // dice(good effects)
                         int randomIndex = rand() % 4;
                         if (randomIndex == 1)
                         {
@@ -486,27 +475,14 @@ int main()
                             DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
                         }
                     }
-                    else if (it.type == STAR)
-                        score += 10;
+                    else if (it.type == STAR) score += 10;
 
                     // special prize(super rare)
                     else if (it.type == PRIZE)
                     { // gift?
                     }
-                    else if (it.type == HOLYWATER)
-                    {
-                        hp--;
-                        shakeTime = 0.25f;
-                        shakePower = 12.0f;
-                    }
-                    else if (it.type == KRUS)
-                    {
-                        slowTime = 3.0f;
-                    }
-                    else if (it.type == ATAY)
-                    {
-                        score += 8;
-                    }
+                   
+                    
 
                     it.active = false; // remove item after collision
                 }
@@ -577,8 +553,6 @@ int main()
                 if (it.type == MUSHROOM) DrawRectangleRec(it.rect, GREEN);
                 if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == HOLYWATER) DrawRectangleRec(it.rect, BLUE);
-                if (it.type == KRUS) DrawRectangleRec(it.rect, YELLOW);
                 if (it.type == ATAY) DrawRectangleRec(it.rect, MAROON);
             }
 
