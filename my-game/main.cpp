@@ -33,7 +33,9 @@ enum ItemType{
     PRIZE,
     STAR,
     TROLLFACE,  
-    ATAY       
+    ATAY,
+    KRUS,
+    HOLYWATER       
 };
 
 struct Item{
@@ -58,7 +60,6 @@ struct Smoke{
     float alpha;
 };
 
-
 // stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
@@ -79,6 +80,12 @@ int main()
     bgMusic = LoadMusicStream("assets/sounds/bg_music.mp3");
     SetMusicVolume(bgMusic, 1.0f);
     PlayMusicStream(bgMusic);
+
+    // load intro music
+    Music introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+    SetMusicVolume(introMusic, 0.5f);  
+    PlayMusicStream(introMusic);
+
 
     // load frames
     for (int i = 1; i <= 110; i++)
@@ -108,7 +115,13 @@ int main()
     Texture2D bloodTex = LoadTexture("assets/images/blood.png");
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
-    Texture2D introTex = LoadTexture("assets/images/intro.png");
+    Texture2D introTex = LoadTexture("assets/images/intro1.png");
+    Texture2D atayTex = LoadTexture("assets/images/atay.png");
+    Texture2D crossTex = LoadTexture("assets/images/cross.png");
+    Texture2D diceTex = LoadTexture("assets/images/dice.png");
+    Texture2D holyTex = LoadTexture("assets/images/holywater.png");
+    Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
+
 
     srand(time(NULL));
     SetTargetFPS(60); //60fps 1sec/60frame
@@ -127,7 +140,7 @@ int main()
     player.y = screenHeight * 0.85f;
 
     //SCORE & HEALTH
-    int score = 50;
+    int score = 0;
     int highScore = 0;
     int hp = 3;
     
@@ -187,14 +200,24 @@ int main()
     while (!WindowShouldClose())
     {
 
-        UpdateMusicStream(bgMusic);
+    
         // menu
         if (state == MENU)
         {
+            UpdateMusicStream(introMusic);
 
             if (UpdateIntro())
             {
+                StopMusicStream(introMusic);
+                UnloadMusicStream(introMusic);
                 state = PLAYING;
+            }
+
+            if (UpdateExit())
+            {
+                StopMusicStream(introMusic);
+                UnloadMusicStream(introMusic);
+                break;            
             }
 
             DrawIntro(highScore, introTex);
@@ -203,6 +226,7 @@ int main()
         // during play
         if (state == PLAYING)
         {
+            UpdateMusicStream(bgMusic);
             float moveSpeed = 400 * move;
 
             //movements
@@ -568,20 +592,22 @@ int main()
                     continue;
                 Color col = WHITE;
                 if (it.type == BOMB) DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BABY) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == MEDKIT) DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BANDAGE) DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == GARLIC) DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == CHILI) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == TROLLFACE) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == HEART) DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BLOOD) DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == POO) DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == DICE) DrawRectangleRec(it.rect, WHITE);
-                if (it.type == MUSHROOM) DrawRectangleRec(it.rect, GREEN);
-                if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == ATAY) DrawRectangleRec(it.rect, MAROON);
+                if (it.type == BABY) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == MEDKIT) DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height},  {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                if (it.type == BANDAGE) DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height},  {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                if (it.type == GARLIC) DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height},  {it.rect.x, it.rect.y, garlic1Tex.width * 0.15f, garlic1Tex.height * 0.15f}, {0, 0}, 0.0f, col);
+                if (it.type == CHILI) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == TROLLFACE) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == HEART) DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == BLOOD) DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == POO) DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == DICE) DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == MUSHROOM) DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == POISON) DrawTexturePro(poisonTex,{0, 0, (float)poisonTex.width, (float)poisonTex.height},  {it.rect.x, it.rect.y, poisonTex.width * 0.15f, poisonTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == HOLYWATER) DrawTexturePro(holyTex, {0, 0, (float)holyTex.width, (float)holyTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == KRUS) DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == ATAY) DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
             }
 
             //TEXTURE OF FOG EFFECT
