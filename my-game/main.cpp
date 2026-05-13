@@ -109,7 +109,7 @@ int main()
     Texture2D bloodTex = LoadTexture("assets/images/blood.png");
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
-    Texture2D introTex = LoadTexture("assets/images/intro.png");
+    Texture2D introTex = LoadTexture("assets/images/intro1.png");
 
     srand(time(NULL));
     SetTargetFPS(60);
@@ -190,6 +190,11 @@ int main()
             if (UpdateIntro())
             {
                 state = PLAYING;
+            }
+
+            if (UpdateExit())
+            {
+             break;            
             }
 
             DrawIntro(highScore, introTex);

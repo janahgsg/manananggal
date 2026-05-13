@@ -7,7 +7,7 @@
 #include <ctime>
 
 
-// ================= UPDATE =================
+// ================= UPDATE INTRO =================
 bool UpdateIntro() {
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
@@ -26,10 +26,35 @@ bool UpdateIntro() {
     bool hovered = CheckCollisionPointRec(mouse, playButton);
 
     if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        return true; // start game
+        return true; 
     }
 
-    return false;
+    return false; 
+}
+
+// ================= UPDATE EXIT =================
+bool UpdateExit() {
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    float buttonWidth = 300;
+    float buttonHeight = 80;
+
+    Rectangle exitButton = {
+        screenWidth / 2.0f - buttonWidth / 2,
+        screenHeight / 2.0f + buttonHeight + 40, // below Play
+        buttonWidth,
+        buttonHeight
+    };
+
+    Vector2 mouse = GetMousePosition();
+    bool hovered = CheckCollisionPointRec(mouse, exitButton);
+
+    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        return true; 
+    }
+
+    return false; 
 }
 
 // ================= DRAW =================
@@ -124,7 +149,42 @@ void DrawIntro(int highScore, Texture2D introTex) {
         WHITE
     );
 
+    // ===== EXIT BUTTON =====
+    float exitButtonWidth = 300;
+    float exitButtonHeight = 80;
 
+    Rectangle exitButton = {
+        screenWidth / 2.0f - exitButtonWidth / 2,
+        screenHeight / 2.0f + exitButtonHeight + 40,
+        exitButtonWidth,
+        exitButtonHeight
+    };
+
+    bool exitHovered = CheckCollisionPointRec(GetMousePosition(), exitButton);
+
+    if (exitHovered) {
+        Rectangle glowRect = {
+            exitButton.x - 5,
+            exitButton.y - 5,
+            exitButton.width + 10,
+            exitButton.height + 10
+        };
+        DrawRectangleRounded(glowRect, 0.3f, 10, Fade(MAROON, 0.5f));
+    }
+
+    Color exitButtonColor = exitHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
+    DrawRectangleRounded(exitButton, 0.3f, 10, exitButtonColor);
+
+    const char* exitText = "EXIT";
+    int exitFontSize = 30;
+    int exitTextWidth = MeasureText(exitText, exitFontSize);
+
+    DrawText(
+        exitText,
+        exitButton.x + exitButton.width / 2 - exitTextWidth / 2,
+        exitButton.y + exitButton.height / 2 - exitFontSize / 2,
+        exitFontSize,
+        WHITE
+    );
     
-
-}
+    }
