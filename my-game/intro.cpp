@@ -7,6 +7,27 @@
 #include <ctime>
 
 
+static Music introMusic;
+
+
+void InitIntroMusic() {
+    introMusic = LoadMusicStream("assets/audio/intro.mp3");
+    PlayMusicStream(introMusic);
+    SetMusicVolume(introMusic, 0.5f); // optional volume
+}
+
+
+void UpdateIntroMusic() {
+    UpdateMusicStream(introMusic);
+}
+
+
+void StopIntroMusic() {
+    StopMusicStream(introMusic);
+    UnloadMusicStream(introMusic);
+}
+    
+
 // ================= UPDATE INTRO =================
 bool UpdateIntro() {
     int screenWidth = GetScreenWidth();
@@ -186,5 +207,5 @@ void DrawIntro(int highScore, Texture2D introTex) {
         exitFontSize,
         WHITE
     );
-    
-    }
+
+}

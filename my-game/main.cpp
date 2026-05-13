@@ -81,6 +81,12 @@ int main()
     SetMusicVolume(bgMusic, 1.0f);
     PlayMusicStream(bgMusic);
 
+    // load intro music
+    Music introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+    SetMusicVolume(introMusic, 0.5f);  
+    PlayMusicStream(introMusic);
+
+
     // load frames
     for (int i = 1; i <= 110; i++)
     {
@@ -182,19 +188,24 @@ int main()
     while (!WindowShouldClose())
     {
 
-        UpdateMusicStream(bgMusic);
+    
         // menu
         if (state == MENU)
         {
+            UpdateMusicStream(introMusic);
 
             if (UpdateIntro())
             {
+                StopMusicStream(introMusic);
+                UnloadMusicStream(introMusic);
                 state = PLAYING;
             }
 
             if (UpdateExit())
             {
-             break;            
+                StopMusicStream(introMusic);
+                UnloadMusicStream(introMusic);
+                break;            
             }
 
             DrawIntro(highScore, introTex);
@@ -203,6 +214,7 @@ int main()
         // during play
         if (state == PLAYING)
         {
+            UpdateMusicStream(bgMusic);
             float moveSpeed = 400 * move;
 
             //movements
