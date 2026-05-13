@@ -114,7 +114,6 @@ int main()
 
     srand(time(NULL));
     SetTargetFPS(60);
-
     
     GameState state = MENU;
     // player

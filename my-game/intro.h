@@ -2,4 +2,4 @@
 #include "raylib.h"
 
 bool UpdateIntro();  // returns true when player wants to start
-void DrawIntro(int highScore, Texture2D introTex);
+void DrawIntro(int highScore, Texture2D introTex); 

@@ -109,6 +109,7 @@ DrawTextEx(scaryFont,
 
 
     DrawRectangleRounded(playButton, 0.3f, 10, buttonColor);
+    
 
     // ===== PLAY TEXT =====
     const char* playText = "PLAY";
