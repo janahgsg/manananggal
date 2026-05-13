@@ -41,8 +41,6 @@ void DrawIntro(int highScore, Texture2D introTex) {
     DrawTextureEx(introTex, {0, 0}, 0.0f, 
         (float)screenWidth / introTex.width, WHITE);
 
-
-
     float buttonWidth = 300;
     float buttonHeight = 80;
 
@@ -55,32 +53,36 @@ void DrawIntro(int highScore, Texture2D introTex) {
 
     Vector2 mouse = GetMousePosition();
     bool hovered = CheckCollisionPointRec(mouse, playButton);
+    
+      // ===== TITLE =====
+const char* title = "Curse of the Wings";
+int titleSize = 90;
 
-    // ===== TITLE =====
-     const char* title = "Curse of the Wings";
-     int titleSize = 60;
+Font scaryFont = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
 
-     int titleWidth = MeasureText(title, titleSize);
+Vector2 textSize = MeasureTextEx(scaryFont, title, (float)titleSize, 2);
 
-    // Title Y position
-     int titleY = screenHeight / 2 - 150;
+float titleX = screenWidth / 2.0f - textSize.x / 2;
+float titleY = screenHeight / 2.0f - 200;
 
-   float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f); // fade in over ~2 seconds
+float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f);
 
-   //shadow
-   DrawText(title, 
-         screenWidth / 2 - titleWidth / 2 + 2,
-         screenHeight / 2 - 150 + 2,
-         titleSize,
-         BLACK);
+// Shadow
+DrawTextEx(scaryFont,
+    title,
+    {titleX + 3, titleY + 3}, // offset for shadow
+    (float)titleSize,
+    0,
+    BLACK);
 
-    // main title wl fade effect
-    DrawText(title, 
-         screenWidth / 2 - titleWidth / 2,
-         screenHeight / 2 - 150,
-         titleSize,
-         Fade(Color{148, 0, 211, 255}, fadeAlpha));
-         
+// Main title with fade
+DrawTextEx(scaryFont,
+    title,
+    {titleX, titleY},
+    (float)titleSize,
+    0,
+    Fade(Color{139, 0, 0, 255}, fadeAlpha));
+
      
     // ===== HIGH SCORE  =====
       const char* scoreText = TextFormat("High Score: %d", highScore);
@@ -89,7 +91,7 @@ void DrawIntro(int highScore, Texture2D introTex) {
 
      DrawText(scoreText,
          screenWidth / 2 - scoreWidth / 2,
-         titleY + titleSize + 20,   
+         titleY + titleSize + 40,   
          scoreFontSize,
          Color{245, 245, 220, 255});
 
@@ -103,7 +105,8 @@ void DrawIntro(int highScore, Texture2D introTex) {
          };
          DrawRectangleRounded(glowRect, 0.3f, 10, Fade(SKYBLUE, 0.5f));
     }
-    Color buttonColor = hovered ? Color{50, 205, 50, 255} : Color{34, 139, 34, 255};
+     Color buttonColor = hovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
+
 
     DrawRectangleRounded(playButton, 0.3f, 10, buttonColor);
 
