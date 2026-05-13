@@ -78,6 +78,7 @@ bool UpdateExit() {
     return false; 
 }
 
+
 // ================= DRAW =================
 void DrawIntro(int highScore, Texture2D introTex) {
     int screenWidth = GetScreenWidth();

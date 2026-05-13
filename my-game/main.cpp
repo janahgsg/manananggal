@@ -116,6 +116,12 @@ int main()
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
     Texture2D introTex = LoadTexture("assets/images/intro1.png");
+    Texture2D atayTex = LoadTexture("assets/images/atay.png");
+    Texture2D crossTex = LoadTexture("assets/images/cross.png");
+    Texture2D diceTex = LoadTexture("assets/images/dice.png");
+    Texture2D holyTex = LoadTexture("assets/images/holywater.png");
+    Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
+
 
     srand(time(NULL));
     SetTargetFPS(60);
@@ -562,11 +568,11 @@ int main()
                 if (it.type == BABY)
                     DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height},  {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height},  {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height},  {it.rect.x, it.rect.y, garlic1Tex.width * 0.15f, garlic1Tex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
                     DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
@@ -578,19 +584,19 @@ int main()
                 if (it.type == POO)
                     DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
-                    DrawRectangleRec(it.rect, WHITE);
+                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawRectangleRec(it.rect, GREEN);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, it.rect, {0, 0}, 0.0f, col);
+                   DrawTexturePro(poisonTex,{0, 0, (float)poisonTex.width, (float)poisonTex.height},  {it.rect.x, it.rect.y, poisonTex.width * 0.15f, poisonTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
                     DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HOLYWATER)
-                    DrawRectangleRec(it.rect, BLUE);
+                    DrawTexturePro(holyTex, {0, 0, (float)holyTex.width, (float)holyTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == KRUS)
-                    DrawRectangleRec(it.rect, YELLOW);
+                    DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
-                    DrawRectangleRec(it.rect, MAROON);
+                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
             }
 
             //TEXTURE OF FOG EFFECT

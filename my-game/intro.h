@@ -9,4 +9,3 @@ bool UpdateExit(); // returns true when player wants to exit
 void InitIntroMusic();   // load and start playing intro music
 void UpdateIntroMusic(); // keep music stream updated each frame
 void StopIntroMusic();   // stop and unload intro music
-
