@@ -55,33 +55,33 @@ void DrawIntro(int highScore, Texture2D introTex) {
     bool hovered = CheckCollisionPointRec(mouse, playButton);
     
       // ===== TITLE =====
-const char* title = "Curse of the Wings";
-int titleSize = 90;
+     const char* title = "Curse of the Wings";
+     int titleSize = 90;
 
-Font scaryFont = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
+     Font scaryFont = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
 
-Vector2 textSize = MeasureTextEx(scaryFont, title, (float)titleSize, 2);
+     Vector2 textSize = MeasureTextEx(scaryFont, title, (float)titleSize, 2);
 
-float titleX = screenWidth / 2.0f - textSize.x / 2;
-float titleY = screenHeight / 2.0f - 200;
+     float titleX = screenWidth / 2.0f - textSize.x / 2;
+     float titleY = screenHeight / 2.0f - 200;
 
-float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f);
+     float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f);
 
-// Shadow
-DrawTextEx(scaryFont,
-    title,
-    {titleX + 3, titleY + 3}, // offset for shadow
-    (float)titleSize,
-    0,
-    BLACK);
+     // Shadow
+     DrawTextEx(scaryFont,
+         title,
+         {titleX + 3, titleY + 3}, // offset for shadow
+         (float)titleSize,
+          0,
+          BLACK);
 
-// Main title with fade
-DrawTextEx(scaryFont,
-    title,
-    {titleX, titleY},
-    (float)titleSize,
-    0,
-    Fade(Color{139, 0, 0, 255}, fadeAlpha));
+    // Main title with fade
+     DrawTextEx(scaryFont,
+         title,
+         {titleX, titleY},
+         (float)titleSize,
+         0,
+         Fade(Color{139, 0, 0, 255}, fadeAlpha));
 
      
     // ===== HIGH SCORE  =====
@@ -109,7 +109,6 @@ DrawTextEx(scaryFont,
 
 
     DrawRectangleRounded(playButton, 0.3f, 10, buttonColor);
-    
 
     // ===== PLAY TEXT =====
     const char* playText = "PLAY";

@@ -60,7 +60,6 @@ struct Smoke{
     float alpha;
 };
 
-
 // stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
