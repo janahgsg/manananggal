@@ -1,7 +1,10 @@
 #include "intro.h"
 #include "raylib.h"
 #include <cmath>
-
+#include <vector>
+#include <cstdlib>
+#include <climits>
+#include <ctime>
 
 
 // ================= UPDATE =================
@@ -38,6 +41,8 @@ void DrawIntro(int highScore, Texture2D introTex) {
     DrawTextureEx(introTex, {0, 0}, 0.0f, 
         (float)screenWidth / introTex.width, WHITE);
 
+
+
     float buttonWidth = 300;
     float buttonHeight = 80;
 
@@ -52,18 +57,13 @@ void DrawIntro(int highScore, Texture2D introTex) {
     bool hovered = CheckCollisionPointRec(mouse, playButton);
 
     // ===== TITLE =====
-    const char* title = "Curse of the Wings";
-    int titleSize = 60;
+     const char* title = "Curse of the Wings";
+     int titleSize = 60;
 
-    int titleWidth = MeasureText(title, titleSize);
+     int titleWidth = MeasureText(title, titleSize);
 
-    //DrawText(
-       // title,
-        //screenWidth / 2 - titleWidth / 2,
-       // screenHeight / 2 - 150,
-       // titleSize,
-       // RED
-   //);
+    // Title Y position
+     int titleY = screenHeight / 2 - 150;
 
    float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f); // fade in over ~2 seconds
 
@@ -75,12 +75,23 @@ void DrawIntro(int highScore, Texture2D introTex) {
          BLACK);
 
     // main title wl fade effect
-    DrawText(title,
+    DrawText(title, 
          screenWidth / 2 - titleWidth / 2,
          screenHeight / 2 - 150,
          titleSize,
-         Fade(Color{255, 215, 0, 255}, fadeAlpha)); //fade in gold color
+         Fade(Color{148, 0, 211, 255}, fadeAlpha));
+         
+     
+    // ===== HIGH SCORE  =====
+      const char* scoreText = TextFormat("High Score: %d", highScore);
+      int scoreFontSize = 30;
+      int scoreWidth = MeasureText(scoreText, scoreFontSize);
 
+     DrawText(scoreText,
+         screenWidth / 2 - scoreWidth / 2,
+         titleY + titleSize + 20,   
+         scoreFontSize,
+         Color{245, 245, 220, 255});
 
     // ===== BUTTON =====
     if (hovered) {
@@ -111,15 +122,6 @@ void DrawIntro(int highScore, Texture2D introTex) {
     );
 
 
-    const char* scoreText = TextFormat("High Score: %d", highScore);
-       int scoreWidth = MeasureText(scoreText, 30);
-
-     DrawRectangle(0, 0, screenWidth, 60, Fade(BLACK, 0.5f)); // semi-transparent bar
-
-     DrawText(scoreText,
-         screenWidth / 2 - scoreWidth / 2,
-         screenHeight - 50,
-         30,
-         Color{245, 245, 220, 255});
+    
 
 }
