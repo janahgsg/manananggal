@@ -85,8 +85,13 @@ void DrawIntro(int highScore, Texture2D introTex) {
     int screenHeight = GetScreenHeight();
 
      // ===== BACKGROUND =====
-    DrawTextureEx(introTex, {0, 0}, 0.0f, 
-        (float)screenWidth / introTex.width, WHITE);
+     DrawTexturePro(
+     introTex,
+     (Rectangle){ 0, 0, (float)introTex.width, (float)introTex.height },   
+     (Rectangle){ 0, 0, (float)screenWidth, (float)screenHeight },         
+     (Vector2){ 0, 0 },                                                    
+     0.0f,                                                                 
+     WHITE );
 
     float buttonWidth = 300;
     float buttonHeight = 80;

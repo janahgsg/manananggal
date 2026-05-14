@@ -185,6 +185,7 @@ int main()
     float jumpForce = -700.0f; // jump strength (negative = up)
     bool isGrounded = true;
 
+    
     Difficulty diff = EASY;
     // camera
     Camera2D camera = {0};
