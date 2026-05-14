@@ -176,6 +176,7 @@ int main()
 
     //MOVEMENTS
     float velocityX = 0;      // player movement momentum
+    
     //slow effect
     float slowTime = 0;
     float move = 1.0f;

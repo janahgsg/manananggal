@@ -162,6 +162,7 @@ void DrawIntro(int highScore, Texture2D introTex) {
 
     DrawRectangleRounded(playButton, 0.3f, 10, buttonColor);
 
+    
     // ===== PLAY TEXT =====
     const char* playText = "PLAY";
     int playFontSize = 30;
