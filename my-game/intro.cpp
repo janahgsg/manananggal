@@ -155,7 +155,7 @@ void DrawIntro(int highScore, Texture2D introTex) {
             playButton.width + 10,
             playButton.height + 10
          };
-         DrawRectangleRounded(glowRect, 0.3f, 10, Fade(SKYBLUE, 0.5f));
+         DrawRectangleRounded(glowRect, 0.3f, 10, Fade(MAROON, 0.5f));
     }
      Color buttonColor = hovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
 
