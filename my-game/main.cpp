@@ -45,19 +45,21 @@ struct Item{
     bool active;
 };
 
-enum Difficulty
-{
+enum Difficulty{
     EASY,
     MEDIUM,
     HARD
 };
 
-struct Smoke{
-    float x;
-    float y;
-    float size;
-    float speed;
-    float alpha;
+enum EventType{
+    NONE,
+    SWAP_CONTROLS,
+    LOW_GRAVITY,
+    SPEED_BOOST,
+    SLOW_BOOST,
+    LUCKY_PARTY,
+    SPIKES,
+    FOG_BLIND
 };
 
 // stores every frame (Texture2D frame1 and so on)
@@ -67,8 +69,7 @@ float frameTimer = 0;
 Sound trollSound;
 Music bgMusic;
 
-int main()
-{
+int main(){
     SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
     InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "Raylib - Wings of the Curse");
 
@@ -126,6 +127,8 @@ int main()
     srand(time(NULL));
     SetTargetFPS(60); //60fps 1sec/60frame
 
+    //VARIABLES-----------------------------------------
+
     
     GameState state = MENU;
     // player
@@ -160,6 +163,11 @@ int main()
 
     float medkitCooldown = 0;
 
+    //EVENTS----------------------------------------------
+    EventType currentEvent = NONE;
+    float eventTimer = 0.0f;
+    float eventCooldown = 5.0f;
+
     //SWITCHED CONTROLS
     bool controlsSwapped = false;
     float swapTimer = 0;
@@ -173,7 +181,6 @@ int main()
     float fogCooldown = 0.0f; 
     float nextFogTime = 3.0; 
 
-
     //MOVEMENTS
     float velocityX = 0;      // player movement momentum
     
@@ -182,9 +189,24 @@ int main()
     float move = 1.0f;
     float baseMove = 1.0f;
     float velocityY = 0;     // vertical speed
+    float slowTimer = 0.0f;
+    //jump
     float gravity = 1800.0f; // pull down
     float jumpForce = -700.0f; // jump strength (negative = up)
     bool isGrounded = true;
+    //speed boost
+    float speedBoost = 1.0f;
+    float speedBoostTimer = 0.0f;
+
+    //TEXTS POP UPS
+    bool showStarText = false;
+    bool showMinusText = false;
+    bool showSlowText = false;
+    bool showComboText = false;
+    //timers
+    float starTextTimer = 0;
+    float minusTextTimer = 0;
+    float slowTextTimer = 0;
 
     
     Difficulty diff = EASY;
@@ -199,11 +221,9 @@ int main()
     camera.rotation = 0.0f;
     camera.zoom = 1.30f;
 
-    while (!WindowShouldClose())
-    {
-
+    while (!WindowShouldClose()){
     
-        // menu
+        // MENU-----------------------------------------------
         if (state == MENU)
         {
             UpdateMusicStream(introMusic);
@@ -215,8 +235,7 @@ int main()
                 state = PLAYING;
             }
 
-            if (UpdateExit())
-            {
+            if (UpdateExit()){
                 StopMusicStream(introMusic);
                 UnloadMusicStream(introMusic);
                 break;            
@@ -225,58 +244,15 @@ int main()
             DrawIntro(highScore, introTex);
         }
 
-        // during play
-        if (state == PLAYING)
-        {
+        // GAMEPLAY-----------------------------------------
+        if (state == PLAYING){
             UpdateMusicStream(bgMusic);
             float moveSpeed = 400 * move;
 
             //movements
             float accel = 2200.0f;      // how fast player gains speed
             float friction = 0.92f;     // slows naturally
-            float maxSpeed = 520.0f * move;
-
-            
-
-            //CONTROLS----------
-            if (diff == MEDIUM || diff == HARD){
-                nextSwap -= GetFrameTime();
-
-                if (nextSwap <= 0 && !controlsSwapped){
-                    controlsSwapped = true;
-                    swapTimer = 60.0f; //duration of 1min
-                }
-
-                if (controlsSwapped){
-                    swapTimer -= GetFrameTime();
-
-                    if (swapTimer <= 0){
-                        controlsSwapped = false;
-                        nextSwap =  280 + rand()%41;
-                    }
-                }
-            }
-
-            // MOVEMENT INPUT
-            if (!controlsSwapped){
-                if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime();
-                if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime();
-            }
-            else{
-                if(IsKeyDown(KEY_LEFT)) velocityX += accel * GetFrameTime();
-                if(IsKeyDown(KEY_RIGHT)) velocityX -= accel * GetFrameTime();
-            }
-            if (IsKeyDown(KEY_UP) && isGrounded){
-                velocityY = jumpForce;
-                isGrounded = false;
-            }
-
-
-        
-            if (IsKeyDown(KEY_UP) && isGrounded){
-                velocityY = jumpForce;
-                isGrounded = false;
-            }
+            float maxSpeed = 520.0f * move * speedBoost;
 
             // Gravity
             velocityY += gravity * GetFrameTime();
@@ -285,8 +261,7 @@ int main()
             player.y += velocityY * GetFrameTime();
 
             // Ground collision
-            if (player.y >= screenHeight * 0.85f)
-            {
+            if (player.y >= screenHeight * 0.85f){
                 player.y = screenHeight * 0.85f;
                 velocityY = 0;
                 isGrounded = true;
@@ -300,6 +275,13 @@ int main()
                 velocityX = maxSpeed;
             if (velocityX < -maxSpeed)
                 velocityX = -maxSpeed;
+
+                if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime() * speedBoost;
+                if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime() * speedBoost;
+                if(IsKeyDown(KEY_UP) && isGrounded){
+                    velocityY = jumpForce;
+                    isGrounded = false;
+                }
 
             player.x += velocityX * GetFrameTime();
 
@@ -318,8 +300,7 @@ int main()
             camera.target.y = player.y + player.height / 2;
 
             // camera shake
-            if (shakeTime > 0)
-            {
+            if (shakeTime > 0){
                 shakeTime -= GetFrameTime();
                 if (shakeTime < 0)
                     shakeTime = 0;
@@ -327,8 +308,7 @@ int main()
 
             Vector2 shakeOffset = {0, 0};
 
-            if (shakeTime > 0)
-            {
+            if (shakeTime > 0){
                 float intensity = shakePower * (shakeTime / 0.25f);
 
                 shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
@@ -340,12 +320,9 @@ int main()
                 screenHeight * 0.85f + shakeOffset.y};
 
             // difficulty
-            if (score >= 50)
-                diff = HARD;
-            else if (score >= 20)
-                diff = MEDIUM;
-            else
-                diff = EASY;
+            if (score >= 50) diff = HARD;
+            else if (score >= 20) diff = MEDIUM;
+            else diff = EASY;
 
             // SPAWNING------------
 
@@ -377,11 +354,11 @@ int main()
                     it.rect.width = 40;
                     it.rect.height = 40;
                     it.rect.x = rand() % (screenWidth - (int)it.rect.width); // random x position
-                    it.rect.y = 0;
+                    it.rect.y = -(rand() % 400);
 
-                    if (diff == EASY) it.speed = 140.0f;
-                    else if (diff == MEDIUM) it.speed = 200.0f;
-                    else if (diff == HARD) it.speed = 320.0f;
+                    if (diff == EASY)  it.speed = 120 + rand()%80;
+                    else if (diff == MEDIUM) it.speed = 180 + rand()%120;
+                    else if (diff == HARD) it.speed = 260 + rand()%180;
 
                     it.active = true;
 
@@ -421,44 +398,97 @@ int main()
                         else if (chance < 85) it.type = MUSHROOM;
                         else if (chance < 95) it.type = DICE;
                         else it.type = STAR;
+
                     }
 
                     items.push_back(it); // add item to vector
                 }
             }
 
-            // FOG EFFECT APPEARANCE -----
-            if(diff == HARD){
-                float dt = GetFrameTime();
+            //CHALLENGES--------------------------------------------
+            eventCooldown -= GetFrameTime();
 
-                fogCooldown += dt;
+            if(currentEvent == NONE && eventCooldown <= 0){
+                int randomNum = rand() % 8;
+                currentEvent = (EventType)randomNum;
 
-                if(!fogActive && fogCooldown >= nextFogTime){
-                    fogActive = true;
-                    fogTimer = 0;
-                    fogAlpha = 0;
-                    fogCooldown = 0;
+                eventTimer = 30.0f + rand()%31; //min of 30s and max of 60s
+            }
+            if (currentEvent != NONE){
+                eventTimer -= GetFrameTime();
+            
+                if(currentEvent == SPEED_BOOST) speedBoost = 1.8f;
+                if(currentEvent == SLOW_BOOST)  speedBoost = 0.8f;
+                if(currentEvent == FOG_BLIND){
+                    float dt = GetFrameTime();
+
+                    fogCooldown += dt;
+
+                    if(!fogActive && fogCooldown >= nextFogTime){
+                        fogActive = true;
+                        fogTimer = 0;
+                        fogAlpha = 0;
+                        fogCooldown = 0;
+                    }
+
+                    if(fogActive){
+                        fogTimer += dt;
+
+                        if(fogTimer < 10.0f) fogAlpha = Lerp(fogAlpha, 0.40f, 0.30f * dt); // Fade in 
+                        else if(fogTimer < 28.0f) fogAlpha = Lerp(fogAlpha, 0.42f, 0.6f * dt); // Stay foggy
+                        else fogAlpha = Lerp(fogAlpha, 0.0f, 0.22f * dt); // Fade out 
+                        if(fogTimer >= 28.0f  && fogAlpha <= 0.01f){ // End 
+                            fogActive = false;
+                            fogAlpha = 0.0f;
+                            fogCooldown = 0.0f;
+                            nextFogTime = 280 + rand()%41;    // around 280 to 320 sec 
+                        }  
+                    }
+                    else fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
                 }
+                if(currentEvent == SWAP_CONTROLS && (diff == MEDIUM || diff == HARD)){
+                    //CONTROLS----------
+                    nextSwap -= GetFrameTime();
 
-                if(fogActive){
-                    fogTimer += dt;
+                    if (nextSwap <= 0 && !controlsSwapped){
+                        controlsSwapped = true;
+                        swapTimer = 60.0f; //duration of 1min
+                    }
 
-                    // Fade in 
-                    if(fogTimer < 10.0f) fogAlpha = Lerp(fogAlpha, 0.40f, 0.30f * dt);
-                    // Stay foggy
-                    else if(fogTimer < 28.0f) fogAlpha = Lerp(fogAlpha, 0.42f, 0.6f * dt);
-                    // Fade out 
-                    else fogAlpha = Lerp(fogAlpha, 0.0f, 0.22f * dt);
-                    // End 
-                    if(fogTimer >= 28.0f  && fogAlpha <= 0.01f){ 
-                        fogActive = false;
-                        fogAlpha = 0.0f;
-                        fogCooldown = 0.0f;
-                        nextFogTime = 280 + rand()%41;    // around 280 to 320 sec 
-                    }  
+                    if (controlsSwapped){
+                        swapTimer -= GetFrameTime();
+
+                        if (swapTimer <= 0){
+                            controlsSwapped = false;
+                            nextSwap =  280 + rand()%41;
+                        }
+                    }
+            
+                    // MOVEMENT INPUT
+                    if (controlsSwapped){
+                        if(IsKeyDown(KEY_LEFT)) velocityX += accel * GetFrameTime() * speedBoost;
+                        if(IsKeyDown(KEY_RIGHT)) velocityX -= accel * GetFrameTime() * speedBoost;
+                    }
+                    else{
+                        if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime() * speedBoost;
+                        if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime() * speedBoost;
+                    }
+                    if(IsKeyDown(KEY_UP) && isGrounded){
+                        velocityY = jumpForce;
+                        isGrounded = false;
+                    }
+                }
+                if(currentEvent == LOW_GRAVITY) gravity = 900.0f;
+
+                if (eventTimer <= 0){
+                    currentEvent = NONE;
+                    eventCooldown = 60.0f;
+            
+                    // reset effects
+                    speedBoost = 1.0f;
+                    gravity = 1800.0f;
                 }
             }
-            else fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
 
             // UPDATE ITEMS & COLLISION -----------------
             for (auto &it : items){
@@ -475,14 +505,13 @@ int main()
                         hp--;
                         shakeTime = 0.25f;
                         shakePower = 12.0f;
-                        //TIMER UPDATE
-                        combo++;
-                        comboTime = 2.5f;
+                        comboTime = 0;
 
-                        if (combo >= 2) score += combo;
+                        
                     }
                     else if (it.type == CHILI){
-                        move += 1.0f;
+                        speedBoost = 1.8f;      
+                        speedBoostTimer = 5.0f; 
                     }
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART){ 
@@ -515,26 +544,32 @@ int main()
                         frameTimer = 0;
                         PlaySound(trollSound);
                     }
-                    else if (it.type == POISON) move -= 2.0f;
+                    else if (it.type == POISON) {
+                        move = 0.45f;
+                        slowTimer = 4.0f;
+                    }
                     
                     // SPECIAL ITEMS
                     else if (it.type == DICE){ // dice(good effects)
                         int randomIndex = rand() % 4;
                         if (randomIndex == 1){
                             score += 10;
-                            DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                            showStarText = true;
+                            starTextTimer = 2.0f;
                         }
                     }
                     else if (it.type == MUSHROOM){ // mushroom(bad effects)
                         int randomIndex = rand() % 4;
-                        if (randomIndex == 1)
-                        {
+                        if (randomIndex == 1){ // -10
                             score -= 10;
-                            DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                            showMinusText = true;
+                            minusTextTimer = 2.0f;
                         }
-                        else if (randomIndex == 2){
-                            move -= 2.0f;
-                            DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                        else if (randomIndex == 2){ //slowness
+                            move = 0.45f;
+                            slowTimer = 4.0f;
+                            showSlowText = true;
+                            slowTextTimer = 2.0f;
                         }
                     }
                     else if (it.type == STAR) score += 10;
@@ -542,15 +577,42 @@ int main()
                     // special prize(super rare)
                     else if (it.type == PRIZE){ // gift?
                     }
-                   
-                    
 
                     it.active = false; // remove item after collision
                 }
             }
-            move += (1.0f - move) * 0.01f;
+
             if (hp <= 0) state = GAMEOVER;
-        }
+
+            //TIMERS-----------------------------
+            //speedboost
+            if (speedBoostTimer > 0){
+                speedBoostTimer -= GetFrameTime();
+
+            if (speedBoostTimer <= 0) speedBoost = 1.0f;
+            } 
+            // STAR 
+            if(showStarText){
+                starTextTimer -= GetFrameTime();
+                if(starTextTimer <= 0) showStarText = false;
+            }
+            // MINUS 
+            if(showMinusText){
+                minusTextTimer -= GetFrameTime();
+                if(minusTextTimer <= 0) showMinusText = false;
+            }
+            // SLOW
+            if(showSlowText){
+                slowTextTimer -= GetFrameTime();
+                if(slowTextTimer <= 0) showSlowText = false;
+            }
+
+            if(slowTimer > 0){
+                slowTimer -= GetFrameTime();
+                if(slowTimer <= 0) move = 1.0f;
+                
+            }
+        } 
         if (state == TROLL_VIDEO){
             // add time every frame
             frameTimer += GetFrameTime();
@@ -635,6 +697,11 @@ int main()
             // UI
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
+
+            //pop up texts
+            if (showStarText) DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (showMinusText) DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (showSlowText) DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
         }
         else if (state == TROLL_VIDEO){
             ClearBackground(WHITE);
