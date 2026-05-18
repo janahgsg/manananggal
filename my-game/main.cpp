@@ -15,8 +15,7 @@ enum GameState
     TRANSITION,
     PLAYING,
     TROLL_VIDEO,
-    GAMEOVER_ANIM,
-    GAMEOVER
+    GAMEOVER_ANIM
 };
 
 enum ItemType
@@ -273,11 +272,12 @@ int main()
              DrawIntroVideo();
              EndDrawing();
 
-             if (IsVideoFinished()) {
-             UnloadIntroVideo();
-             state = PLAYING;
-             }
-         }
+            if (IsVideoFinished())
+            {
+                UnloadIntroVideo();
+                state = PLAYING;
+            }
+        }
 
         // GAMEPLAY-----------------------------------------
         if (state == PLAYING)
@@ -731,13 +731,6 @@ int main()
                 if (starTextTimer <= 0)
                     showStarText = false;
             }
-            // STAR
-            if (showStarText)
-            {
-                starTextTimer -= GetFrameTime();
-                if (starTextTimer <= 0)
-                    showStarText = false;
-            }
             // MINUS
             if (showMinusText)
             {
@@ -787,10 +780,6 @@ int main()
             gameOverFlash -= GetFrameTime() * 1.5f;
             if (gameOverFlash < 0)
                 gameOverFlash = 0;
-
-            // After ~2.5 seconds, transition to actual game over menu
-            if (gameOverAnimTimer >= 2.5f)
-                state = GAMEOVER;
         }
 
         // drawing
@@ -958,67 +947,146 @@ int main()
         if (hitFlash > 0)
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
-        // heartbeat text
+      // heartbeat text
         if (hp == 1)
         {
             int pulse = 20 + sin(GetTime() * 8) * 10;
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
-        else if (state == GAMEOVER_ANIM)
+           if (state == GAMEOVER_ANIM)
+{
+    if (gameOverAnimTimer < 2.5f)
+    {
+        if (gameOverFlash > 0)
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+
+        float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
+        int fontSize = (int)(80 * scale);
+        int textW = MeasureText("GAME OVER", fontSize);
+        DrawText("GAME OVER",
+            screenWidth / 2 - textW / 2,
+            screenHeight / 2 - fontSize / 2,
+            fontSize, RED);
+
+        if (gameOverAnimTimer > 1.2f)
         {
-            ClearBackground(BLACK);
+            int subW = MeasureText("your soul has been claimed...", 24);
+            DrawText("your soul has been claimed...",
+                screenWidth / 2 - subW / 2,
+                screenHeight / 2 + 60,
+                24,
+                Fade(WHITE, (float)sin(gameOverAnimTimer * 6) * 0.5f + 0.5f));
+        }
+    }
 
-            // Red flash overlay
-            if (gameOverFlash > 0)
-                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+    // show panel after 2.5s
+    if (gameOverAnimTimer >= 2.5f)
+    {
+        if (score > highScore) highScore = score;
 
-            // Pulsing "GAME OVER" text that scales in
-            float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
-            int fontSize = (int)(80 * scale);
-            int textW = MeasureText("GAME OVER", fontSize);
-            DrawText("GAME OVER",
-                     screenWidth / 2 - textW / 2,
-                     screenHeight / 2 - fontSize / 2,
-                     fontSize,
-                     RED);
+        float panelW = 460, panelH = 400;
+        float panelX = screenWidth / 2.0f - panelW / 2.0f;
+        float panelY = screenHeight / 2.0f - panelH / 2.0f;
 
-            // Optional blinking subtext after 1.2s
-            if (gameOverAnimTimer > 1.2f)
-            {
-                int subW = MeasureText("your soul has been claimed...", 24);
-                DrawText("your soul has been claimed...",
-                         screenWidth / 2 - subW / 2,
-                         screenHeight / 2 + 60,
-                         24,
-                         Fade(WHITE, (float)sin(gameOverAnimTimer * 6) * 0.5f + 0.5f));
-            }
+        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.82f));
+        DrawRectangleRounded({panelX, panelY, panelW, panelH}, 0.08f, 12, {25, 25, 25, 250});
+        DrawRectangleRoundedLines({panelX, panelY, panelW, panelH}, 0.08f, 12, {70, 70, 70, 180});
+
+        const char *title = "GAME OVER";
+        int greenVal = 30 + (int)(sinf(GetTime() * 3.0f) * 25.0f);
+        Color titleCol = {200, (unsigned char)greenVal, 30, 255};
+        Vector2 titleSize = MeasureTextEx(nosifer, title, 52, 2);
+        DrawTextEx(nosifer, title, {screenWidth / 2.0f - titleSize.x / 2.0f, panelY + 22}, 52, 2, titleCol);
+
+        const char *sub = "Wings of the Curse";
+        Vector2 subSize = MeasureTextEx(nosifer, sub, 18, 1);
+        DrawTextEx(nosifer, sub, {screenWidth / 2.0f - subSize.x / 2.0f, panelY + 82}, 18, 1, GRAY);
+
+        DrawLineEx({panelX + 20, panelY + 112}, {panelX + panelW - 20, panelY + 112}, 1.0f, {70, 70, 70, 180});
+
+        float bW = 185, bH = 78, bY = panelY + 122;
+
+        DrawRectangleRounded({panelX + 20, bY, bW, bH}, 0.12f, 8, {40, 40, 40, 255});
+        DrawTextEx(nosifer, "YOUR SCORE", {panelX + 30, bY + 10}, 14, 1, GRAY);
+        DrawTextEx(nosifer, TextFormat("%d", score), {panelX + 30, bY + 30}, 32, 1, {220, 150, 30, 255});
+
+        DrawRectangleRounded({panelX + panelW - bW - 20, bY, bW, bH}, 0.12f, 8, {40, 40, 40, 255});
+        DrawTextEx(nosifer, "BEST SCORE", {panelX + panelW - bW - 10, bY + 10}, 14, 1, GRAY);
+        DrawTextEx(nosifer, TextFormat("%d", highScore), {panelX + panelW - bW - 10, bY + 30}, 32, 1, {60, 140, 220, 255});
+
+        float div2Y = bY + bH + 14;
+
+        if (score > 0 && score >= highScore)
+        {
+            const char *badge = "* NEW HIGH SCORE!";
+            Vector2 badgeSize = MeasureTextEx(nosifer, badge, 16, 1);
+            DrawTextEx(nosifer, badge, {screenWidth / 2.0f - badgeSize.x / 2.0f, div2Y}, 16, 1, {80, 200, 120, 255});
+            div2Y += 26;
         }
 
-        else if (state == GAMEOVER)
-        {
-            DrawText("GAME OVER", 300, 250, 40, RED);
-            DrawText("Press enter to restart", 230, 320, 20, WHITE);
-            // restart
-            if (IsKeyPressed(KEY_ENTER))
-            {
-                if (highScore < score)
-                    highScore = score;
-                state = MENU;
-                hp = 3;
-                score = 0;
-                combo = 0;
-                items.clear();
-                player.x = (screenWidth - player.width) / 2;
-                move = 1.0f;
-                gravity = 1800.0f;
-                currentEvent = NONE;
-                introMusic = LoadMusicStream("assets/sounds/intro.mp3");
-                SetMusicVolume(introMusic, 0.5f);
-                PlayMusicStream(introMusic);
-            }
-        }
+        DrawLineEx({panelX + 20, div2Y}, {panelX + panelW - 20, div2Y}, 1.0f, {70, 70, 70, 180});
 
+        const char *diffLabel = (diff == HARD) ? "HARD MODE" : (diff == MEDIUM) ? "MEDIUM MODE" : "EASY MODE";
+        Color diffCol = (diff == HARD) ? RED : (diff == MEDIUM) ? ORANGE : GREEN;
+        Vector2 diffSize = MeasureTextEx(nosifer, diffLabel, 17, 1);
+        DrawTextEx(nosifer, diffLabel, {screenWidth / 2.0f - diffSize.x / 2.0f, div2Y + 10}, 17, 1, diffCol);
+
+        float btnW = panelW - 40, btnH = 48, btnX = panelX + 20;
+
+        Rectangle btnPlay = {btnX, div2Y + 38, btnW, btnH};
+        bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
+        Color btnPlayCol = hoverPlay ? RED : Color{180, 40, 40, 255};
+        DrawRectangleRounded(btnPlay, 0.14f, 8, btnPlayCol);
+        const char *playTxt = "PLAY AGAIN  [ENTER]";
+        Vector2 playSize = MeasureTextEx(nosifer, playTxt, 20, 1);
+        DrawTextEx(nosifer, playTxt, {btnX + btnW / 2 - playSize.x / 2, div2Y + 50}, 20, 1, WHITE);
+
+        Rectangle btnMenu = {btnX, div2Y + 96, btnW, btnH};
+        bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
+        Color btnMenuCol = hoverMenu ? Color{70, 70, 70, 255} : Color{50, 50, 50, 255};
+        DrawRectangleRounded(btnMenu, 0.14f, 8, btnMenuCol);
+        const char *menuTxt = "MAIN MENU  [ESC]";
+        Vector2 menuSize = MeasureTextEx(nosifer, menuTxt, 20, 1);
+        DrawTextEx(nosifer, menuTxt, {btnX + btnW / 2 - menuSize.x / 2, div2Y + 108}, 20, 1, LIGHTGRAY);
+
+        if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
+        {
+            state = PLAYING;
+            hp = 3;
+            score = 0;
+            combo = 0;
+            items.clear();
+            player.x = (screenWidth - player.width) / 2;
+            move = 1.0f;
+            chiliBoost = 1.0f;
+            eventBoost = 1.0f;
+            gravity = 1800.0f;
+            currentEvent = NONE;
+            secondEvent = NONE;
+            gameOverAnimTimer = 0.0f;
+        }
+        if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
+        {
+            state = MENU;
+            hp = 3;
+            score = 0;
+            combo = 0;
+            items.clear();
+            player.x = (screenWidth - player.width) / 2;
+            move = 1.0f;
+            chiliBoost = 1.0f;
+            eventBoost = 1.0f;
+            gravity = 1800.0f;
+            currentEvent = NONE;
+            secondEvent = NONE;
+            gameOverAnimTimer = 0.0f;
+            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+            SetMusicVolume(introMusic, 0.5f);
+            PlayMusicStream(introMusic);
+        }
+    }
+}
         EndDrawing();
     }
 
