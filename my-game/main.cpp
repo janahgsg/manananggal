@@ -12,6 +12,7 @@ using namespace std;
 enum GameState
 {
     MENU,
+    TRANSITION,
     PLAYING,
     TROLL_VIDEO,
     GAMEOVER
@@ -236,7 +237,8 @@ int main()
             if (UpdateIntro()) {
                 StopMusicStream(introMusic);
                 UnloadMusicStream(introMusic);
-                state = PLAYING;
+                InitIntroVideo();
+                state = TRANSITION;
             }
 
             if (UpdateExit())
@@ -248,6 +250,19 @@ int main()
 
             DrawIntro(highScore, introTex);
         }
+
+        if (state == TRANSITION) {
+             UpdateIntroVideo();
+             BeginDrawing();
+             ClearBackground(BLACK);
+             DrawIntroVideo();
+             EndDrawing();
+
+             if (IsVideoFinished()) {
+             UnloadIntroVideo();
+             state = PLAYING;
+             }
+         }
 
         // GAMEPLAY-----------------------------------------
         if (state == PLAYING)

@@ -10,3 +10,11 @@ void DrawIntro(int highScore, Texture2D introTex);
 void InitIntroMusic();   // load and start playing intro music
 void UpdateIntroMusic(); // keep music stream updated each frame
 void StopIntroMusic();   // stop and unload intro music
+
+/// ==== VIDEO CONTROL ====
+void InitIntroVideo();
+void UpdateIntroVideo();
+void DrawIntroVideo();
+bool IsVideoFinished();
+void UnloadIntroVideo();
+

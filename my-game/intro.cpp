@@ -5,9 +5,64 @@
 #include <cstdlib>
 #include <climits>
 #include <ctime>
+#include <string>
 
 
 static Music introMusic;
+
+static std::vector<Texture2D> videoFrames;
+static int currentFrame = 0;
+static float frameTimer = 0.0f;
+static float frameDelay = 0.1f; 
+static bool videoFinished = false;
+
+
+void InitIntroVideo() {
+    
+    for (int i = 1; i <= 9; i++) {
+        std::string filename = "assets/videos/TransIntro/" + std::to_string(i) + ".png";
+        videoFrames.push_back(LoadTexture(filename.c_str()));
+    }
+    currentFrame = 0;
+    frameTimer = 0.0f;
+    videoFinished = false;
+    TraceLog(LOG_INFO, "InitIntroVideo complete. Frames loaded: %i", videoFrames.size());
+}
+
+// --- Update function ---
+void UpdateIntroVideo() {
+    if (videoFinished) return;
+
+    frameTimer += GetFrameTime();
+    if (frameTimer >= frameDelay) {
+        currentFrame++;
+        frameTimer = 0.0f;
+    }
+
+    if (currentFrame >= videoFrames.size()) {
+        videoFinished = true;
+    }
+}
+
+// --- Draw function ---
+void DrawIntroVideo() {
+    if (!videoFinished && currentFrame < videoFrames.size()) {
+        DrawTexture(videoFrames[currentFrame], 0, 0, WHITE);
+    }
+}
+
+//Flag to check if video has finished
+bool IsVideoFinished() {
+    return videoFinished;
+}
+
+// --- Cleanup function ---
+void UnloadIntroVideo() {
+    for (auto &tex : videoFrames) {
+        UnloadTexture(tex);
+    }
+    videoFrames.clear();
+}
 
 
 void InitIntroMusic() {
