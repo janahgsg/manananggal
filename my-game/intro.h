@@ -1,9 +1,10 @@
 #pragma once
 #include "raylib.h"
 
-bool UpdateIntro();  // returns true when player wants to start
-void DrawIntro(int highScore, Texture2D introTex); 
-bool UpdateExit(); // returns true when player wants to exit
+bool UpdateIntro(); // returns true if play button is clicked
+bool UpdateExit();  // returns true if exit button is clicked
+void DrawIntro(int highScore, Texture2D introTex);
+
 
 // ===== MUSIC CONTROL =====
 void InitIntroMusic();   // load and start playing intro music

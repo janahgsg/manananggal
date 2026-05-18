@@ -28,23 +28,50 @@ void StopIntroMusic() {
 }
     
 
-bool UpdateIntro(Rectangle playButton) {
+// ================= UPDATE INTRO =================
+bool UpdateIntro() {
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    float buttonWidth = 300;
+    float buttonHeight = 80;
+
+    
+    float scoreY = screenHeight / 2.0f - 200 + 120 + 40; 
+    Rectangle playButton = {
+        screenWidth / 2.0f - buttonWidth / 2,
+        scoreY + 50,   
+        buttonWidth,
+        buttonHeight
+    };
+
     Vector2 mouse = GetMousePosition();
-    if (CheckCollisionPointRec(mouse, playButton) &&
-        IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        return true;
-    }
-    return false;
+    bool hovered = CheckCollisionPointRec(mouse, playButton);
+
+    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);};
+
+// ================= UPDATE EXIT =================
+bool UpdateExit() {
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    float buttonWidth = 300;
+    float buttonHeight = 80;
+
+    
+    Rectangle exitButton = {
+        screenWidth / 2.0f - buttonWidth / 2,
+        screenHeight / 2.0f + buttonHeight + 30, 
+        buttonWidth,
+        buttonHeight
+    };
+
+    Vector2 mouse = GetMousePosition();
+    bool hovered = CheckCollisionPointRec(mouse, exitButton);
+
+    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
 
-bool UpdateExit(Rectangle exitButton) {
-    Vector2 mouse = GetMousePosition();
-    if (CheckCollisionPointRec(mouse, exitButton) &&
-        IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        return true;
-    }
-    return false;
-}
 
 
 // ================= DRAW =================
