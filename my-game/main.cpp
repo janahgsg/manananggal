@@ -15,6 +15,7 @@ enum GameState
     TRANSITION,
     PLAYING,
     TROLL_VIDEO,
+    GAMEOVER_ANIM,
     GAMEOVER
 };
 
@@ -102,8 +103,9 @@ int main()
     PlayMusicStream(introMusic);
 
     // load frames
-    for (int i = 1; i <= 110; i++) videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
-    
+    for (int i = 1; i <= 110; i++)
+        videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
+
     // load images
     // bg
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
@@ -169,11 +171,16 @@ int main()
     int comboPop = 0;
     bool comboBroken = false;
     float comboBrokenTimer = 0;
-    
-    //SHAKE EFFECT
-    float shakeTime = 0;     // how long screen shakes
-    float shakePower = 0;     // strength of shake
-    float hitFlash = 0;       // red flash when damaged
+
+    // SHAKE EFFECT
+    float shakeTime = 0;  // how long screen shakes
+    float shakePower = 0; // strength of shake
+    float hitFlash = 0;   // red flash when damaged
+
+    // game over
+    float gameOverAnimTimer = 0.0f;
+    float gameOverFlash = 0.0f;
+    Sound gameOverSound = LoadSound("assets/sounds/game_over.mp3"); // add sfx
 
     float medkitCooldown = 0;
 
@@ -183,7 +190,7 @@ int main()
 
     float eventTimer = 0.0f;
     float eventCooldown = 10.0f;
-    //FOG EFFECT
+    // FOG EFFECT
     float fogAlpha = 0.0f;
     float fogTimer = 0.0f;
     float fogMoveX = -900.0f;
@@ -204,9 +211,9 @@ int main()
     float gravity = 1800.0f;   // pull down
     float jumpForce = -700.0f; // jump strength (negative = up)
     bool isGrounded = true;
-    //speed boost
+    // speed boost
     float speedBoostTimer = 0.0f;
-    //chili
+    // chili
     float chiliBoost = 1.0f;
     float eventBoost = 1.0f;
 
@@ -240,7 +247,8 @@ int main()
         {
             UpdateMusicStream(introMusic);
 
-            if (UpdateIntro()) {
+            if (UpdateIntro())
+            {
                 StopMusicStream(introMusic);
                 UnloadMusicStream(introMusic);
                 InitIntroVideo();
@@ -276,9 +284,9 @@ int main()
         {
             UpdateMusicStream(bgMusic);
 
-            //movements
-            float accel = 2200.0f;      // how fast player gains speed
-            float friction = 0.92f;     // slows naturally
+            // movements
+            float accel = 2200.0f;  // how fast player gains speed
+            float friction = 0.92f; // slows naturally
             float maxSpeed = 520.0f * move * chiliBoost * eventBoost;
             // Gravity
             velocityY += gravity * GetFrameTime();
@@ -303,18 +311,21 @@ int main()
             if (velocityX < -maxSpeed)
                 velocityX = -maxSpeed;
 
-                int dir = 1;
+            int dir = 1;
 
-                // swapped controls
-                if(currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS) dir = -1;
-                
-                
-                if(IsKeyDown(KEY_LEFT)) velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;               
-                if(IsKeyDown(KEY_RIGHT)) velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;              
-                if(IsKeyDown(KEY_UP) && isGrounded){
-                    velocityY = jumpForce;
-                    isGrounded = false;
-                }
+            // swapped controls
+            if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
+                dir = -1;
+
+            if (IsKeyDown(KEY_LEFT))
+                velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
+            if (IsKeyDown(KEY_RIGHT))
+                velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
+            if (IsKeyDown(KEY_UP) && isGrounded)
+            {
+                velocityY = jumpForce;
+                isGrounded = false;
+            }
 
             player.x += velocityX * GetFrameTime();
 
@@ -391,7 +402,8 @@ int main()
             {
                 spawnTimer = 0;
                 // spawnn items
-                for (int i = 0; i < spawnAmount; i++){
+                for (int i = 0; i < spawnAmount; i++)
+                {
                     Item it;
                     it.rect.width = 40;
                     it.rect.height = 40;
@@ -414,7 +426,8 @@ int main()
                     }
 
                     static bool prizeSpawn = false;
-                    if(score >= 500 && rand() % 100 < 15){
+                    if (score >= 500 && rand() % 100 < 15)
+                    {
                         prizeSpawn = true;
                         it.type = PRIZE;
                     }
@@ -455,37 +468,43 @@ int main()
                 }
             }
 
-            //CHALLENGES--------------------------------------------
-           
+            // CHALLENGES--------------------------------------------
+
             // countdown before next event
-            if(currentEvent == NONE) eventCooldown -= GetFrameTime();
+            if (currentEvent == NONE)
+                eventCooldown -= GetFrameTime();
 
             // start new event
-            if(currentEvent == NONE && eventCooldown <= 0){
+            if (currentEvent == NONE && eventCooldown <= 0)
+            {
 
                 // reset previous
                 secondEvent = NONE;
 
-                if(diff == MEDIUM){
+                if (diff == MEDIUM)
+                {
 
                     int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST};
-                    currentEvent = (EventType)mediumEvents[rand()%3];
+                    currentEvent = (EventType)mediumEvents[rand() % 3];
                     eventTimer = 18.0f;
                     // next event
                     eventCooldown = 20.0f;
                 }
 
-                else if(diff == HARD){
+                else if (diff == HARD)
+                {
 
-                    int hardEvents[] = { SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND };
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND};
 
-                    currentEvent = (EventType)hardEvents[rand()%5];
+                    currentEvent = (EventType)hardEvents[rand() % 5];
 
                     // 40% chance for DOUBLE EVENT
-                    if(rand()%100 < 40){
-                        secondEvent = (EventType)hardEvents[rand()%5];
+                    if (rand() % 100 < 40)
+                    {
+                        secondEvent = (EventType)hardEvents[rand() % 5];
                         // prevent same event twice
-                        while(secondEvent == currentEvent) secondEvent = (EventType)hardEvents[rand()%5];
+                        while (secondEvent == currentEvent)
+                            secondEvent = (EventType)hardEvents[rand() % 5];
                     }
 
                     eventTimer = 25.0f;
@@ -495,7 +514,8 @@ int main()
                 }
             }
 
-            if(currentEvent != NONE){
+            if (currentEvent != NONE)
+            {
 
                 eventTimer -= GetFrameTime();
                 // reset effects every frame first
@@ -503,19 +523,25 @@ int main()
                 gravity = 1800.0f;
 
                 // helper lambda
-                auto ApplyEvent = [&](EventType e){
-
-                    if(e == SPEED_BOOST) eventBoost = 1.7f;
-                    if(e == SLOW_BOOST) eventBoost = 0.65f;
-                    if(e == LOW_GRAVITY) gravity = 700.0f;
-                    if(e == FOG_BLIND){
+                auto ApplyEvent = [&](EventType e)
+                {
+                    if (e == SPEED_BOOST)
+                        eventBoost = 1.7f;
+                    if (e == SLOW_BOOST)
+                        eventBoost = 0.65f;
+                    if (e == LOW_GRAVITY)
+                        gravity = 700.0f;
+                    if (e == FOG_BLIND)
+                    {
 
                         fogActive = true;
                         fogTimer += GetFrameTime();
 
-                        if(fogTimer < 2.0f) fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
+                        if (fogTimer < 2.0f)
+                            fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
 
-                        else fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
+                        else
+                            fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
                     }
                 };
 
@@ -524,7 +550,8 @@ int main()
                 ApplyEvent(secondEvent);
 
                 // event ended
-                if(eventTimer <= 0){
+                if (eventTimer <= 0)
+                {
 
                     currentEvent = NONE;
                     secondEvent = NONE;
@@ -538,8 +565,10 @@ int main()
                     fogTimer = 0.0f;
 
                     // RESET COOLDOWN
-                    if(diff == MEDIUM) eventCooldown = 20.0f;
-                    else if(diff == HARD) eventCooldown = 12.0f;
+                    if (diff == MEDIUM)
+                        eventCooldown = 20.0f;
+                    else if (diff == HARD)
+                        eventCooldown = 12.0f;
                 }
             }
 
@@ -567,9 +596,10 @@ int main()
                         comboBroken = true;
                         comboBrokenTimer = 1.5f;
                     }
-                    else if (it.type == CHILI){
-                        chiliBoost = 1.8f;      
-                        speedBoostTimer = 5.0f; 
+                    else if (it.type == CHILI)
+                    {
+                        chiliBoost = 1.8f;
+                        speedBoostTimer = 5.0f;
                     }
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART)
@@ -656,36 +686,50 @@ int main()
                 }
             }
 
-            if (hp <= 0)
-                state = GAMEOVER;
+            if (hp <= 0 && state == PLAYING)
+            {
+                state = GAMEOVER_ANIM;
+                gameOverAnimTimer = 0.0f;
+                gameOverFlash = 1.0f;
+                PlaySound(gameOverSound);
+                shakeTime = 0.5f;
+                shakePower = 20.0f;
+            }
 
-            //TIMERS-----------------------------
-            //combo
-            if(comboTime > 0){
+            // TIMERS-----------------------------
+            // combo
+            if (comboTime > 0)
+            {
                 comboTime -= GetFrameTime();
-                if(comboTime <= 0){
+                if (comboTime <= 0)
+                {
                     comboTime = 0;
                     combo = 0;
                 }
             }
 
-            if(comboBroken){
+            if (comboBroken)
+            {
                 comboBrokenTimer -= GetFrameTime();
-            
-                if(comboBrokenTimer <= 0)
+
+                if (comboBrokenTimer <= 0)
                     comboBroken = false;
             }
 
-            //speedboost
-            if(speedBoostTimer > 0){
+            // speedboost
+            if (speedBoostTimer > 0)
+            {
                 speedBoostTimer -= GetFrameTime();
-                if(speedBoostTimer <= 0) chiliBoost = 1.0f;
+                if (speedBoostTimer <= 0)
+                    chiliBoost = 1.0f;
             }
 
-            // STAR 
-            if(showStarText){
+            // STAR
+            if (showStarText)
+            {
                 starTextTimer -= GetFrameTime();
-                if(starTextTimer <= 0) showStarText = false;
+                if (starTextTimer <= 0)
+                    showStarText = false;
             }
             // STAR
             if (showStarText)
@@ -735,6 +779,18 @@ int main()
                 currentFrame = 0;      // reset video
                 state = PLAYING;       // resume game
             }
+        }
+
+        if (state == GAMEOVER_ANIM)
+        {
+            gameOverAnimTimer += GetFrameTime();
+            gameOverFlash -= GetFrameTime() * 1.5f;
+            if (gameOverFlash < 0)
+                gameOverFlash = 0;
+
+            // After ~2.5 seconds, transition to actual game over menu
+            if (gameOverAnimTimer >= 2.5f)
+                state = GAMEOVER;
         }
 
         // drawing
@@ -798,9 +854,10 @@ int main()
                     DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
             }
 
-            //TEXTURE OF FOG EFFECT
-            if(fogActive && fogAlpha > 0){
-                float camLeft  = camera.target.x - screenWidth / (2 * camera.zoom);
+            // TEXTURE OF FOG EFFECT
+            if (fogActive && fogAlpha > 0)
+            {
+                float camLeft = camera.target.x - screenWidth / (2 * camera.zoom);
                 float camRight = camera.target.x + screenWidth / (2 * camera.zoom);
 
                 for (int row = 0; row < 6; row++)
@@ -813,50 +870,64 @@ int main()
                     }
                 }
             }
-            
+
             EndMode2D();
 
             // UI
             DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
 
-            //POP UP TEXTS--------------------------------------
-            
-            if (showStarText) DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
-            if (showMinusText) DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
-            if (showSlowText) DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            // POP UP TEXTS--------------------------------------
 
-            //events
+            if (showStarText)
+                DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (showMinusText)
+                DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (showSlowText)
+                DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+
+            // events
             string eventName = "";
 
-            auto GetEventName = [&](EventType e){
-
-                if(e == SPEED_BOOST) return "SPEED BOOST";
-                if(e == SLOW_BOOST) return "SLOW CURSE";
-                if(e == SWAP_CONTROLS) return "SWAPPED CONTROLS";
-                if(e == LOW_GRAVITY) return "LOW GRAVITY";
-                if(e == FOG_BLIND) return "CURSED FOG";
+            auto GetEventName = [&](EventType e)
+            {
+                if (e == SPEED_BOOST)
+                    return "SPEED BOOST";
+                if (e == SLOW_BOOST)
+                    return "SLOW CURSE";
+                if (e == SWAP_CONTROLS)
+                    return "SWAPPED CONTROLS";
+                if (e == LOW_GRAVITY)
+                    return "LOW GRAVITY";
+                if (e == FOG_BLIND)
+                    return "CURSED FOG";
 
                 return "";
             };
 
             eventName = GetEventName(currentEvent);
 
-            if(secondEvent != NONE){
+            if (secondEvent != NONE)
+            {
                 eventName += " + ";
                 eventName += GetEventName(secondEvent);
             }
 
-            if(currentEvent != NONE){
+            if (currentEvent != NONE)
+            {
                 DrawRectangle(15, 60, 420, 40, Fade(BLACK, 0.5f));
                 DrawText(eventName.c_str(), 25, 70, 28, RED);
             }
 
-            // combo 
-            if (combo >= 2)DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
-            if (combo >= 5)DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 120, 20, 40, ORANGE);
-            if (combo >= 10)DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 140, 20, 45, RED);
-            if(comboBroken) DrawText("COMBO LOST!", screenWidth/2 - 120, 70, 35, RED);
+            // combo
+            if (combo >= 2)
+                DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
+            if (combo >= 5)
+                DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 120, 20, 40, ORANGE);
+            if (combo >= 10)
+                DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 140, 20, 45, RED);
+            if (comboBroken)
+                DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
         }
         else if (state == TROLL_VIDEO)
         {
@@ -894,11 +965,43 @@ int main()
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
-        else if (state == GAMEOVER){
+        else if (state == GAMEOVER_ANIM)
+        {
+            ClearBackground(BLACK);
+
+            // Red flash overlay
+            if (gameOverFlash > 0)
+                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+
+            // Pulsing "GAME OVER" text that scales in
+            float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
+            int fontSize = (int)(80 * scale);
+            int textW = MeasureText("GAME OVER", fontSize);
+            DrawText("GAME OVER",
+                     screenWidth / 2 - textW / 2,
+                     screenHeight / 2 - fontSize / 2,
+                     fontSize,
+                     RED);
+
+            // Optional blinking subtext after 1.2s
+            if (gameOverAnimTimer > 1.2f)
+            {
+                int subW = MeasureText("your soul has been claimed...", 24);
+                DrawText("your soul has been claimed...",
+                         screenWidth / 2 - subW / 2,
+                         screenHeight / 2 + 60,
+                         24,
+                         Fade(WHITE, (float)sin(gameOverAnimTimer * 6) * 0.5f + 0.5f));
+            }
+        }
+
+        else if (state == GAMEOVER)
+        {
             DrawText("GAME OVER", 300, 250, 40, RED);
             DrawText("Press enter to restart", 230, 320, 20, WHITE);
             // restart
-            if (IsKeyPressed(KEY_ENTER)){
+            if (IsKeyPressed(KEY_ENTER))
+            {
                 if (highScore < score)
                     highScore = score;
                 state = MENU;
@@ -929,6 +1032,7 @@ int main()
 
     // unload
     UnloadSound(trollSound);
+    UnloadSound(gameOverSound);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
 
