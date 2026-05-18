@@ -90,6 +90,12 @@ int main()
     SetMusicVolume(bgMusic, 1.0f);
     PlayMusicStream(bgMusic);
 
+    // bat music
+    Music batmusic= LoadMusicStream("assets/sounds/bat flying.mp3");
+    SetMusicVolume(batmusic, 1.0f);
+    PlayMusicStream(batmusic);
+
+
     // load intro music
     Music introMusic = LoadMusicStream("assets/sounds/intro.mp3");
     SetMusicVolume(introMusic, 0.5f);
@@ -252,6 +258,7 @@ int main()
         }
 
         if (state == TRANSITION) {
+            UpdateMusicStream(batmusic);
              UpdateIntroVideo();
              BeginDrawing();
              ClearBackground(BLACK);

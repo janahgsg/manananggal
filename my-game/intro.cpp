@@ -21,12 +21,13 @@ void InitIntroVideo() {
     
     for (int i = 1; i <= 9; i++) {
         std::string filename = "assets/videos/TransIntro/" + std::to_string(i) + ".png";
-        videoFrames.push_back(LoadTexture(filename.c_str()));
+        Texture2D tex = LoadTexture(filename.c_str());
+        SetTextureFilter(tex, TEXTURE_FILTER_POINT);
+        videoFrames.push_back(tex);
     }
     currentFrame = 0;
     frameTimer = 0.0f;
     videoFinished = false;
-    TraceLog(LOG_INFO, "InitIntroVideo complete. Frames loaded: %i", videoFrames.size());
 }
 
 // --- Update function ---
@@ -46,8 +47,19 @@ void UpdateIntroVideo() {
 
 // --- Draw function ---
 void DrawIntroVideo() {
-    if (!videoFinished && currentFrame < videoFrames.size()) {
-        DrawTexture(videoFrames[currentFrame], 0, 0, WHITE);
+     if (!videoFinished && currentFrame < videoFrames.size()) {
+        Texture2D frame = videoFrames[currentFrame];
+
+        ClearBackground(BLACK);
+
+        DrawTexturePro(
+            frame,
+            {0, 0, (float)frame.width, (float)frame.height},   
+            {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, 
+            {0, 0},                                          
+            0.0f,                                            
+            WHITE                                           
+        );
     }
 }
 
