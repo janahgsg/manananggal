@@ -747,15 +747,15 @@ int main()
                 if (it.type == BOMB)
                     DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, {it.rect.x, it.rect.y, babyTex.width * 0.15f, babyTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
                     DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.15f, garlic1Tex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.2f, garlic1Tex.height * 0.2f}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.15f, chiliTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
                     DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
@@ -763,11 +763,11 @@ int main()
                 if (it.type == BLOOD)
                     DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {it.rect.x, it.rect.y, pooTex.width * 0.15f, pooTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
                     DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {it.rect.x, it.rect.y, mushroomTex.width * 0.15f, mushroomTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
                     DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {it.rect.x, it.rect.y, poisonTex.width * 0.15f, poisonTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
