@@ -201,6 +201,7 @@ int main()
     float eventCooldown = 10.0f;
     // FOG EFFECT
     float fogAlpha = 0.0f;
+    float fogTimer = 0.0f;
     bool fogActive = false;
     bool fogFadingOut = false;
 
