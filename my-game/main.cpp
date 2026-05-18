@@ -179,7 +179,7 @@ int main()
     // game over
     float gameOverAnimTimer = 0.0f;
     float gameOverFlash = 0.0f;
-    Sound gameOverSound = LoadSound("assets/sounds/game_over.mp3"); // add sfx
+    Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
 
     float medkitCooldown = 0;
 
