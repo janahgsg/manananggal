@@ -66,6 +66,7 @@ enum EventType
     SLOW_BOOST,
     LUCKY_PARTY,
     SPIKES,
+    INVERTED_SCREEN,
     FOG_BLIND
 };
 
@@ -155,6 +156,9 @@ int main()
     player.x = (screenWidth - player.width) / 2;
     player.y = screenHeight * 0.85f;
 
+    //INVERTED SCREEN
+    bool invertedScreen = false;
+
     // SCORE & HEALTH
     int score = 0;
     int highScore = 0;
@@ -181,7 +185,10 @@ int main()
     float gameOverFlash = 0.0f;
     Sound gameOverSound = LoadSound("assets/sounds/game_over.mp3"); // add sfx
 
+    //extra 
     float medkitCooldown = 0;
+    static bool prizeSpawn = false;
+
 
     // EVENTS----------------------------------------------
     EventType currentEvent = NONE;
@@ -191,11 +198,8 @@ int main()
     float eventCooldown = 10.0f;
     // FOG EFFECT
     float fogAlpha = 0.0f;
-    float fogTimer = 0.0f;
-    float fogMoveX = -900.0f;
     bool fogActive = false;
-    float fogCooldown = 0.0f;
-    float nextFogTime = 3.0;
+    bool fogFadingOut = false;
 
     // MOVEMENTS
     float velocityX = 0; // player movement momentum
@@ -220,7 +224,6 @@ int main()
     bool showStarText = false;
     bool showMinusText = false;
     bool showSlowText = false;
-    bool showComboText = false;
     // timers
     float starTextTimer = 0;
     float minusTextTimer = 0;
@@ -234,7 +237,8 @@ int main()
         screenHeight * 0.85f};
     camera.target = {
         player.x + player.width / 2,
-        player.y + player.height / 2};
+        player.y + player.height / 2
+    };
     camera.rotation = 0.0f;
     camera.zoom = 1.30f;
 
@@ -343,6 +347,20 @@ int main()
             // keep Y fixed so player remains bottom
             camera.target.y = player.y + player.height / 2;
 
+            //inverted screen
+            if(invertedScreen){
+                camera.offset = {
+                    screenWidth / 2.0f,
+                    screenHeight / 2.0f
+                };
+            }
+            else{
+                camera.offset = {
+                    screenWidth / 2.0f,
+                    screenHeight * 0.85f
+                };
+            }
+
             // camera shake
             if (shakeTime > 0)
             {
@@ -361,9 +379,12 @@ int main()
                 shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
             }
 
+            float baseY = invertedScreen ? screenHeight / 2.0f : screenHeight * 0.85f;
+
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
-                screenHeight * 0.85f + shakeOffset.y};
+                baseY + shakeOffset.y
+            };
 
             // difficulty
             if (score >= 50)
@@ -425,7 +446,6 @@ int main()
                         medkitCooldown = 8.0f;
                     }
 
-                    static bool prizeSpawn = false;
                     if (score >= 500 && rand() % 100 < 15)
                     {
                         prizeSpawn = true;
@@ -484,8 +504,8 @@ int main()
                 if (diff == MEDIUM)
                 {
 
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST};
-                    currentEvent = (EventType)mediumEvents[rand() % 3];
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN};
+                    currentEvent = (EventType)mediumEvents[rand() % 4];
                     eventTimer = 18.0f;
                     // next event
                     eventCooldown = 20.0f;
@@ -494,17 +514,17 @@ int main()
                 else if (diff == HARD)
                 {
 
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND};
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN};
 
-                    currentEvent = (EventType)hardEvents[rand() % 5];
+                    currentEvent = (EventType)hardEvents[rand() % 6];
 
                     // 40% chance for DOUBLE EVENT
                     if (rand() % 100 < 40)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 5];
+                        secondEvent = (EventType)hardEvents[rand() % 6];
                         // prevent same event twice
                         while (secondEvent == currentEvent)
-                            secondEvent = (EventType)hardEvents[rand() % 5];
+                            secondEvent = (EventType)hardEvents[rand() % 6];
                     }
 
                     eventTimer = 25.0f;
@@ -514,6 +534,7 @@ int main()
                 }
             }
 
+            // EVENTS SYSTEM---------------------------------------------------
             if (currentEvent != NONE)
             {
 
@@ -521,6 +542,7 @@ int main()
                 // reset effects every frame first
                 eventBoost = 1.0f;
                 gravity = 1800.0f;
+                
 
                 // helper lambda
                 auto ApplyEvent = [&](EventType e)
@@ -533,15 +555,12 @@ int main()
                         gravity = 700.0f;
                     if (e == FOG_BLIND)
                     {
-
                         fogActive = true;
-                        fogTimer += GetFrameTime();
-
-                        if (fogTimer < 2.0f)
-                            fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
-
-                        else
-                            fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
+                        fogFadingOut = false;
+                        fogAlpha = 0.0f;
+                    }
+                    if(e == INVERTED_SCREEN){
+                        invertedScreen = true;
                     }
                 };
 
@@ -558,17 +577,41 @@ int main()
 
                     fogActive = false;
                     fogAlpha = 0.0f;
+                    fogFadingOut = false;
 
                     gravity = 1800.0f;
                     eventBoost = 1.0f;
 
-                    fogTimer = 0.0f;
+                    invertedScreen = false;
 
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
                         eventCooldown = 20.0f;
                     else if (diff == HARD)
                         eventCooldown = 12.0f;
+                }
+            }
+
+            //FOG EFFECT
+            if (fogActive)
+            {
+                float fadeStart = 5.0f; // how many seconds before event ends it starts fading
+
+                if (eventTimer > fadeStart)
+                {
+                    // FADE IN
+                    fogAlpha = Lerp(fogAlpha, 0.55f, 2.5f * GetFrameTime());
+                }
+                else
+                {
+                    // FADE OUT 
+                    fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
+
+                    if (fogAlpha <= 0.02f)
+                    {
+                        fogActive = false;
+                        fogAlpha = 0.0f;
+                    }
                 }
             }
 
@@ -841,24 +884,45 @@ int main()
                     DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
                     DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == PRIZE) //INSERT PRIZE IMAGE
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
             }
 
+            //EVENTS DESIGNS------------------------------------------------------
             // TEXTURE OF FOG EFFECT
-            if (fogActive && fogAlpha > 0)
-            {
-                float camLeft = camera.target.x - screenWidth / (2 * camera.zoom);
+            if(fogActive && fogAlpha > 0){
+
+                float camLeft  = camera.target.x - screenWidth / (2 * camera.zoom);
                 float camRight = camera.target.x + screenWidth / (2 * camera.zoom);
-
-                for (int row = 0; row < 6; row++)
-                {
-                    for (float x = camLeft - 300; x < camRight + 300; x += 240)
-                    {
+            
+                for(int row = 0; row < 6; row++){
+            
+                    for(float x = camLeft - 300; x < camRight + 300; x += 240){
+            
                         float y = row * 160;
-
-                        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(LIGHTGRAY, fogAlpha * 0.5f));
+            
+                        DrawCircleGradient(
+                            {x, y},
+                            220,
+                            Fade(LIGHTGRAY, fogAlpha),
+                            Fade(WHITE, 0.0f)
+                        );
+            
+                        DrawCircleGradient(
+                            {x + 100, y + 50},
+                            260,
+                            Fade(GRAY, fogAlpha * 0.8f),
+                            Fade(WHITE, 0.0f)
+                        );
                     }
                 }
             }
+
+            if(invertedScreen) {
+                camera.rotation = 180.0f;
+                camera.target.y += 100.0f;
+            }
+            else camera.rotation = 0.0f;
 
             EndMode2D();
 
@@ -890,6 +954,7 @@ int main()
                     return "LOW GRAVITY";
                 if (e == FOG_BLIND)
                     return "CURSED FOG";
+                if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
 
                 return "";
             };
@@ -954,6 +1019,7 @@ int main()
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
+        // GAME OVER----------------------------------------------------
            if (state == GAMEOVER_ANIM)
 {
     if (gameOverAnimTimer < 2.5f)
