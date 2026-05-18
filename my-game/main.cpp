@@ -102,14 +102,17 @@ int main()
     PlayMusicStream(introMusic);
 
     // load frames
-    for (int i = 1; i <= 110; i++)
-        videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
-
+    for (int i = 1; i <= 110; i++) 
+    videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
+    
     // load images
     // bg
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
     Texture2D groundTex = LoadTexture("assets/images/ground.png");
     Texture2D wallTex = LoadTexture("assets/images/wall.png");
+    Texture2D bgEasy   = LoadTexture("assets/images/easy.png");
+    Texture2D bgMedium = LoadTexture("assets/images/medium.png");
+    Texture2D bgHard   = LoadTexture("assets/images/hard.png");
 
     // items
     Texture2D bombTex = LoadTexture("assets/images/bomb.png");
@@ -170,7 +173,7 @@ int main()
     int comboPop = 0;
     bool comboBroken = false;
     float comboBrokenTimer = 0;
-
+    
     // SHAKE EFFECT
     float shakeTime = 0;  // how long screen shakes
     float shakePower = 0; // strength of shake
@@ -221,6 +224,7 @@ int main()
     bool showMinusText = false;
     bool showSlowText = false;
     bool showComboText = false;
+    
     // timers
     float starTextTimer = 0;
     float minusTextTimer = 0;
@@ -246,7 +250,7 @@ int main()
         {
             UpdateMusicStream(introMusic);
 
-            if (UpdateIntro())
+            if (UpdateIntro()) 
             {
                 StopMusicStream(introMusic);
                 UnloadMusicStream(introMusic);
@@ -272,12 +276,13 @@ int main()
              DrawIntroVideo();
              EndDrawing();
 
-            if (IsVideoFinished())
-            {
-                UnloadIntroVideo();
-                state = PLAYING;
-            }
-        }
+
+             if (IsVideoFinished()) 
+             {
+             UnloadIntroVideo();
+             state = PLAYING;
+             }
+         }
 
         // GAMEPLAY-----------------------------------------
         if (state == PLAYING)
@@ -311,21 +316,21 @@ int main()
             if (velocityX < -maxSpeed)
                 velocityX = -maxSpeed;
 
-            int dir = 1;
+                int dir = 1;
 
-            // swapped controls
+                // swapped controls
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
-                dir = -1;
-
+                 dir = -1;
+                
             if (IsKeyDown(KEY_LEFT))
                 velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
             if (IsKeyDown(KEY_RIGHT))
                 velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
             if (IsKeyDown(KEY_UP) && isGrounded)
             {
-                velocityY = jumpForce;
-                isGrounded = false;
-            }
+                    velocityY = jumpForce;
+                    isGrounded = false;
+                }
 
             player.x += velocityX * GetFrameTime();
 
@@ -469,7 +474,7 @@ int main()
             }
 
             // CHALLENGES--------------------------------------------
-
+           
             // countdown before next event
             if (currentEvent == NONE)
                 eventCooldown -= GetFrameTime();
@@ -526,11 +531,11 @@ int main()
                 auto ApplyEvent = [&](EventType e)
                 {
                     if (e == SPEED_BOOST)
-                        eventBoost = 1.7f;
+                    eventBoost = 1.7f;
                     if (e == SLOW_BOOST)
-                        eventBoost = 0.65f;
+                    eventBoost = 0.65f;
                     if (e == LOW_GRAVITY)
-                        gravity = 700.0f;
+                    gravity = 700.0f;
                     if (e == FOG_BLIND)
                     {
 
@@ -538,10 +543,10 @@ int main()
                         fogTimer += GetFrameTime();
 
                         if (fogTimer < 2.0f)
-                            fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
+                           fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
 
-                        else
-                            fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
+                        else 
+                           fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
                     }
                 };
 
@@ -566,9 +571,9 @@ int main()
 
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
-                        eventCooldown = 20.0f;
+                       eventCooldown = 20.0f;
                     else if (diff == HARD)
-                        eventCooldown = 12.0f;
+                       eventCooldown = 12.0f;
                 }
             }
 
@@ -598,8 +603,8 @@ int main()
                     }
                     else if (it.type == CHILI)
                     {
-                        chiliBoost = 1.8f;
-                        speedBoostTimer = 5.0f;
+                        chiliBoost = 1.8f;      
+                        speedBoostTimer = 5.0f; 
                     }
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART)
@@ -711,7 +716,7 @@ int main()
             if (comboBroken)
             {
                 comboBrokenTimer -= GetFrameTime();
-
+            
                 if (comboBrokenTimer <= 0)
                     comboBroken = false;
             }
@@ -724,6 +729,11 @@ int main()
                     chiliBoost = 1.0f;
             }
 
+            // STAR 
+            if(showStarText){
+                starTextTimer -= GetFrameTime();
+                if(starTextTimer <= 0) showStarText = false;
+            }
             // STAR
             if (showStarText)
             {
@@ -789,17 +799,33 @@ int main()
         // game
         if (state == PLAYING)
         {
-            ClearBackground(SKYBLUE);
-            // camera
+            BeginMode2D(camera);
             BeginMode2D(camera);
 
+             DrawTexturePro(
+              wallTex,
+              {0, 0, (float)wallTex.width, (float)wallTex.height},
+              {0, 0, (float)screenWidth, (float)screenHeight},
+              {0, 0},
+               0,
+              WHITE);
+    
+
+            Texture2D currentBg;
+
+            if (diff == EASY)      currentBg = bgEasy;
+            else if (diff == MEDIUM) currentBg = bgMedium;
+            else if (diff == HARD)   currentBg = bgHard;
+
             DrawTexturePro(
-                bgTex,
-                {0, 0, (float)bgTex.width, (float)bgTex.height},
-                {0, 0, (float)screenWidth, (float)screenHeight},
-                {0, 0},
-                0,
-                WHITE);
+             currentBg,
+             {0, 0, (float)currentBg.width, (float)currentBg.height},
+             {0, 0, (float)screenWidth, (float)screenHeight},
+             {0, 0},
+              0,
+              WHITE);
+
+
             DrawRectangleRec(player, RED);
             // draw items
             for (auto &it : items)
@@ -859,7 +885,7 @@ int main()
                     }
                 }
             }
-
+            
             EndMode2D();
 
             // UI
@@ -867,7 +893,7 @@ int main()
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
 
             // POP UP TEXTS--------------------------------------
-
+            
             if (showStarText)
                 DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showMinusText)
@@ -908,7 +934,7 @@ int main()
                 DrawText(eventName.c_str(), 25, 70, 28, RED);
             }
 
-            // combo
+            // combo 
             if (combo >= 2)
                 DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
             if (combo >= 5)
@@ -947,7 +973,7 @@ int main()
         if (hitFlash > 0)
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
-      // heartbeat text
+        // heartbeat text
         if (hp == 1)
         {
             int pulse = 20 + sin(GetTime() * 8) * 10;
@@ -1068,24 +1094,24 @@ int main()
         }
         if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
         {
-            state = MENU;
-            hp = 3;
-            score = 0;
-            combo = 0;
-            items.clear();
-            player.x = (screenWidth - player.width) / 2;
-            move = 1.0f;
+                state = MENU;
+                hp = 3;
+                score = 0;
+                combo = 0;
+                items.clear();
+                player.x = (screenWidth - player.width) / 2;
+                move = 1.0f;
             chiliBoost = 1.0f;
             eventBoost = 1.0f;
-            gravity = 1800.0f;
-            currentEvent = NONE;
+                gravity = 1800.0f;
+                currentEvent = NONE;
             secondEvent = NONE;
             gameOverAnimTimer = 0.0f;
-            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
-            SetMusicVolume(introMusic, 0.5f);
-            PlayMusicStream(introMusic);
+                introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+                SetMusicVolume(introMusic, 0.5f);
+                PlayMusicStream(introMusic);
+            }
         }
-    }
 }
         EndDrawing();
     }
