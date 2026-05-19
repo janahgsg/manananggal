@@ -354,17 +354,15 @@ int main()
             camera.target.y = player.y + player.height / 2;
 
             //inverted screen
-            if(invertedScreen){
-                camera.offset = {
-                    screenWidth / 2.0f,
-                    screenHeight / 2.0f
-                };
+            if (invertedScreen)
+            {
+                camera.rotation = 180.0f;
+                camera.zoom = 1.45f;
             }
-            else{
-                camera.offset = {
-                    screenWidth / 2.0f,
-                    screenHeight * 0.85f
-                };
+            else
+            {
+                camera.rotation = 0.0f;
+                camera.zoom = 1.30f;
             }
 
             // camera shake
@@ -560,16 +558,7 @@ int main()
                     if (e == LOW_GRAVITY)
                     gravity = 700.0f;
                     if (e == FOG_BLIND)
-                    {
-                        fogActive = true;
-                        fogTimer += GetFrameTime();
-
-                        if (fogTimer < 2.0f)
-                            fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
-
-                        else
-                            fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
-                    }
+                    fogActive = true;
                 };
 
                 // apply BOTH events
@@ -603,17 +592,17 @@ int main()
             //FOG EFFECT
             if (fogActive)
             {
-                float fadeStart = 5.0f; // how many seconds before event ends it starts fading
+                float fadeStart = 5.0f;
 
                 if (eventTimer > fadeStart)
                 {
-                    // FADE IN
-                    fogAlpha = Lerp(fogAlpha, 0.55f, 2.5f * GetFrameTime());
+                    // smooth fade in
+                    fogAlpha = Lerp(fogAlpha, 0.55f, 1.5f * GetFrameTime());
                 }
                 else
                 {
-                    // FADE OUT 
-                    fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
+                    // smooth fade out
+                    fogAlpha = Lerp(fogAlpha, 0.0f, 1.0f * GetFrameTime());
 
                     if (fogAlpha <= 0.02f)
                     {
@@ -845,7 +834,6 @@ int main()
         // game
         if (state == PLAYING)
         {
-            BeginMode2D(camera);
             BeginMode2D(camera);
 
              DrawTexturePro(
