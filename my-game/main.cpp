@@ -848,15 +848,8 @@ int main()
             BeginMode2D(camera);
             BeginMode2D(camera);
 
-             DrawTexturePro(
-              wallTex,
-              {0, 0, (float)wallTex.width, (float)wallTex.height},
-              {0, 0, (float)screenWidth, (float)screenHeight},
-              {0, 0},
-               0,
-              WHITE);
+             
     
-
             Texture2D currentBg;
 
             if (diff == EASY)      currentBg = bgEasy;
@@ -869,7 +862,19 @@ int main()
              {0, 0, (float)screenWidth, (float)screenHeight},
              {0, 0},
               0,
-              WHITE);
+             ColorAlpha(WHITE, 0.7f));
+
+             // Left wall
+            DrawTexturePro(wallTex,
+                {0, 0, (float)wallTex.width, (float)wallTex.height},
+                {0, 0, 200, (float)screenHeight}, 
+                {0, 0}, 0, WHITE);
+
+             // Right wall
+            DrawTexturePro(wallTex,
+                {0, 0, (float)wallTex.width, (float)wallTex.height},
+                {(float)screenWidth - 200, 0, 200, (float)screenHeight},
+                {0, 0}, 0, WHITE);
 
 
             DrawRectangleRec(player, RED);
