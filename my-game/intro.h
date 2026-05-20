@@ -5,6 +5,11 @@ bool UpdateIntro(); // returns true if play button is clicked
 bool UpdateExit();  // returns true if exit button is clicked
 void DrawIntro(int highScore, Texture2D introTex);
 
+//info
+void InitInfoTexture();
+void UnloadInfoTexture();
+void UpdateInfo();
+
 
 // ===== MUSIC CONTROL =====
 void InitIntroMusic();   // load and start playing intro music
