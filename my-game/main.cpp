@@ -67,7 +67,8 @@ enum EventType
     LUCKY_PARTY,
     SPIKES,
     INVERTED_SCREEN,
-    FOG_BLIND
+    FOG_BLIND,
+    EARTHQUAKE
 };
 
 // stores every frame (Texture2D frame1 and so on)
@@ -110,10 +111,11 @@ int main()
     // bg
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
     Texture2D groundTex = LoadTexture("assets/images/ground.png");
-    Texture2D wallTex = LoadTexture("assets/images/wall.png");
-    Texture2D bgEasy   = LoadTexture("assets/images/easy.png");
-    Texture2D bgMedium = LoadTexture("assets/images/medium.png");
-    Texture2D bgHard   = LoadTexture("assets/images/hard.png");
+    Texture2D wallTex = LoadTexture("assets/images/wall.jpg");
+    Texture2D bgEasy   = LoadTexture("assets/images/easyy.png");
+    Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
+    Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
+    Texture2D introTex = LoadTexture("assets/images/intro2.png");
 
     // items
     Texture2D bombTex = LoadTexture("assets/images/bomb.png");
@@ -132,7 +134,6 @@ int main()
     Texture2D bloodTex = LoadTexture("assets/images/blood.png");
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
-    Texture2D introTex = LoadTexture("assets/images/intro1.png");
     Texture2D atayTex = LoadTexture("assets/images/atay.png");
     Texture2D crossTex = LoadTexture("assets/images/cross.png");
     Texture2D diceTex = LoadTexture("assets/images/dice.png");
@@ -204,6 +205,20 @@ int main()
     float fogTimer = 0.0f;
     bool fogActive = false;
     bool fogFadingOut = false;
+
+    // EARTHQUAKE
+    bool quakeActive = false;
+    float quakeTimer = 0.0f;
+    Rectangle pit = {0,0,0,0};
+    bool fallingInPit = false;
+    float pitOpen = 0.0f;
+    static float pitX = 0;
+    //fake pit
+    Rectangle fakePit = {0,0,0,0};
+    bool fakePitActive = false;
+    float fakePitTimer = 0.0f;
+    float fakeShake = sin(GetTime() * 25) * 4;
+    float crackShake = sin(GetTime() * 40) * 3; // animation
 
     // MOVEMENTS
     float velocityX = 0; // player movement momentum
@@ -304,12 +319,57 @@ int main()
             // Update player position
             player.y += velocityY * GetFrameTime();
 
-            // Ground collision
-            if (player.y >= screenHeight * 0.85f)
+            if (IsKeyPressed(KEY_A))
+    {
+        currentEvent = EARTHQUAKE;
+        secondEvent = NONE;
+
+        quakeActive = true;
+        quakeTimer = 0;
+        eventTimer = 25.0f;
+    }
+
+            bool overPit = quakeActive && player.x + player.width > pit.x && player.x < pit.x + pit.width;
+
+            if (!fallingInPit)
             {
-                player.y = screenHeight * 0.85f;
-                velocityY = 0;
-                isGrounded = true;
+                // normal floor only if NOT over pit
+                if (!overPit)
+                {
+                    if (player.y >= screenHeight * 0.85f)
+                    {
+                        player.y = screenHeight * 0.85f;
+                        velocityY = 0;
+                        isGrounded = true;
+                    }
+                }
+                else
+                {
+                    // player falls
+                    isGrounded = false;
+                }
+            }
+
+            //FALLING INTO PIT DEAAADDDD
+            if (fallingInPit)
+            {
+                velocityY += 3000 * GetFrameTime();
+
+                shakeTime = 0.1f;
+                shakePower = 14.0f;
+
+                if (player.y > screenHeight + 200)
+                {
+                    hp = 0;
+                }
+
+                camera.zoom -= 0.4f * GetFrameTime();
+
+                if (camera.zoom < 0.7f)
+                    camera.zoom = 0.7f;
+
+                // spinning while falling
+                camera.rotation += 40 * GetFrameTime();
             }
 
             // slow down
@@ -354,17 +414,18 @@ int main()
             camera.target.y = player.y + player.height / 2;
 
             //inverted screen
-            if(invertedScreen){
-                camera.offset = {
-                    screenWidth / 2.0f,
-                    screenHeight / 2.0f
-                };
-            }
-            else{
-                camera.offset = {
-                    screenWidth / 2.0f,
-                    screenHeight * 0.85f
-                };
+            if (!fallingInPit)
+            {
+                if (invertedScreen)
+                {
+                    camera.rotation = 180.0f;
+                    camera.zoom = 1.30f;
+                }
+                else
+                {
+                    camera.rotation = 0.0f;
+                    camera.zoom = 1.30f;
+                }
             }
 
             // camera shake
@@ -520,17 +581,17 @@ int main()
                 else if (diff == HARD)
                 {
 
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN};
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE};
 
-                    currentEvent = (EventType)hardEvents[rand() % 6];
+                    currentEvent = (EventType)hardEvents[rand() % 7];
 
                     // 40% chance for DOUBLE EVENT
                     if (rand() % 100 < 40)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 6];
+                        secondEvent = (EventType)hardEvents[rand() % 7];
                         // prevent same event twice
                         while (secondEvent == currentEvent)
-                            secondEvent = (EventType)hardEvents[rand() % 6];
+                            secondEvent = (EventType)hardEvents[rand() % 7];
                     }
 
                     eventTimer = 25.0f;
@@ -560,16 +621,11 @@ int main()
                     if (e == LOW_GRAVITY)
                     gravity = 700.0f;
                     if (e == FOG_BLIND)
-                    {
-                        fogActive = true;
-                        fogTimer += GetFrameTime();
-
-                        if (fogTimer < 2.0f)
-                            fogAlpha = Lerp(fogAlpha, 0.45f, 2.0f * GetFrameTime());
-
-                        else
-                            fogAlpha = Lerp(fogAlpha, 0.55f, 2.0f * GetFrameTime());
-                    }
+                    fogActive = true;
+                    if (e == INVERTED_SCREEN)
+                    invertedScreen = true;
+                    if (e == EARTHQUAKE)
+                    quakeActive = true;
                 };
 
                 // apply BOTH events
@@ -592,6 +648,11 @@ int main()
 
                     invertedScreen = false;
 
+                    quakeActive = false;
+                    fallingInPit = false;
+                    pitOpen = 0.0f;
+                    pit = {0,0,0,0};
+
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
                        eventCooldown = 20.0f;
@@ -603,23 +664,97 @@ int main()
             //FOG EFFECT
             if (fogActive)
             {
-                float fadeStart = 5.0f; // how many seconds before event ends it starts fading
+                float fadeStart = 5.0f;
 
                 if (eventTimer > fadeStart)
                 {
-                    // FADE IN
-                    fogAlpha = Lerp(fogAlpha, 0.55f, 2.5f * GetFrameTime());
+                    // smooth fade in
+                    fogAlpha = Lerp(fogAlpha, 0.55f, 1.5f * GetFrameTime());
                 }
                 else
                 {
-                    // FADE OUT 
-                    fogAlpha = Lerp(fogAlpha, 0.0f, 2.0f * GetFrameTime());
+                    // smooth fade out
+                    fogAlpha = Lerp(fogAlpha, 0.0f, 1.0f * GetFrameTime());
 
                     if (fogAlpha <= 0.02f)
                     {
                         fogActive = false;
                         fogAlpha = 0.0f;
                     }
+                }
+            }
+
+            // EARTHQUAKE PIT
+            if (quakeActive)
+            {
+                quakeTimer += GetFrameTime();
+                // shaking
+                shakeTime = 0.1f;
+                shakePower = 6.0f;
+
+                // OPENS CRACKS after 3.5 sec, ground opens
+                if (quakeTimer > 3.5f)
+                {
+                    // generate random position ONCE
+                    if (pitOpen <= 0)
+                        pitX = rand() % (screenWidth - 360);
+
+                    // open pit gradually
+                    pitOpen += 220 * GetFrameTime();
+
+                    if (pitOpen > 360)
+                        pitOpen = 360;
+
+                    pit = {
+                        pitX,
+                        (float)screenHeight * 0.89f,
+                        pitOpen,
+                        220
+                    };
+
+                    // COLLISION CHECK player falls if over pit
+                    bool overPit = player.x + player.width > pit.x && player.x < pit.x + pit.width;
+
+                    if (overPit && player.y + player.height >= pit.y)
+                    {
+                        fallingInPit = true;
+                    }
+                }
+            }
+            else
+            {
+                // smooth closing animation
+                if (pitOpen > 0)
+                {
+                    pitOpen -= 120 * GetFrameTime();
+
+                    if (pitOpen < 0)
+                        pitOpen = 0;
+
+                    // keep center while closing
+                    pit = {
+                        pitX + (360 - pitOpen) / 2,
+                        (float)screenHeight * 0.89f,
+                        pitOpen,
+                        220
+                    };
+                }
+                else
+                {
+                    // reset only AFTER fully closed
+                    quakeTimer = 0;
+                    fallingInPit = false;
+                }
+            }
+
+            // FAKE PIT timer
+            if (fakePitActive)
+            {
+             fakePitTimer -= GetFrameTime();
+
+                if (fakePitTimer <= 0)
+                {
+                    fakePitActive = false;
                 }
             }
 
@@ -808,6 +943,7 @@ int main()
                 if (slowTimer <= 0)
                     move = 1.0f;
             }
+
         }
         if (state == TROLL_VIDEO)
         {
@@ -846,7 +982,6 @@ int main()
         if (state == PLAYING)
         {
             BeginMode2D(camera);
-            BeginMode2D(camera);
 
              
     
@@ -855,26 +990,27 @@ int main()
             if (diff == EASY)      currentBg = bgEasy;
             else if (diff == MEDIUM) currentBg = bgMedium;
             else if (diff == HARD)   currentBg = bgHard;
+              
 
+            // Draw difficulty background first (fills the whole screen)
             DrawTexturePro(
-             currentBg,
-             {0, 0, (float)currentBg.width, (float)currentBg.height},
-             {0, 0, (float)screenWidth, (float)screenHeight},
-             {0, 0},
-              0,
-             ColorAlpha(WHITE, 0.7f));
+                 currentBg,
+                 {0, 0, (float)currentBg.width, (float)currentBg.height},
+                 {0, 0, (float)screenWidth, (float)screenHeight},
+                 {0, 0},
+                 0,
+                 WHITE
+                 );
 
-             // Left wall
-            DrawTexturePro(wallTex,
-                {0, 0, (float)wallTex.width, (float)wallTex.height},
-                {0, 0, 200, (float)screenHeight}, 
-                {0, 0}, 0, WHITE);
-
-             // Right wall
-            DrawTexturePro(wallTex,
-                {0, 0, (float)wallTex.width, (float)wallTex.height},
-                {(float)screenWidth - 200, 0, 200, (float)screenHeight},
-                {0, 0}, 0, WHITE);
+            // Then overlay difficulty background with transparency
+             DrawTexturePro(
+                 currentBg,
+                 {0, 0, (float)currentBg.width, (float)currentBg.height},
+                 {0, 0, (float)screenWidth, (float)screenHeight},
+                 {0, 0},
+                 0,
+                 ColorAlpha(WHITE, 0.7f) // adjust alpha so wall shows through
+                 );
 
 
             DrawRectangleRec(player, RED);
@@ -952,6 +1088,63 @@ int main()
                 }
             }
 
+            //TEXTURE OF EARTH QUAKE
+            if (quakeActive && quakeTimer > 2.0f)
+            {
+
+                // hole
+                DrawRectangleRec(pit, BLACK);
+
+                // crack lines
+                DrawLineEx(
+                    {pit.x, pit.y},
+                    {pit.x + pit.width, pit.y + 20},
+                    5,
+                    DARKBROWN
+                );
+
+                DrawLineEx(
+                    {pit.x + 40, pit.y + 10},
+                    {pit.x + 120, pit.y + 50},
+                    3,
+                    GRAY
+                );
+
+                DrawLineEx(
+                    {pit.x + 200, pit.y},
+                    {pit.x + 280, pit.y + 60},
+                    4,
+                    GRAY
+                );
+            }
+
+            //TEXTURE OF FAKE PIT
+            // FAKE PIT
+            if (fakePitActive)
+            {
+                DrawRectangle(
+                    fakePit.x + fakeShake,
+                    fakePit.y,
+                    fakePit.width,
+                    fakePit.height,
+                    DARKGRAY
+                );
+
+                DrawLineEx(
+                    {fakePit.x, fakePit.y},
+                    {fakePit.x + fakePit.width, fakePit.y + 10},
+                    4,
+                    GRAY
+                );
+
+                DrawLineEx(
+                    {fakePit.x + 30, fakePit.y + 5},
+                    {fakePit.x + 100, fakePit.y + 40},
+                    2,
+                    LIGHTGRAY
+                );
+            }
+
             EndMode2D();
 
             // UI
@@ -966,6 +1159,9 @@ int main()
                 DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showSlowText)
                 DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+
+            if (quakeTimer > 1.0f && quakeTimer < 2.0f) DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (quakeTimer > 2.0f && quakeTimer < 3.5f) DrawText("RUN AWAY!!!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
 
             // events
             string eventName = "";
@@ -983,6 +1179,7 @@ int main()
                 if (e == FOG_BLIND)
                     return "CURSED FOG";
                 if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
+                if (e == EARTHQUAKE) return "EARTHQUAKE";
 
                 return "";
             };
@@ -1001,6 +1198,22 @@ int main()
                 DrawText(eventName.c_str(), 25, 70, 28, RED);
             }
 
+            if (fallingInPit)
+            {
+                float alpha = (player.y - screenHeight * 0.85f) / 300.0f;
+
+                if (alpha > 1.0f)
+                    alpha = 1.0f;
+
+                DrawRectangle(
+                    0,
+                    0,
+                    screenWidth,
+                    screenHeight,
+                    Fade(BLACK, alpha)
+                );
+            }
+
             // combo 
             if (combo >= 2)
                 DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
@@ -1010,6 +1223,16 @@ int main()
                 DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 140, 20, 45, RED);
             if (comboBroken)
                 DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
+                if (quakeTimer > 1.2f && quakeTimer < 2.0f)
+                {
+                    DrawText(
+                        "THE GROUND IS CRACKING!",
+                        screenWidth / 2 - 220,
+                        120,
+                        35,
+                        RED
+                    );
+                }
         }
         else if (state == TROLL_VIDEO)
         {
@@ -1048,31 +1271,31 @@ int main()
         }
 
         // GAME OVER----------------------------------------------------
-           if (state == GAMEOVER_ANIM)
-{
-    if (gameOverAnimTimer < 2.5f)
-    {
-        if (gameOverFlash > 0)
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
-
-        float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
-        int fontSize = (int)(80 * scale);
-        int textW = MeasureText("GAME OVER", fontSize);
-        DrawText("GAME OVER",
-            screenWidth / 2 - textW / 2,
-            screenHeight / 2 - fontSize / 2,
-            fontSize, RED);
-
-        if (gameOverAnimTimer > 1.2f)
+        if (state == GAMEOVER_ANIM)
         {
-            int subW = MeasureText("your soul has been claimed...", 24);
-            DrawText("your soul has been claimed...",
-                screenWidth / 2 - subW / 2,
-                screenHeight / 2 + 60,
-                24,
-                Fade(WHITE, (float)sin(gameOverAnimTimer * 6) * 0.5f + 0.5f));
-        }
-    }
+            if (gameOverAnimTimer < 2.5f)
+            {
+                if (gameOverFlash > 0)
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+
+                float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
+                int fontSize = (int)(80 * scale);
+                int textW = MeasureText("GAME OVER", fontSize);
+                DrawText("GAME OVER",
+                    screenWidth / 2 - textW / 2,
+                    screenHeight / 2 - fontSize / 2,
+                    fontSize, RED);
+
+                if (gameOverAnimTimer > 1.2f)
+                {
+                    int subW = MeasureText("your soul has been claimed...", 24);
+                    DrawText("your soul has been claimed...",
+                        screenWidth / 2 - subW / 2,
+                        screenHeight / 2 + 60,
+                        24,
+                        Fade(WHITE, (float)sin(gameOverAnimTimer * 6) * 0.5f + 0.5f));
+                }
+            }
 
     // show panel after 2.5s
     if (gameOverAnimTimer >= 2.5f)
