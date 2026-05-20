@@ -209,16 +209,20 @@ int main()
     // EARTHQUAKE
     bool quakeActive = false;
     float quakeTimer = 0.0f;
-    Rectangle pit = {0,0,0,0};
-    bool fallingInPit = false;
+    //pit 
+    Rectangle pit = {0};
+    bool pitCreated = false; //control creation
+
     float pitOpen = 0.0f;
-    static float pitX = 0;
-    //fake pit
-    Rectangle fakePit = {0,0,0,0};
-    bool fakePitActive = false;
-    float fakePitTimer = 0.0f;
-    float fakeShake = sin(GetTime() * 25) * 4;
-    float crackShake = sin(GetTime() * 40) * 3; // animation
+    float pitTargetWidth = 0.0f; //controls the sizes of the pits
+
+    float pitX = 0;
+    float pitCenterX = 0;
+
+    int pitCount = 1; // d more pits, d merrier
+
+    float pitAlpha = 1;
+    bool fallingInPit = false;
 
     // MOVEMENTS
     float velocityX = 0; // player movement momentum
@@ -319,57 +323,91 @@ int main()
             // Update player position
             player.y += velocityY * GetFrameTime();
 
+            //TESTING EVENTS-------------------------------------
             if (IsKeyPressed(KEY_A))
-    {
-        currentEvent = EARTHQUAKE;
-        secondEvent = NONE;
+            {
+                currentEvent = EARTHQUAKE;
+                secondEvent = NONE;
 
-        quakeActive = true;
-        quakeTimer = 0;
-        eventTimer = 25.0f;
-    }
+                quakeActive = true;
+                quakeTimer = 0;
+                eventTimer = 25.0f;
+            }
+
+            if (IsKeyPressed(KEY_E))
+            {
+                currentEvent = INVERTED_SCREEN;
+                secondEvent = NONE;
+
+                invertedScreen = true;
+
+                eventTimer = 25.0f;
+            }
 
             bool overPit = quakeActive && player.x + player.width > pit.x && player.x < pit.x + pit.width;
 
+            //EARTHQUAKE ground-------------------------
+            float groundY = screenHeight * 0.89f; //ground level
+
+            // GROUND and PIT COLLISION
+            float playerBottom = player.y + player.height;
+
+            bool fullyInsidePit = pitCreated && player.x >= pit.x && player.x + player.width <= pit.x + pit.width;
+
+            // normal ground
             if (!fallingInPit)
             {
-                // normal floor only if NOT over pit
-                if (!overPit)
+                if (playerBottom >= groundY)
                 {
-                    if (player.y >= screenHeight * 0.85f)
+                    // safe ground
+                    if (!fullyInsidePit)
                     {
-                        player.y = screenHeight * 0.85f;
+                        player.y = groundY - player.height;
                         velocityY = 0;
                         isGrounded = true;
                     }
+                    else
+                    {
+                        // no ground in pit
+                        isGrounded = false;
+                    }
                 }
-                else
+
+                // falling
+                if (fullyInsidePit &&
+                    playerBottom > groundY + 35)
                 {
-                    // player falls
-                    isGrounded = false;
+                    fallingInPit = true;
                 }
             }
 
             //FALLING INTO PIT DEAAADDDD
             if (fallingInPit)
             {
-                velocityY += 3000 * GetFrameTime();
+                // gravity fall
+                velocityY += 3200 * GetFrameTime();
+                player.y += velocityY * GetFrameTime();
 
-                shakeTime = 0.1f;
-                shakePower = 14.0f;
-
-                if (player.y > screenHeight + 200)
+                camera.rotation = 0.0f;
+            
+                // camera follows downward
+                camera.target.y = Lerp(
+                    camera.target.y,
+                    player.y + 250,
+                    4.0f * GetFrameTime()
+                );
+            
+                // DIE ONLY WHEN DEEP
+                if (player.y > screenHeight + 100)
                 {
                     hp = 0;
                 }
 
-                camera.zoom -= 0.4f * GetFrameTime();
-
-                if (camera.zoom < 0.7f)
-                    camera.zoom = 0.7f;
-
-                // spinning while falling
-                camera.rotation += 40 * GetFrameTime();
+                // GAME OVER LATER
+                if (player.y > screenHeight + 350)
+                {
+                    state = GAMEOVER_ANIM;
+                }
             }
 
             // slow down
@@ -416,16 +454,13 @@ int main()
             //inverted screen
             if (!fallingInPit)
             {
+                float targetRotation = 0.0f;
+
                 if (invertedScreen)
-                {
-                    camera.rotation = 180.0f;
-                    camera.zoom = 1.30f;
-                }
-                else
-                {
-                    camera.rotation = 0.0f;
-                    camera.zoom = 1.30f;
-                }
+                    targetRotation = 180.0f;
+
+                camera.rotation = Lerp(camera.rotation, targetRotation, 5.0f * GetFrameTime());
+                camera.zoom = Lerp(camera.zoom, 1.30f, 4.0f * GetFrameTime());
             }
 
             // camera shake
@@ -446,7 +481,8 @@ int main()
                 shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
             }
 
-            float baseY = invertedScreen ? screenHeight / 2.0f : screenHeight * 0.85f;
+            //reverse screen
+            float baseY = invertedScreen ? screenHeight / 2.0f + -420 : screenHeight * 0.85f;
 
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
@@ -650,8 +686,6 @@ int main()
 
                     quakeActive = false;
                     fallingInPit = false;
-                    pitOpen = 0.0f;
-                    pit = {0,0,0,0};
 
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
@@ -688,75 +722,80 @@ int main()
             if (quakeActive)
             {
                 quakeTimer += GetFrameTime();
-                // shaking
+            
                 shakeTime = 0.1f;
                 shakePower = 6.0f;
-
-                // OPENS CRACKS after 3.5 sec, ground opens
-                if (quakeTimer > 3.5f)
+            
+                // CREATE PIT
+                if (quakeTimer > 3.5f && !pitCreated)
                 {
-                    // generate random position ONCE
-                    if (pitOpen <= 0)
-                        pitX = rand() % (screenWidth - 360);
-
-                    // open pit gradually
-                    pitOpen += 220 * GetFrameTime();
-
-                    if (pitOpen > 360)
-                        pitOpen = 360;
-
+                    pitCount = GetRandomValue(1, 3);
+            
+                    if (pitCount == 1) pitTargetWidth = 360;
+                    else if (pitCount == 2) pitTargetWidth = 240;
+                    else pitTargetWidth = 170;
+            
+                    pitX = rand() % (screenWidth - (int)pitTargetWidth);
+                    pitCenterX = pitX + pitTargetWidth / 2;
+            
+                    pitOpen = 0.0f;
+                    pitCreated = true;
+                }
+            
+                // open SMMOOTTHLY
+                if (pitCreated)
+                {
+                    pitOpen += 250 * GetFrameTime();
+                    if (pitOpen > pitTargetWidth)
+                        pitOpen = pitTargetWidth;
+            
                     pit = {
-                        pitX,
-                        (float)screenHeight * 0.89f,
+                        pitCenterX - pitOpen / 2,
+                        screenHeight * 0.89f,
                         pitOpen,
                         220
                     };
+            
+                    // fall check
+                    float playerCenterX = player.x + player.width / 2;
+            
+                    bool abovePit =
+                        playerCenterX > pit.x &&
+                        playerCenterX < pit.x + pit.width;
+            
+                        float playerBottom = player.y + player.height;
 
-                    // COLLISION CHECK player falls if over pit
-                    bool overPit = player.x + player.width > pit.x && player.x < pit.x + pit.width;
-
-                    if (overPit && player.y + player.height >= pit.y)
-                    {
-                        fallingInPit = true;
-                    }
+                        if (abovePit && playerBottom >= groundY && velocityY > 150)
+                        {
+                            fallingInPit = true;
+                        }
                 }
             }
             else
             {
-                // smooth closing animation
-                if (pitOpen > 0)
+                // smooth closing
+                if (pitOpen > 1.0f)
                 {
-                    pitOpen -= 120 * GetFrameTime();
+                    pitOpen = Lerp(pitOpen, 0.0f, 5.0f * GetFrameTime());
 
-                    if (pitOpen < 0)
-                        pitOpen = 0;
+                    if (pitOpen < 2.0f)
+                        pitOpen = 0.0f;
 
-                    // keep center while closing
                     pit = {
-                        pitX + (360 - pitOpen) / 2,
-                        (float)screenHeight * 0.89f,
+                        pitCenterX - pitOpen / 2,
+                        groundY,
                         pitOpen,
-                        220
+                        screenHeight - groundY
                     };
                 }
                 else
                 {
-                    // reset only AFTER fully closed
+                    pitCreated = false;
                     quakeTimer = 0;
-                    fallingInPit = false;
                 }
             }
 
-            // FAKE PIT timer
-            if (fakePitActive)
-            {
-             fakePitTimer -= GetFrameTime();
-
-                if (fakePitTimer <= 0)
-                {
-                    fakePitActive = false;
-                }
-            }
+            
 
             // UPDATE ITEMS & COLLISION -----------------
             for (auto &it : items)
@@ -1006,6 +1045,27 @@ int main()
               0,
               WHITE);
 
+            //TEXTURE OF EARTH QUAKE
+            if (pitOpen > 1)
+            {
+                // dark opening
+                DrawRectangle(
+                    pit.x,
+                    pit.y,
+                    pit.width,
+                    pit.height,
+                    BLACK
+                );
+
+                // slight top shadow/crack
+                DrawRectangle(
+                    pit.x,
+                    pit.y - 5,
+                    pit.width,
+                    5,
+                    DARKGRAY
+                );
+            }
 
             DrawRectangleRec(player, RED);
             // draw items
@@ -1082,63 +1142,6 @@ int main()
                 }
             }
 
-            //TEXTURE OF EARTH QUAKE
-            if (quakeActive && quakeTimer > 2.0f)
-            {
-
-                // hole
-                DrawRectangleRec(pit, BLACK);
-
-                // crack lines
-                DrawLineEx(
-                    {pit.x, pit.y},
-                    {pit.x + pit.width, pit.y + 20},
-                    5,
-                    DARKBROWN
-                );
-
-                DrawLineEx(
-                    {pit.x + 40, pit.y + 10},
-                    {pit.x + 120, pit.y + 50},
-                    3,
-                    GRAY
-                );
-
-                DrawLineEx(
-                    {pit.x + 200, pit.y},
-                    {pit.x + 280, pit.y + 60},
-                    4,
-                    GRAY
-                );
-            }
-
-            //TEXTURE OF FAKE PIT
-            // FAKE PIT
-            if (fakePitActive)
-            {
-                DrawRectangle(
-                    fakePit.x + fakeShake,
-                    fakePit.y,
-                    fakePit.width,
-                    fakePit.height,
-                    DARKGRAY
-                );
-
-                DrawLineEx(
-                    {fakePit.x, fakePit.y},
-                    {fakePit.x + fakePit.width, fakePit.y + 10},
-                    4,
-                    GRAY
-                );
-
-                DrawLineEx(
-                    {fakePit.x + 30, fakePit.y + 5},
-                    {fakePit.x + 100, fakePit.y + 40},
-                    2,
-                    LIGHTGRAY
-                );
-            }
-
             EndMode2D();
 
             // UI
@@ -1191,13 +1194,16 @@ int main()
                 DrawRectangle(15, 60, 420, 40, Fade(BLACK, 0.5f));
                 DrawText(eventName.c_str(), 25, 70, 28, RED);
             }
-
+            //effect when the player fell into the pit
             if (fallingInPit)
             {
-                float alpha = (player.y - screenHeight * 0.85f) / 300.0f;
+                float fallStartY = screenHeight * 0.85f;
+                float fallDistance = player.y - fallStartY;
 
-                if (alpha > 1.0f)
-                    alpha = 1.0f;
+                float alpha = fallDistance / 400.0f;
+
+                if (alpha < 0.0f) alpha = 0.0f;
+                if (alpha > 1.0f) alpha = 1.0f;
 
                 DrawRectangle(
                     0,
