@@ -1333,7 +1333,7 @@ int main()
                 if (it.type == BANDAGE)
                     DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.15f, garlic1Tex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
                     DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.15f, chiliTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
