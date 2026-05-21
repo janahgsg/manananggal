@@ -65,6 +65,7 @@ enum EventType
     SPEED_BOOST,
     SLOW_BOOST,
     LUCKY_PARTY,
+    MISFORTUNE,
     SPIKES,
     INVERTED_SCREEN,
     FOG_BLIND,
@@ -452,7 +453,7 @@ int main()
                     hp = 0;
                 }
 
-                // GAME OVER LATER
+                // GAME OVER LATER -- to be fixed
                 if (player.y > screenHeight + 350)
                 {
                     state = GAMEOVER_ANIM;
@@ -1289,7 +1290,7 @@ int main()
             EndMode2D();
 
             // UI
-            DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE);
+            DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE); // HEARTTTTTTTT
             DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
 
             // POP UP TEXTS--------------------------------------
@@ -1414,7 +1415,7 @@ int main()
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
-        // GAME OVER----------------------------------------------------
+    // GAME OVER----------------------------------------------------
     if (state == GAMEOVER_ANIM) {
 
     UpdateMusicStream(gameOverMusic);
