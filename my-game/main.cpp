@@ -135,7 +135,7 @@ int main()
     Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
-    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.jpg");
+    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
     InitInfoTexture();
 
     // items
@@ -1536,6 +1536,8 @@ int main()
         if (state == GAMEOVER_ANIM) {
 
              UpdateMusicStream(gameOverMusic);
+             ClearBackground(BLACK);
+            
 
     // BACKGROUND
     // i2 gameover bg !!
@@ -1633,8 +1635,8 @@ int main()
         DrawRectangleRoundedLines(btnPlay, 0.1f, 8, btnPlayBorder);
 
         Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
-        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN  [ENTER]", 26, 1);
-        DrawTextEx(gamefont, "PLAY AGAIN  [ENTER]",
+        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN ", 26, 1);
+        DrawTextEx(gamefont, "PLAY AGAIN",
             {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
             26, 1, hoverPlay ? WHITE : Color{200, 200, 200, 255});
 
@@ -1646,8 +1648,8 @@ int main()
         DrawRectangleRounded(btnMenu, 0.3f, 10, btnMenuBg);
         DrawRectangleRoundedLines(btnMenu, 0.3f, 10, {139, 0, 0, 255});
 
-        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU  [ESC]", 26, 1);
-        DrawTextEx(gamefont, "MAIN MENU  [ESC]",
+        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU", 26, 1);
+        DrawTextEx(gamefont, "MAIN MENU",
         {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
             26, 1, hoverMenu ? WHITE : Color{180, 180, 180, 255});
 
