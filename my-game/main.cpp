@@ -1118,7 +1118,7 @@ int main()
 
                  // play music AFTER game over sound finishes (~2 seconds)
     if (gameOverAnimTimer >= 2.0f && !IsMusicStreamPlaying(gameOverMusic))
-        PlayMusicStream(gameOverMusic);  // ADD THIS
+        PlayMusicStream(gameOverMusic);  
         }
         // drawing
         BeginDrawing();
@@ -1502,7 +1502,7 @@ int main()
         DrawTextEx(nosifer, "OVER", {overX, overY}, 160, 4, {200, 20, 20, 255});
 
         // ===== BUTTONS =====
-        float btnW = 340, btnH = 52;
+        float btnW = 500, btnH = 80;
         float btnX = screenWidth / 2.0f - btnW / 2.0f;
         float btnStartY = overY + overSize.y + 40;
 
@@ -1511,14 +1511,13 @@ int main()
         bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
         Color btnPlayBg = hoverPlay ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         Color btnPlayBorder = {139, 0, 0, 255};
-        DrawRectangleRounded(btnPlay, 0.1f, 8, btnPlayBg);
-        DrawRectangleRoundedLines(btnPlay, 0.1f, 8, btnPlayBorder);
+        DrawRectangleRounded(btnPlay, 0.3f, 10, btnPlayBg);
 
         Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
-        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN  [ENTER]", 26, 1);
-        DrawTextEx(gamefont, "PLAY AGAIN  [ENTER]",
-            {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
-            26, 1, hoverPlay ? WHITE : Color{200, 200, 200, 255});
+        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN", 50, 0);
+        DrawTextEx(gamefont, "PLAY AGAIN",
+          {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
+          50, 0, hoverPlay ? WHITE : Color{200, 200, 200, 255});
 
         // MAIN MENU button 
         float btn2Y = btnStartY + btnH + 10;
@@ -1526,12 +1525,12 @@ int main()
         bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
         Color btnMenuBg = hoverMenu ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         DrawRectangleRounded(btnMenu, 0.3f, 10, btnMenuBg);
-        DrawRectangleRoundedLines(btnMenu, 0.3f, 10, {139, 0, 0, 255});
+        
 
-        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU  [ESC]", 26, 1);
-        DrawTextEx(gamefont, "MAIN MENU  [ESC]",
-            {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
-            26, 1, hoverMenu ? WHITE : Color{180, 180, 180, 255});
+        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU", 50, 0);
+        DrawTextEx(gamefont, "MAIN MENU",
+          {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
+          50, 0, hoverMenu ? WHITE : Color{180, 180, 180, 255});
 
         // INPUT
         if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
