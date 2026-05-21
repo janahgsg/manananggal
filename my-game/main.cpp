@@ -135,7 +135,7 @@ int main()
     Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
-    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.jpg");
+    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
     InitInfoTexture();
 
     // items
