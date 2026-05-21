@@ -164,6 +164,7 @@ int main()
 
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
+    Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
 
     //character
     Texture2D playerTex = LoadTexture("assets/character/human/player.png");
@@ -350,6 +351,7 @@ int main()
              if (IsVideoFinished()) 
              {
              UnloadIntroVideo();
+             PlayMusicStream(bgMusic);  
              state = PLAYING;
              }
          }
@@ -1634,7 +1636,6 @@ int main()
         DrawRectangleRounded(btnPlay, 0.1f, 8, btnPlayBg);
         DrawRectangleRoundedLines(btnPlay, 0.1f, 8, btnPlayBorder);
 
-        Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
         Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN ", 26, 1);
         DrawTextEx(gamefont, "PLAY AGAIN",
             {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
@@ -1740,6 +1741,7 @@ int main()
     UnloadMusicStream(gameOverMusic);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
+    UnloadFont(gamefont);
 
     CloseAudioDevice();
     CloseWindow();
