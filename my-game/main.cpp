@@ -1161,11 +1161,15 @@ int main()
                currentAnim = WALK_LEFT;
              }
 
-            // Jump
-            if (IsKeyPressed(KEY_UP) && isGrounded) {
-               velocityY = jumpForce;
-               isGrounded = false;
-               currentAnim = JUMP;
+            // Jump trigger (physics only)
+             if (IsKeyPressed(KEY_UP) && isGrounded) {
+                velocityY = jumpForce;
+                isGrounded = false;
+        }
+
+             // If airborne, force jump animation
+                if (!isGrounded) {
+                currentAnim = JUMP;
              }
 
              // Update frame timer for walk animations
