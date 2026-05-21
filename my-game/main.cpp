@@ -1534,6 +1534,7 @@ int main()
              UpdateMusicStream(gameOverMusic);
 
     // BACKGROUND
+    // i2 gameover bg !!
     DrawTexturePro(
         gameOverBg,
         {0, 0, (float)gameOverBg.width, (float)gameOverBg.height},
