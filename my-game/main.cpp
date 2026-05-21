@@ -238,6 +238,7 @@ int main()
     float gameOverAnimTimer = 0.0f;
     float gameOverFlash = 0.0f;
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
+    Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
 
     //extra 
     float medkitCooldown = 0;
@@ -265,6 +266,7 @@ int main()
     vector<float> pitCenters;
     vector<float> pitOpens;
     bool pitCreated = false; //control creation
+    bool pitSoundPlayed = false;
     int pitCount = 1; // d more pits, d merrier
 
     float pitAlpha = 1;
@@ -817,6 +819,7 @@ int main()
                 // CREATE PIT
                 if (quakeTimer > 1.0f && !pitCreated)                {
                     pitCreated = true;
+                    PlaySound(pitSound);
 
                     pits.clear();
                     pitWidths.clear();
@@ -893,7 +896,11 @@ int main()
                         // open individually
                         if (quakeTimer > 3.5f)
                         {
-                            pitOpens[i] += 250 * GetFrameTime();
+                            if (!pitSoundPlayed) {
+                              PlaySound(pitSound);
+                              pitSoundPlayed = true;
+                 }
+                 pitOpens[i] += 250 * GetFrameTime();
 
                             if (pitOpens[i] > pitWidths[i])
                                 pitOpens[i] = pitWidths[i];
@@ -950,6 +957,7 @@ int main()
                 {
                     pitCreated = false;
                     quakeTimer = 0;
+                    pitSoundPlayed = false;
             
                     pits.clear();
                     pitWidths.clear();
@@ -1675,6 +1683,7 @@ int main()
         gravity = 1800.0f;
         fallingInPit = false;// earthquake
         pitCreated = false;
+        pitSoundPlayed = false;
         quakeActive = false;
         quakeTimer = 0;
         velocityY = 0;
@@ -1705,6 +1714,7 @@ int main()
         gravity = 1800.0f;
         fallingInPit = false;// earthquake pit
         pitCreated = false;
+        pitSoundPlayed = false;
         quakeActive = false;
         quakeTimer = 0;
         velocityY = 0;
@@ -1738,6 +1748,7 @@ int main()
     // unload
     UnloadSound(trollSound);
     UnloadSound(gameOverSound);
+    UnloadSound(pitSound);
     UnloadMusicStream(gameOverMusic);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
