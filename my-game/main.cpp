@@ -135,7 +135,7 @@ int main()
     Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
-    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
+    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.jpg");
     InitInfoTexture();
 
     // items
@@ -160,6 +160,7 @@ int main()
     Texture2D diceTex = LoadTexture("assets/images/dice.png");
     Texture2D holyTex = LoadTexture("assets/images/holywater.png");
     Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
+    Texture2D hpTex = LoadTexture("assets/images/hearty.png");
 
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
@@ -469,9 +470,9 @@ int main()
             if (velocityX < -maxSpeed)
                 velocityX = -maxSpeed;
 
-            int dir = 1;
+                int dir = 1;
 
-            // swapped controls
+                // swapped controls
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
@@ -483,7 +484,7 @@ int main()
             {
                     velocityY = jumpForce;
                     isGrounded = false;
-            }
+                }
 
             player.x += velocityX * GetFrameTime();
 
@@ -870,7 +871,7 @@ int main()
                 if (!it.active)
                     continue;
                     it.speed += 55 * GetFrameTime();
-                    it.rect.y += it.speed * GetFrameTime();
+                it.rect.y += it.speed * GetFrameTime();
 
                 // remove if off-screen
                 if (it.rect.y > screenHeight)
@@ -1116,7 +1117,7 @@ int main()
             if (gameOverFlash < 0)
                 gameOverFlash = 0;
 
-                 // play music AFTER game over sound finishes (~2 seconds)
+    // play music AFTER game over sound finishes (~2 seconds)
     if (gameOverAnimTimer >= 2.0f && !IsMusicStreamPlaying(gameOverMusic))
         PlayMusicStream(gameOverMusic);  
         }
@@ -1196,7 +1197,7 @@ int main()
             player.width  = playerTex.width * scale;
             player.height = playerTex.height * scale;
 
-            Rectangle dest = {
+             Rectangle dest = {
                 player.x,
                 player.y,
                 player.width,   
@@ -1210,7 +1211,7 @@ int main()
                 {0, 0},
                 0.0f,
                 WHITE
-            );
+                );
 
             DrawRectangleLines(player.x, player.y, player.width, player.height, RED);
 
@@ -1289,9 +1290,22 @@ int main()
 
             EndMode2D();
 
-            // UI
-            DrawText(TextFormat("hp: %d", hp), 10, 10, 20, WHITE); // HEARTTTTTTTT
-            DrawText(TextFormat("score: %d", score), 20, 20, 40, WHITE);
+            // UI   
+            
+            string eventName = "";// events
+
+            float hpScale = 0.1f; 
+             for (int i = 0; i < hp; i++) {
+             DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
+             }
+ 
+
+            DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
+
+            if (currentEvent != NONE) {
+               DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
+               DrawText(eventName.c_str(), 25, 100, 28, RED);
+             }
 
             // POP UP TEXTS--------------------------------------
             
@@ -1305,8 +1319,7 @@ int main()
             if (quakeTimer > 1.0f && quakeTimer < 2.0f) DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (quakeTimer > 2.0f && quakeTimer < 3.5f) DrawText("RUN AWAY!!!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
 
-            // events
-            string eventName = "";
+
 
             auto GetEventName = [&](EventType e)
             {
@@ -1415,10 +1428,10 @@ int main()
             DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
-    // GAME OVER----------------------------------------------------
-    if (state == GAMEOVER_ANIM) {
+        // GAME OVER----------------------------------------------------
+        if (state == GAMEOVER_ANIM) {
 
-    UpdateMusicStream(gameOverMusic);
+             UpdateMusicStream(gameOverMusic);
 
     // BACKGROUND
     DrawTexturePro(
@@ -1441,7 +1454,7 @@ int main()
         // GAME (white) stacked on OVER (red)
         float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
         int fontSize = (int)(160 * scale);
-
+        
         Vector2 gameSize = MeasureTextEx(nosifer, "GAME", (float)fontSize, 4);
         Vector2 overSize = MeasureTextEx(nosifer, "OVER", (float)fontSize, 4);
 
@@ -1460,8 +1473,8 @@ int main()
     }
 
     if (gameOverAnimTimer >= 2.5f)
-    {
-        if (score > highScore) highScore = score;
+{
+    if (score > highScore) highScore = score;
 
         // ===== UPPER LEFT INFO =====
         float infoX = 60;
@@ -1481,9 +1494,9 @@ int main()
         DrawTextEx(nosifer, "DIFFICULTY", {infoX, infoY + 180}, 18, 1, {160, 160, 160, 255});
         DrawTextEx(nosifer, diffLabel, {infoX, infoY + 204}, 28, 1, diffCol);
 
-        // NEW HIGH SCORE badge
-        if (score > 0 && score >= highScore)
-        {
+    // NEW HIGH SCORE badge
+    if (score > 0 && score >= highScore)
+    {
             DrawTextEx(nosifer, "* NEW HIGH SCORE!", {infoX, infoY + 248}, 18, 1, {80, 220, 120, 255});
         }
 
@@ -1502,76 +1515,77 @@ int main()
         DrawTextEx(nosifer, "OVER", {overX, overY}, 160, 4, {200, 20, 20, 255});
 
         // ===== BUTTONS =====
-        float btnW = 500, btnH = 80;
-        float btnX = screenWidth / 2.0f - btnW / 2.0f;
+        float btnW = 340, btnH = 52;
+    float btnX = screenWidth / 2.0f - btnW / 2.0f;
         float btnStartY = overY + overSize.y + 40;
 
         // PLAY AGAIN button — thin red border style
         Rectangle btnPlay = {btnX, btnStartY, btnW, btnH};
-        bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
+    bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
         Color btnPlayBg = hoverPlay ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         Color btnPlayBorder = {139, 0, 0, 255};
-        DrawRectangleRounded(btnPlay, 0.3f, 10, btnPlayBg);
+        DrawRectangleRounded(btnPlay, 0.1f, 8, btnPlayBg);
+        DrawRectangleRoundedLines(btnPlay, 0.1f, 8, btnPlayBorder);
 
         Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
-        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN", 50, 0);
-        DrawTextEx(gamefont, "PLAY AGAIN",
-          {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
-          50, 0, hoverPlay ? WHITE : Color{200, 200, 200, 255});
+        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN  [ENTER]", 26, 1);
+        DrawTextEx(gamefont, "PLAY AGAIN  [ENTER]",
+            {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
+            26, 1, hoverPlay ? WHITE : Color{200, 200, 200, 255});
 
         // MAIN MENU button 
         float btn2Y = btnStartY + btnH + 10;
-        Rectangle btnMenu = {btnX, btn2Y, btnW, btnH};
-        bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
+    Rectangle btnMenu = {btnX, btn2Y, btnW, btnH};
+    bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
         Color btnMenuBg = hoverMenu ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         DrawRectangleRounded(btnMenu, 0.3f, 10, btnMenuBg);
-        
+        DrawRectangleRoundedLines(btnMenu, 0.3f, 10, {139, 0, 0, 255});
 
-        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU", 50, 0);
-        DrawTextEx(gamefont, "MAIN MENU",
-          {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
-          50, 0, hoverMenu ? WHITE : Color{180, 180, 180, 255});
+        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU  [ESC]", 26, 1);
+        DrawTextEx(gamefont, "MAIN MENU  [ESC]",
+        {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
+            26, 1, hoverMenu ? WHITE : Color{180, 180, 180, 255});
 
-        // INPUT
-        if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
-        {
-            StopMusicStream(gameOverMusic);
-            PlayMusicStream(bgMusic);
-            state = PLAYING;
-            hp = 3;
-            score = 0;
-            combo = 0;
-            items.clear();
-            player.x = (screenWidth - player.width) / 2;
-            move = 1.0f;
-            chiliBoost = 1.0f;
-            eventBoost = 1.0f;
-            gravity = 1800.0f;
-            currentEvent = NONE;
-            secondEvent = NONE;
-            gameOverAnimTimer = 0.0f;
-        }
-        if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
-        {
-            StopMusicStream(gameOverMusic);
-            state = MENU;
-            hp = 3;
-            score = 0;
-            combo = 0;
-            items.clear();
-            player.x = (screenWidth - player.width) / 2;
-            move = 1.0f;
-            chiliBoost = 1.0f;
-            eventBoost = 1.0f;
-            gravity = 1800.0f;
-            currentEvent = NONE;
-            secondEvent = NONE;
-            gameOverAnimTimer = 0.0f;
-            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
-            SetMusicVolume(introMusic, 0.5f);
-            PlayMusicStream(introMusic);
-        }
+    // INPUT
+    if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
+    {
+        StopMusicStream(gameOverMusic);  
+        PlayMusicStream(bgMusic);        
+        state = PLAYING;
+        hp = 3;
+        score = 0;
+        combo = 0;
+        items.clear();
+        player.x = (screenWidth - player.width) / 2;
+        move = 1.0f;
+        chiliBoost = 1.0f;
+        eventBoost = 1.0f;
+        gravity = 1800.0f;
+        currentEvent = NONE;
+        secondEvent = NONE;
+        gameOverAnimTimer = 0.0f;
     }
+    if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
+    {
+        StopMusicStream(gameOverMusic);
+        state = MENU;
+        hp = 3;
+        score = 0;
+        combo = 0;
+        items.clear();
+        player.x = (screenWidth - player.width) / 2;
+        move = 1.0f;
+        chiliBoost = 1.0f;
+        eventBoost = 1.0f;
+        gravity = 1800.0f;
+        currentEvent = NONE;
+        secondEvent = NONE;
+        gameOverAnimTimer = 0.0f;
+        introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+        SetMusicVolume(introMusic, 0.5f);
+        PlayMusicStream(introMusic);
+    }
+}
 }
         EndDrawing();
     }
@@ -1582,6 +1596,8 @@ int main()
     UnloadTexture(introTex);
     UnloadInfoTexture(); 
     UnloadTexture(gameOverBg);  
+    UnloadTexture(hpTex);
+
 
     currentFrame = 0;
     frameTimer = 0;
