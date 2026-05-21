@@ -424,9 +424,9 @@ int main()
             if (velocityX < -maxSpeed)
                 velocityX = -maxSpeed;
 
-                int dir = 1;
+            int dir = 1;
 
-                // swapped controls
+            // swapped controls
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
@@ -438,7 +438,7 @@ int main()
             {
                     velocityY = jumpForce;
                     isGrounded = false;
-                }
+            }
 
             player.x += velocityX * GetFrameTime();
 
@@ -510,63 +510,80 @@ int main()
             int spawnAmount;
             if (diff == EASY)
             {
-                spawnDelay = 1.0f;
+                spawnDelay = 0.85f;
                 spawnAmount = 1;
                 baseMove = 1.0f;
             }
             else if (diff == MEDIUM)
             {
-                spawnDelay = 0.65f;
+                spawnDelay = 0.55f;
                 spawnAmount = 2;
-                baseMove = 1.2f;
+                baseMove = 1.15f;
             }
             else if (diff == HARD)
             {
-                spawnDelay = 0.40f;
+                spawnDelay = 0.38f;
                 spawnAmount = 3;
-                baseMove = 1.4f;
+                baseMove = 1.3f;
             }
 
             if (spawnTimer > spawnDelay)
             {
                 spawnTimer = 0;
-                // spawnn items
+                // spawnn items, no more overlap
                 for (int i = 0; i < spawnAmount; i++)
                 {
                     Item it;
-                    it.rect.width = 40;
-                    it.rect.height = 40;
-                    it.rect.x = rand() % (screenWidth - (int)it.rect.width); // random x position
-                    it.rect.y = -(rand() % 400);
+                    it.rect.width = 58;
+                    it.rect.height = 58;
+                    int laneWidth = screenWidth / 4;
+                    int lane = rand() % 4;
+                    it.rect.x = 80 + rand() % (screenWidth - 160);
+                    //avoid overlapping items
+                    bool isTooClose = false;
+                    for(auto &other : items){
+                        if (!other.active) continue;
+
+                        if (fabs(it.rect.x - other.rect.x) < 90 &&
+                            fabs(it.rect.y - other.rect.y) < 120)
+                        {
+                            isTooClose = true;
+                            break;
+                        }
+                    }
+                    if(isTooClose) continue;
+                    it.rect.y = -100 - rand() % 250;
 
                     if (diff == EASY)
-                        it.speed = 120 + rand() % 80;
+                        it.speed = 240 + rand() % 30;
                     else if (diff == MEDIUM)
-                        it.speed = 180 + rand() % 120;
+                        it.speed = 320 + rand() % 50;
                     else if (diff == HARD)
-                        it.speed = 260 + rand() % 180;
+                        it.speed = 430 + rand() % 70;
 
                     it.active = true;
 
-                    if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 12)
-                    {
-                        it.type = MEDKIT;
-                        medkitCooldown = 8.0f;
-                    }
-
+                    //rare items
                     if (score >= 500 && rand() % 100 < 15)
                     {
                         prizeSpawn = true;
                         it.type = PRIZE;
                     }
-                    else if (hp == 1 && rand() % 100 < 10)
+                    else if (hp == 1 && medkitCooldown <= 0 && rand() % 1000 < 8) 
+                    {
                         it.type = MEDKIT;
+                        medkitCooldown = 12.0f;
+                    }
+                    else if (hp < 3 && rand() % 1000 < 15) 
+                        it.type = BANDAGE;
+
                     else if (diff == EASY)
                     {
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
                         int randomIndex = rand() % 6;
                         it.type = pool[randomIndex];
                     }
+                    //items for each difficulties
                     else if (diff == MEDIUM)
                     {
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB,
@@ -579,14 +596,14 @@ int main()
                         int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, ATAY};
 
                         int chance = rand() % 100;
-                        if (chance < 70)
+                        if (chance < 82)
                         {
                             int randomIndex = rand() % 11;
                             it.type = pool[randomIndex];
                         }
-                        else if (chance < 85)
+                        else if (chance < 90)
                             it.type = MUSHROOM;
-                        else if (chance < 95)
+                        else if (chance < 96)
                             it.type = DICE;
                         else
                             it.type = STAR;
@@ -807,7 +824,8 @@ int main()
             {
                 if (!it.active)
                     continue;
-                it.rect.y += it.speed * GetFrameTime();
+                    it.speed += 55 * GetFrameTime();
+                    it.rect.y += it.speed * GetFrameTime();
 
                 // remove if off-screen
                 if (it.rect.y > screenHeight)
@@ -819,8 +837,8 @@ int main()
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
                     {
                         hp--;
-                        shakeTime = 0.25f;
-                        shakePower = 12.0f;
+                        shakeTime = 0.08f;
+                        shakePower = 4.0f;
                         combo = 0;
                         comboTime = 0;
                         comboBroken = true;
@@ -1090,13 +1108,13 @@ int main()
                 if (it.type == BOMB)
                     DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, {it.rect.x, it.rect.y, babyTex.width * 0.15f, babyTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.2f, garlic1Tex.height * 0.2f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
                     DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.15f, chiliTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
