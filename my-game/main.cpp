@@ -1292,7 +1292,7 @@ int main()
 
             // UI   
             
-            string eventName = "";// events
+           
 
             float hpScale = 0.1f; 
              for (int i = 0; i < hp; i++) {
@@ -1302,10 +1302,7 @@ int main()
 
             DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
 
-            if (currentEvent != NONE) {
-               DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
-               DrawText(eventName.c_str(), 25, 100, 28, RED);
-             }
+        
 
             // POP UP TEXTS--------------------------------------
             
@@ -1319,7 +1316,7 @@ int main()
             if (quakeTimer > 1.0f && quakeTimer < 2.0f) DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (quakeTimer > 2.0f && quakeTimer < 3.5f) DrawText("RUN AWAY!!!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
 
-
+             string eventName = "";// events
 
             auto GetEventName = [&](EventType e)
             {
@@ -1349,8 +1346,8 @@ int main()
 
             if (currentEvent != NONE)
             {
-                DrawRectangle(15, 60, 420, 40, Fade(BLACK, 0.5f));
-                DrawText(eventName.c_str(), 25, 70, 28, RED);
+                DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
+                DrawText(eventName.c_str(), 25, 100, 28, RED);
             }
             //effect when the player fell into the pit
             if (fallingInPit)
