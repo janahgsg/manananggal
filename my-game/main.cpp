@@ -71,6 +71,16 @@ enum EventType
     EARTHQUAKE
 };
 
+
+enum PlayerAnim { IDLE, WALK_LEFT, WALK_RIGHT, JUMP };
+
+PlayerAnim currentAnim = IDLE;
+
+int playerFrame = 0;
+float pframeTimer = 0.0f;
+float pframeDelay = 0.15f;
+
+
 // stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
@@ -114,7 +124,7 @@ int main()
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
     Texture2D groundTex = LoadTexture("assets/images/ground.png");
     Texture2D wallTex = LoadTexture("assets/images/wall.jpg");
-    Texture2D bgEasy   = LoadTexture("assets/images/easyy.png");
+    Texture2D bgEasy   = LoadTexture("assets/images/easyy(1).png");
     Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
@@ -146,6 +156,33 @@ int main()
 
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
+
+    //character
+    Texture2D playerTex = LoadTexture("assets/character/human/player.png");
+
+    Texture2D RwalkFrames[6]; 
+     RwalkFrames[0] = LoadTexture("assets/character/human/right/1.png");
+     RwalkFrames[1] = LoadTexture("assets/character/human/right/2.png");
+     RwalkFrames[2] = LoadTexture("assets/character/human/right/3.png");
+    RwalkFrames[3] = LoadTexture("assets/character/human/right/4.png");
+    RwalkFrames[4] = LoadTexture("assets/character/human/right/5.png");
+    RwalkFrames[5] = LoadTexture("assets/character/human/right/6.png");
+
+    Texture2D LwalkFrames[6]; 
+     LwalkFrames[0] = LoadTexture("assets/character/human/left/1.png");
+     LwalkFrames[1] = LoadTexture("assets/character/human/left/2.png");
+     LwalkFrames[2] = LoadTexture("assets/character/human/left/3.png");
+    LwalkFrames[3] = LoadTexture("assets/character/human/left/4.png");
+    LwalkFrames[4] = LoadTexture("assets/character/human/left/5.png");
+    LwalkFrames[5] = LoadTexture("assets/character/human/left/6.png");
+
+    Texture2D JumpFrames[6]; 
+     JumpFrames[0] = LoadTexture("assets/character/human/jump/1.png");
+     JumpFrames[1] = LoadTexture("assets/character/human/jump/2.png");
+     JumpFrames[2] = LoadTexture("assets/character/human/jump/3.png");
+     JumpFrames[3] = LoadTexture("assets/character/human/jump/4.png");
+     JumpFrames[4] = LoadTexture("assets/character/human/jump/5.png");
+   
 
     srand(time(NULL));
     SetTargetFPS(60); // 60fps 1sec/60frame
@@ -327,6 +364,7 @@ int main()
 
             // Update player position
             player.y += velocityY * GetFrameTime();
+
 
             //TESTING EVENTS-------------------------------------
             if (IsKeyPressed(KEY_A))
@@ -1007,6 +1045,41 @@ int main()
                     move = 1.0f;
             }
 
+
+            // ANIMATIONS-----------------------------
+            currentAnim = IDLE;
+
+            // Walking right
+           if (IsKeyDown(KEY_RIGHT)) {
+               player.x += 200 * GetFrameTime();
+               currentAnim = WALK_RIGHT;
+             }
+
+            // Walking left
+            if (IsKeyDown(KEY_LEFT)) {
+               player.x -= 200 * GetFrameTime();
+               currentAnim = WALK_LEFT;
+             }
+
+            // Jump
+            if (IsKeyPressed(KEY_UP) && isGrounded) {
+               velocityY = jumpForce;
+               isGrounded = false;
+               currentAnim = JUMP;
+             }
+
+             // Update frame timer for walk animations
+            if (currentAnim == WALK_RIGHT || currentAnim == WALK_LEFT || currentAnim == JUMP) {
+               pframeTimer += GetFrameTime();
+               if (pframeTimer >= pframeDelay) {
+                  pframeTimer = 0.0f;
+                  playerFrame++;
+               if (playerFrame >= 6) playerFrame = 0;
+             }
+             } else {
+              playerFrame = 0;
+             }
+
         }
         if (state == TROLL_VIDEO)
         {
@@ -1056,7 +1129,7 @@ int main()
             else if (diff == HARD)   currentBg = bgHard;
               
 
-            // Draw difficulty background first (fills the whole screen)
+            
             DrawTexturePro(
                  currentBg,
                  {0, 0, (float)currentBg.width, (float)currentBg.height},
@@ -1066,14 +1139,14 @@ int main()
                  WHITE
                  );
 
-            // Then overlay difficulty background with transparency
+            
              DrawTexturePro(
                  currentBg,
                  {0, 0, (float)currentBg.width, (float)currentBg.height},
                  {0, 0, (float)screenWidth, (float)screenHeight},
                  {0, 0},
                  0,
-                 ColorAlpha(WHITE, 0.7f) // adjust alpha so wall shows through
+                 ColorAlpha(WHITE, 0.7f) 
                  );
 
             //TEXTURE OF EARTH QUAKE
@@ -1098,8 +1171,42 @@ int main()
                 );
             }
 
-            DrawRectangleRec(player, RED);
-            // draw items
+
+            //character 
+            
+            Texture2D texToDraw;
+
+            switch (currentAnim) {
+                case WALK_RIGHT: texToDraw = RwalkFrames[currentFrame]; break;
+                case WALK_LEFT:  texToDraw = LwalkFrames[currentFrame]; break;
+                case JUMP:       texToDraw = JumpFrames[currentFrame];  break;
+                default:         texToDraw = playerTex;                 break; 
+            }
+
+             float scale = 0.5f;
+
+// keep player rect consistent with texture size
+player.width  = playerTex.width * scale;
+player.height = playerTex.height * scale;
+
+Rectangle dest = {
+    player.x,
+    player.y,
+    player.width,   
+    player.height   
+};
+
+DrawTexturePro(
+    texToDraw,
+    {0, 0, (float)texToDraw.width, (float)texToDraw.height},
+    dest,
+    {0, 0},
+    0.0f,
+    WHITE
+);
+
+DrawRectangleLines(player.x, player.y, player.width, player.height, RED);
+
             for (auto &it : items)
             {
                 if (!it.active)
