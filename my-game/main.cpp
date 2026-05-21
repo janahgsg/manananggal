@@ -259,15 +259,11 @@ int main()
     bool quakeActive = false;
     float quakeTimer = 0.0f;
     //pit 
-    Rectangle pit = {0};
+    vector<Rectangle> pits;
+    vector<float> pitWidths;
+    vector<float> pitCenters;
+    vector<float> pitOpens;
     bool pitCreated = false; //control creation
-
-    float pitOpen = 0.0f;
-    float pitTargetWidth = 0.0f; //controls the sizes of the pits
-
-    float pitX = 0;
-    float pitCenterX = 0;
-
     int pitCount = 1; // d more pits, d merrier
 
     float pitAlpha = 1;
@@ -381,7 +377,7 @@ int main()
                 secondEvent = NONE;
 
                 quakeActive = true;
-                quakeTimer = 0;
+                quakeTimer = 0.0f;
                 eventTimer = 25.0f;
             }
 
@@ -395,16 +391,37 @@ int main()
                 eventTimer = 25.0f;
             }
 
-            bool overPit = quakeActive && player.x + player.width > pit.x && player.x < pit.x + pit.width;
+            bool overPit = false;
 
+            for (auto &p : pits)
+            {
+                if (quakeActive &&
+                    player.x + player.width > p.x &&
+                    player.x < p.x + p.width)
+                {
+                    overPit = true;
+                    break;
+                }
+            }
             //EARTHQUAKE ground-------------------------
             float groundY = screenHeight * 0.89f; //ground level
 
             // GROUND and PIT COLLISION
             float playerBottom = player.y + player.height;
 
-            bool fullyInsidePit = pitCreated && player.x >= pit.x && player.x + player.width <= pit.x + pit.width;
+            float playerCenter = player.x + player.width / 2;
 
+            bool fullyInsidePit = false;
+
+            for (auto &p : pits)
+            {
+                if (playerCenter > p.x &&
+                    playerCenter < p.x + p.width)
+                {
+                    fullyInsidePit = true;
+                    break;
+                }
+            }
             // normal ground
             if (!fallingInPit)
             {
@@ -457,7 +474,7 @@ int main()
                 // GAME OVER LATER -- to be fixed
                 if (player.y > screenHeight + 350)
                 {
-                    state = GAMEOVER_ANIM;
+                    hp = 0;
                 }
             }
 
@@ -625,31 +642,31 @@ int main()
 
                     else if (diff == EASY)
                     {
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, TROLLFACE};
-                        int randomIndex = rand() % 6;
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, TROLLFACE};
+                        int randomIndex = rand() % 5;
                         it.type = pool[randomIndex];
                     }
                     //items for each difficulties
                     else if (diff == MEDIUM)
                     {
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB,
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB,
                                       POISON, MEAT, HEART, TROLLFACE, ATAY};
-                        int randomIndex = rand() % 11;
+                        int randomIndex = rand() % 10;
                         it.type = pool[randomIndex];
                     }
                     else if (diff == HARD)
                     {
-                        int pool[] = {POO, GARLIC, BANDAGE, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, ATAY};
+                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, ATAY};
 
-                        int chance = rand() % 100;
-                        if (chance < 82)
+                        int chance = rand() % 1000;
+                        if (chance < 860)
                         {
-                            int randomIndex = rand() % 11;
+                            int randomIndex = rand() % 10;
                             it.type = pool[randomIndex];
                         }
-                        else if (chance < 90)
+                        else if (chance < 940)
                             it.type = MUSHROOM;
-                        else if (chance < 96)
+                        else if (chance < 985)
                             it.type = DICE;
                         else
                             it.type = STAR;
@@ -791,79 +808,153 @@ int main()
             {
                 quakeTimer += GetFrameTime();
             
-                shakeTime = 0.1f;
-                shakePower = 6.0f;
-            
+                if(shakeTime <= 0){
+                    shakeTime = 0.1f;
+                    shakePower = 6.0f;
+                }
                 // CREATE PIT
-                if (quakeTimer > 3.5f && !pitCreated)
-                {
-                    pitCount = GetRandomValue(1, 3);
-            
-                    if (pitCount == 1) pitTargetWidth = 360;
-                    else if (pitCount == 2) pitTargetWidth = 240;
-                    else pitTargetWidth = 170;
-            
-                    pitX = rand() % (screenWidth - (int)pitTargetWidth);
-                    pitCenterX = pitX + pitTargetWidth / 2;
-            
-                    pitOpen = 0.0f;
+                if (quakeTimer > 1.0f && !pitCreated)                {
                     pitCreated = true;
+
+                    pits.clear();
+                    pitWidths.clear();
+                    pitCenters.clear();
+
+                    if (diff == HARD)
+                        pitCount = GetRandomValue(2, 3);
+                    else
+                        pitCount = 1;
+
+                    for (int i = 0; i < pitCount; i++)
+                    {
+                        float randomWidth;
+
+                        // random widths
+                        if (pitCount == 1)
+                        {
+                            randomWidth = GetRandomValue(260, 340);
+                        }
+                        else if (pitCount == 2)
+                        {
+                            randomWidth = GetRandomValue(170, 240);
+                        }
+                        else // 3 pits
+                        {
+                            randomWidth = GetRandomValue(120, 180);
+                        }
+
+                        //prevent pit overlap
+                        float randomX;
+                        bool tooClose;
+
+                        do {
+                            tooClose = false;
+
+                            randomX = GetRandomValue(
+                                100,
+                                screenWidth - randomWidth - 100
+                            );
+
+                            // avoid overlap
+                            for (int j = 0; j < pits.size(); j++)
+                            {
+                                if (fabs(randomX - pits[j].x) < 220)
+                                {
+                                    tooClose = true;
+                                    break;
+                                }
+                            }
+
+                        } while (tooClose);
+
+                        Rectangle newPit = {
+                            randomX,
+                            screenHeight * 0.89f,
+                            0,
+                            220
+                        };
+
+                        pits.push_back(newPit);
+
+                        pitWidths.push_back(randomWidth);
+                        pitOpens.push_back(0.0f);
+
+                        pitCenters.push_back(randomX + randomWidth / 2);
+                    }
                 }
             
-                // open SMMOOTTHLY
+                // open pits
                 if (pitCreated)
                 {
-                    pitOpen += 250 * GetFrameTime();
-                    if (pitOpen > pitTargetWidth)
-                        pitOpen = pitTargetWidth;
-            
-                    pit = {
-                        pitCenterX - pitOpen / 2,
-                        screenHeight * 0.89f,
-                        pitOpen,
-                        220
-                    };
-            
-                    // fall check
-                    float playerCenterX = player.x + player.width / 2;
-            
-                    bool abovePit =
-                        playerCenterX > pit.x &&
-                        playerCenterX < pit.x + pit.width;
-            
+                    for (int i = 0; i < pits.size(); i++)
+                    {
+                        // open individually
+                        if (quakeTimer > 3.5f)
+                        {
+                            pitOpens[i] += 250 * GetFrameTime();
+
+                            if (pitOpens[i] > pitWidths[i])
+                                pitOpens[i] = pitWidths[i];
+                        }
+
+                        pits[i] = {
+                            pitCenters[i] - pitOpens[i] / 2,
+                            screenHeight * 0.89f,
+                            pitOpens[i],
+                            220
+                        };
+
+                        float playerCenterX = player.x + player.width / 2;
                         float playerBottom = player.y + player.height;
 
-                        if (abovePit && playerBottom >= groundY && velocityY > 150)
+                        bool abovePit =
+                            playerCenterX > pits[i].x &&
+                            playerCenterX < pits[i].x + pits[i].width;
+
+                        if (abovePit &&
+                            playerBottom >= groundY &&
+                            velocityY > 150)
                         {
                             fallingInPit = true;
                         }
+                    }
                 }
             }
             else
             {
-                // smooth closing
-                if (pitOpen > 1.0f)
+                bool allClosed = true;
+            
+                for (int i = 0; i < pitOpens.size(); i++)
                 {
-                    pitOpen = Lerp(pitOpen, 0.0f, 5.0f * GetFrameTime());
-
-                    if (pitOpen < 2.0f)
-                        pitOpen = 0.0f;
-
-                    pit = {
-                        pitCenterX - pitOpen / 2,
+                    pitOpens[i] = Lerp(
+                        pitOpens[i],
+                        0.0f,
+                        5.0f * GetFrameTime()
+                    );
+            
+                    if (pitOpens[i] > 1.0f)
+                        allClosed = false;
+            
+                    pits[i] = {
+                        pitCenters[i] - pitOpens[i] / 2,
                         groundY,
-                        pitOpen,
+                        pitOpens[i],
                         screenHeight - groundY
                     };
                 }
-                else
+            
+                // fully reset
+                if (allClosed)
                 {
                     pitCreated = false;
                     quakeTimer = 0;
+            
+                    pits.clear();
+                    pitWidths.clear();
+                    pitCenters.clear();
+                    pitOpens.clear();
                 }
             }
-
-            
 
             // UPDATE ITEMS & COLLISION -----------------
             for (auto &it : items)
@@ -883,8 +974,8 @@ int main()
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
                     {
                         hp--;
-                        shakeTime = 0.08f;
-                        shakePower = 4.0f;
+                        shakeTime = 0.22f;
+                        shakePower = 14.0f;
                         combo = 0;
                         comboTime = 0;
                         comboBroken = true;
@@ -902,7 +993,7 @@ int main()
 
                         combo++;
                         comboTime = 2.5f;
-                        if (combo >= 2)
+                        if (combo > 1)
                             score += combo;
                     }
                     else if (it.type == ATAY)
@@ -914,7 +1005,7 @@ int main()
 
                         combo++;
                         comboTime = 2.5f;
-                        if (combo >= 2)
+                        if (combo > 1)
                             score += combo;
                     }
                     // HEAL
@@ -1007,8 +1098,11 @@ int main()
             {
                 comboBrokenTimer -= GetFrameTime();
             
-                if (comboBrokenTimer <= 0)
+                if (comboBrokenTimer <= 0){
                     comboBroken = false;
+                    comboBrokenTimer = 0;
+                    comboTime = 0;
+                }   
             }
 
             // speedboost
@@ -1054,18 +1148,16 @@ int main()
             }
 
 
-            // ANIMATIONS-----------------------------
+            // PLAYER ANIMATIONS-----------------------------
             currentAnim = IDLE;
 
             // Walking right
            if (IsKeyDown(KEY_RIGHT)) {
-               player.x += 200 * GetFrameTime();
                currentAnim = WALK_RIGHT;
              }
 
             // Walking left
             if (IsKeyDown(KEY_LEFT)) {
-               player.x -= 200 * GetFrameTime();
                currentAnim = WALK_LEFT;
              }
 
@@ -1078,16 +1170,14 @@ int main()
 
              // Update frame timer for walk animations
             if (currentAnim == WALK_RIGHT || currentAnim == WALK_LEFT || currentAnim == JUMP) {
-               pframeTimer += GetFrameTime();
-               if (pframeTimer >= pframeDelay) {
-                  pframeTimer = 0.0f;
-                  playerFrame++;
-               if (playerFrame >= 6) playerFrame = 0;
-             }
-             } else {
-              playerFrame = 0;
-             }
-
+                pframeTimer += GetFrameTime();
+                if (pframeTimer >= pframeDelay) {
+                    pframeTimer = 0.0f;
+                    playerFrame++;
+                    if (playerFrame >= 6) playerFrame = 0;
+                }
+            } else playerFrame = 0;
+            
         }
         if (state == TROLL_VIDEO)
         {
@@ -1117,9 +1207,9 @@ int main()
             if (gameOverFlash < 0)
                 gameOverFlash = 0;
 
-    // play music AFTER game over sound finishes (~2 seconds)
-    if (gameOverAnimTimer >= 2.0f && !IsMusicStreamPlaying(gameOverMusic))
-        PlayMusicStream(gameOverMusic);  
+            // play music AFTER game over sound finishes (~2 seconds)
+            if (gameOverAnimTimer >= 2.0f && !IsMusicStreamPlaying(gameOverMusic))
+                PlayMusicStream(gameOverMusic);  
         }
         // drawing
         BeginDrawing();
@@ -1135,9 +1225,7 @@ int main()
             if (diff == EASY)      currentBg = bgEasy;
             else if (diff == MEDIUM) currentBg = bgMedium;
             else if (diff == HARD)   currentBg = bgHard;
-              
-
-            
+          
             DrawTexturePro(
                  currentBg,
                  {0, 0, (float)currentBg.width, (float)currentBg.height},
@@ -1148,35 +1236,51 @@ int main()
                  );
 
             
-             DrawTexturePro(
-                 currentBg,
-                 {0, 0, (float)currentBg.width, (float)currentBg.height},
-                 {0, 0, (float)screenWidth, (float)screenHeight},
-                 {0, 0},
-                 0,
-                 ColorAlpha(WHITE, 0.7f) 
-                 );
+            DrawTexturePro(
+                currentBg,
+                {0, 0, (float)currentBg.width, (float)currentBg.height},
+                {0, 0, (float)screenWidth, (float)screenHeight},
+                {0, 0},
+                0,
+                ColorAlpha(WHITE, 0.7f) 
+                );
 
-            //TEXTURE OF EARTH QUAKE
-            if (pitOpen > 1)
+            // WARNING BEFORE PIT OPENS
+            if (quakeTimer > 1.5f && quakeTimer < 3.5f)
             {
-                // dark opening
-                DrawRectangle(
-                    pit.x,
-                    pit.y,
-                    pit.width,
-                    pit.height,
-                    BLACK
-                );
+                for (int i = 0; i < pitCenters.size(); i++)
+                {
+                    DrawText(
+                        "!",
+                        pitCenters[i] - 10,
+                        screenHeight * 0.75f,
+                        60,
+                        RED
+                    );
+                }
+            }
 
-                // slight top shadow/crack
-                DrawRectangle(
-                    pit.x,
-                    pit.y - 5,
-                    pit.width,
-                    5,
-                    DARKGRAY
-                );
+            //TEXTURE OF EARTHQUAKE
+            for (int i = 0; i < pits.size(); i++)
+            {
+                if (pitOpens[i] > 1)
+                {
+                    DrawRectangle(
+                        pits[i].x,
+                        pits[i].y,
+                        pits[i].width,
+                        pits[i].height,
+                        BLACK
+                    );
+                 
+                    DrawRectangle(
+                        pits[i].x,
+                        pits[i].y - 5,
+                        pits[i].width,
+                        5,
+                        DARKGRAY
+                    );
+                }
             }
 
 
@@ -1191,7 +1295,7 @@ int main()
                 default:         texToDraw = playerTex;                 break; 
             }
 
-             float scale = 0.5f;
+            float scale = 0.5f;
 
             // keep player rect consistent with texture size
             player.width  = playerTex.width * scale;
@@ -1291,15 +1395,11 @@ int main()
             EndMode2D();
 
             // UI   
-            
-           
-
+            //health
             float hpScale = 0.1f; 
-             for (int i = 0; i < hp; i++) {
-             DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
-             }
- 
-
+            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
+            
+            //score 
             DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
 
         
@@ -1313,8 +1413,11 @@ int main()
             if (showSlowText)
                 DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
 
-            if (quakeTimer > 1.0f && quakeTimer < 2.0f) DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
-            if (quakeTimer > 2.0f && quakeTimer < 3.5f) DrawText("RUN AWAY!!!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (quakeTimer > 1.0f && quakeTimer < 3.0f)
+                DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 250, screenHeight - 100, 40, RED);
+            
+            if (quakeTimer > 3.0f && quakeTimer < 5.5f)
+                DrawText("RUN AWAY!!!", screenWidth / 2 - 180, screenHeight - 100, 50, WHITE);
 
              string eventName = "";// events
 
@@ -1370,7 +1473,7 @@ int main()
             }
 
             // combo 
-            if (combo >= 2)
+            if (combo > 1)
                 DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
             if (combo >= 5)
                 DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 120, 20, 40, ORANGE);
@@ -1378,16 +1481,16 @@ int main()
                 DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 140, 20, 45, RED);
             if (comboBroken)
                 DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
-                if (quakeTimer > 1.2f && quakeTimer < 2.0f)
-                {
-                    DrawText(
-                        "THE GROUND IS CRACKING!",
-                        screenWidth / 2 - 220,
-                        120,
-                        35,
-                        RED
-                    );
-                }
+            if (quakeTimer > 1.2f && quakeTimer < 2.0f)
+            {
+                DrawText(
+                    "THE GROUND IS CRACKING!",
+                    screenWidth / 2 - 220,
+                    120,
+                    35,
+                    RED
+                );
+            }
         }
         else if (state == TROLL_VIDEO)
         {
@@ -1547,17 +1650,30 @@ int main()
     if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
     {
         StopMusicStream(gameOverMusic);  
-        PlayMusicStream(bgMusic);        
+        PlayMusicStream(bgMusic);     
+        //RESET EVERYTHING   
         state = PLAYING;
         hp = 3;
         score = 0;
         combo = 0;
+        comboBroken = false;
+        comboBrokenTimer = 0;
+        comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
         gravity = 1800.0f;
+        fallingInPit = false;// earthquake
+        pitCreated = false;
+        quakeActive = false;
+        quakeTimer = 0;
+        velocityY = 0;
+        velocityX = 0;
+    
+        camera.rotation = 0;
+        invertedScreen = false;
         currentEvent = NONE;
         secondEvent = NONE;
         gameOverAnimTimer = 0.0f;
@@ -1565,16 +1681,28 @@ int main()
     if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
     {
         StopMusicStream(gameOverMusic);
+        //RESET EVERYTHING
         state = MENU;
         hp = 3;
         score = 0;
         combo = 0;
+        comboBroken = false;
+        comboBrokenTimer = 0;
+        comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
         gravity = 1800.0f;
+        fallingInPit = false;// earthquake pit
+        pitCreated = false;
+        quakeActive = false;
+        quakeTimer = 0;
+        velocityY = 0;
+        velocityX = 0;
+        camera.rotation = 0;
+        invertedScreen = false;
         currentEvent = NONE;
         secondEvent = NONE;
         gameOverAnimTimer = 0.0f;
