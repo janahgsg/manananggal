@@ -1212,6 +1212,12 @@ int main()
                 currentFrame = 0;      // reset video
                 state = PLAYING;       // resume game
             }
+            if (IsKeyPressed(KEY_ENTER))
+            {
+            StopSound(trollSound);
+             currentFrame = 0;
+             state = PLAYING;
+            }
         }
 
         if (state == GAMEOVER_ANIM)
@@ -1518,19 +1524,24 @@ int main()
                      (float)videoFrames[currentFrame].height},
                     {0, 0,
                      (float)screenWidth,
-                     (float)screenHeight},
+                     (float)screenHeight},  
                     {0, 0},
                     0,
                     WHITE);
 
-                DrawText(
-                    "RELAPSE KA MUNA BOI",
-                    screenWidth / 2 - 220,
-                    screenHeight - 100,
-                    40,
-                    RED);
-            }
-        }
+                DrawText("RELAPSE ", screenWidth / 2 - 350, screenHeight - 100, 40, BLUE);
+                DrawText("KA ", screenWidth / 2 - 350 + MeasureText("RELAPSE ", 40), screenHeight - 100, 40, YELLOW);
+                DrawText("MUNA ", screenWidth / 2 - 350 + MeasureText("RELAPSE KA ", 40), screenHeight - 100, 40, BLUE);
+                DrawText("BOI HAHA :((", screenWidth / 2 - 350 + MeasureText("RELAPSE KA MUNA ", 40), screenHeight - 100, 40, YELLOW);
+
+                DrawText(                          
+                    "Press ENTER to skip",
+                    screenWidth / 2 - 130,
+                    screenHeight - 50,
+                    25,
+                    GRAY);
+                    }
+                }
 
         if (hitFlash > 0)
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
