@@ -1289,9 +1289,9 @@ int main()
             Texture2D texToDraw;
 
             switch (currentAnim) {
-                case WALK_RIGHT: texToDraw = RwalkFrames[currentFrame]; break;
-                case WALK_LEFT:  texToDraw = LwalkFrames[currentFrame]; break;
-                case JUMP:       texToDraw = JumpFrames[currentFrame];  break;
+                case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
+                case WALK_LEFT:  texToDraw = LwalkFrames[playerFrame]; break;
+                case JUMP:       texToDraw = JumpFrames[playerFrame];  break;
                 default:         texToDraw = playerTex;                 break; 
             }
 
