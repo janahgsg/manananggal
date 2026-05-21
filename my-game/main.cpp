@@ -72,8 +72,14 @@ enum EventType
 };
 
 
-enum PlayerAnim { IDLE, WALK_LEFT, WALK_RIGHT, JUMP };
+enum PlayerAnim { 
+    IDLE,
+    WALK_LEFT,
+    WALK_RIGHT,
+    JUMP 
+};
 
+// Animation
 PlayerAnim currentAnim = IDLE;
 
 int playerFrame = 0;
@@ -1185,27 +1191,27 @@ int main()
 
              float scale = 0.5f;
 
-// keep player rect consistent with texture size
-player.width  = playerTex.width * scale;
-player.height = playerTex.height * scale;
+            // keep player rect consistent with texture size
+            player.width  = playerTex.width * scale;
+            player.height = playerTex.height * scale;
 
-Rectangle dest = {
-    player.x,
-    player.y,
-    player.width,   
-    player.height   
-};
+            Rectangle dest = {
+                player.x,
+                player.y,
+                player.width,   
+                player.height   
+            };
 
-DrawTexturePro(
-    texToDraw,
-    {0, 0, (float)texToDraw.width, (float)texToDraw.height},
-    dest,
-    {0, 0},
-    0.0f,
-    WHITE
-);
+            DrawTexturePro(
+                texToDraw,
+                {0, 0, (float)texToDraw.width, (float)texToDraw.height},
+                dest,
+                {0, 0},
+                0.0f,
+                WHITE
+            );
 
-DrawRectangleLines(player.x, player.y, player.width, player.height, RED);
+            DrawRectangleLines(player.x, player.y, player.width, player.height, RED);
 
             for (auto &it : items)
             {
