@@ -201,8 +201,8 @@ int main()
     GameState state = MENU;
     // player
     Rectangle player;
-    player.width = 50;
-    player.height = 50;
+    player.width = 300;
+    player.height = 300;
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
@@ -601,8 +601,8 @@ int main()
                 for (int i = 0; i < spawnAmount; i++)
                 {
                     Item it;
-                    it.rect.width = 58;
-                    it.rect.height = 58;
+                    it.rect.width = 75;
+                    it.rect.height = 75;
                     int laneWidth = screenWidth / 4;
                     int lane = rand() % 4;
                     it.rect.x = 80 + rand() % (screenWidth - 160);
@@ -1315,7 +1315,7 @@ int main()
                 default:         texToDraw = playerTex;                 break; 
             }
 
-            float scale = 0.5f;
+            float scale = 0.85f;
 
             // keep player rect consistent with texture size
             player.width  = playerTex.width * scale;
@@ -1351,11 +1351,11 @@ int main()
                 if (it.type == MEDKIT)
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.10f, potionBandageTex.height * 0.10f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.15f, garlic1Tex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.22f, garlic1Tex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.15f, chiliTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.22f, chiliTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
                     DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
@@ -1363,13 +1363,13 @@ int main()
                 if (it.type == BLOOD)
                     DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {it.rect.x, it.rect.y, pooTex.width * 0.15f, pooTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {it.rect.x, it.rect.y, pooTex.width * 0.22f, pooTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
                     DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {it.rect.x, it.rect.y, mushroomTex.width * 0.15f, mushroomTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {it.rect.x, it.rect.y, mushroomTex.width * 0.22f, mushroomTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {it.rect.x, it.rect.y, poisonTex.width * 0.15f, poisonTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {it.rect.x, it.rect.y, poisonTex.width * 0.22f, poisonTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
                     DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HOLYWATER)
@@ -1379,7 +1379,7 @@ int main()
                 if (it.type == ATAY)
                     DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == PRIZE) //INSERT PRIZE IMAGE
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.15f, potionMedkitTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.22f, potionMedkitTex.height * 0.22f}, {0, 0}, 0.0f, col);
             }
 
             //EVENTS DESIGNS------------------------------------------------------
@@ -1493,12 +1493,13 @@ int main()
             }
 
             // combo 
-            if (combo > 1)
-                DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
-            if (combo >= 5)
-                DrawText(TextFormat("HOTSTREAK!!", combo), screenWidth / 2 - 120, 20, 40, ORANGE);
             if (combo >= 10)
-                DrawText(TextFormat("UNSTOPPABLE", combo), screenWidth / 2 - 140, 20, 45, RED);
+                DrawText("UNSTOPPABLE", screenWidth / 2 - 140, 20, 45, RED);
+            else if (combo >= 5)
+                DrawText("HOTSTREAK!!", screenWidth / 2 - 120, 20, 40, ORANGE);
+            else if (combo > 1)
+                DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
+
             if (comboBroken)
                 DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
             if (quakeTimer > 1.2f && quakeTimer < 2.0f)
@@ -1686,23 +1687,56 @@ int main()
         comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
+        player.y = screenHeight * 0.85f;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
         gravity = 1800.0f;
-        fallingInPit = false;// earthquake
+        velocityY = 0;
+        velocityX = 0;
+        isGrounded = true;
+    
+        spawnTimer = 0;
+        eventCooldown = 10.0f;
+        eventTimer = 0;
+        currentEvent = NONE;
+        secondEvent = NONE;
+        
+        slowTimer = 0;
+        speedBoostTimer = 0;
+        medkitCooldown = 0;
+        
+        showStarText = false;
+        showMinusText = false;
+        showSlowText = false;
+        starTextTimer = 0;
+        minusTextTimer = 0;
+        slowTextTimer = 0;
+        
+        shakeTime = 0;
+        shakePower = 0;
+        hitFlash = 0;
+        
+        fogActive = false;
+        fogAlpha = 0;
+        
+        fallingInPit = false;
         pitCreated = false;
         pitSoundPlayed = false;
         quakeActive = false;
         quakeTimer = 0;
-        velocityY = 0;
-        velocityX = 0;
+        pits.clear();
+        pitWidths.clear();
+        pitCenters.clear();
+        pitOpens.clear();
     
         camera.rotation = 0;
+        camera.zoom = 1.30f;
+        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+
         invertedScreen = false;
-        currentEvent = NONE;
-        secondEvent = NONE;
         gameOverAnimTimer = 0.0f;
+        diff = EASY;
     }
     if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
     {
@@ -1717,22 +1751,57 @@ int main()
         comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
+        player.y = screenHeight * 0.85f;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
         gravity = 1800.0f;
-        fallingInPit = false;// earthquake pit
+        velocityY = 0;
+        velocityX = 0;
+        isGrounded = true;
+
+        spawnTimer = 0;
+        eventCooldown = 10.0f;
+        eventTimer = 0;
+        currentEvent = NONE;
+        secondEvent = NONE;
+
+        slowTimer = 0;
+        speedBoostTimer = 0;
+        medkitCooldown = 0;
+
+        showStarText = false;
+        showMinusText = false;
+        showSlowText = false;
+        starTextTimer = 0;
+        minusTextTimer = 0;
+        slowTextTimer = 0;
+
+        shakeTime = 0;
+        shakePower = 0;
+        hitFlash = 0;
+
+        fogActive = false;
+        fogAlpha = 0;
+
+        fallingInPit = false;
         pitCreated = false;
         pitSoundPlayed = false;
         quakeActive = false;
         quakeTimer = 0;
-        velocityY = 0;
-        velocityX = 0;
+        pits.clear();
+        pitWidths.clear();
+        pitCenters.clear();
+        pitOpens.clear();
+
         camera.rotation = 0;
+        camera.zoom = 1.30f;
+        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+
         invertedScreen = false;
-        currentEvent = NONE;
-        secondEvent = NONE;
         gameOverAnimTimer = 0.0f;
+        diff = EASY;
+
         introMusic = LoadMusicStream("assets/sounds/intro.mp3");
         SetMusicVolume(introMusic, 0.5f);
         PlayMusicStream(introMusic);
