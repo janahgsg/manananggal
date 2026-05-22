@@ -1652,8 +1652,7 @@ int main()
     bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
         Color btnPlayBg = hoverPlay ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         Color btnPlayBorder = {139, 0, 0, 255};
-        DrawRectangleRounded(btnPlay, 0.1f, 8, btnPlayBg);
-        DrawRectangleRoundedLines(btnPlay, 0.1f, 8, btnPlayBorder);
+        DrawRectangleRounded(btnPlay, 0.3f, 10, btnPlayBg);
 
         Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN ", 26, 1);
         DrawTextEx(gamefont, "PLAY AGAIN",
@@ -1666,7 +1665,6 @@ int main()
     bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
         Color btnMenuBg = hoverMenu ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
         DrawRectangleRounded(btnMenu, 0.3f, 10, btnMenuBg);
-        DrawRectangleRoundedLines(btnMenu, 0.3f, 10, {139, 0, 0, 255});
 
         Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU", 26, 1);
         DrawTextEx(gamefont, "MAIN MENU",
