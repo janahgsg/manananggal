@@ -900,7 +900,7 @@ int main()
                               PlaySound(pitSound);
                               pitSoundPlayed = true;
                  }
-                 pitOpens[i] += 250 * GetFrameTime();
+                            pitOpens[i] += 250 * GetFrameTime();
 
                             if (pitOpens[i] > pitWidths[i])
                                 pitOpens[i] = pitWidths[i];
@@ -1524,7 +1524,7 @@ int main()
                      (float)videoFrames[currentFrame].height},
                     {0, 0,
                      (float)screenWidth,
-                     (float)screenHeight},  
+                     (float)screenHeight},
                     {0, 0},
                     0,
                     WHITE);
@@ -1534,14 +1534,14 @@ int main()
                 DrawText("MUNA ", screenWidth / 2 - 350 + MeasureText("RELAPSE KA ", 40), screenHeight - 100, 40, BLUE);
                 DrawText("BOI HAHA :((", screenWidth / 2 - 350 + MeasureText("RELAPSE KA MUNA ", 40), screenHeight - 100, 40, YELLOW);
 
-                DrawText(                          
+                DrawText(
                     "Press ENTER to skip",
                     screenWidth / 2 - 130,
                     screenHeight - 50,
                     25,
                     GRAY);
-                    }
-                }
+            }
+        }
 
         if (hitFlash > 0)
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
