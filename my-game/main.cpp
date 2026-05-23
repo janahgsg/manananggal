@@ -85,8 +85,18 @@ enum PlayerAnim {
     JUMP 
 };
 
+enum MananAnim {
+    FLY_FRONT,
+    FLY_RIGHT,
+    FLY_LEFT
+};
+
+
+
 // Animation
 PlayerAnim currentAnim = IDLE;
+MananAnim currentMananAnim = FLY_FRONT;
+
 
 int playerFrame = 0;
 float pframeTimer = 0.0f;
@@ -201,6 +211,32 @@ int main()
      JumpFrames[2] = LoadTexture("assets/character/human/jump/3.png");
      JumpFrames[3] = LoadTexture("assets/character/human/jump/4.png");
      JumpFrames[4] = LoadTexture("assets/character/human/jump/5.png");
+
+
+    Texture2D FlyFrames[6];   // front
+        FlyFrames[0] = LoadTexture("assets/character/manananggal/front/1.png");
+        FlyFrames[1] = LoadTexture("assets/character/manananggal/front/2.png");
+        FlyFrames[2] = LoadTexture("assets/character/manananggal/front/3.png");
+        FlyFrames[3] = LoadTexture("assets/character/manananggal/front/4.png");
+        FlyFrames[4] = LoadTexture("assets/character/manananggal/front/5.png");
+        FlyFrames[5] = LoadTexture("assets/character/manananggal/front/6.png");
+
+    Texture2D RflyFrames[6];  // right
+        RflyFrames[0] = LoadTexture("assets/character/manananggal/right/1.png");
+        RflyFrames[1] = LoadTexture("assets/character/manananggal/right/2.png");
+        RflyFrames[2] = LoadTexture("assets/character/manananggal/right/3.png");
+        RflyFrames[3] = LoadTexture("assets/character/manananggal/right/4.png");
+        RflyFrames[4] = LoadTexture("assets/character/manananggal/right/5.png");
+        RflyFrames[5] = LoadTexture("assets/character/manananggal/right/6.png");
+
+    Texture2D LflyFrames[6];  // left
+        LflyFrames[0] = LoadTexture("assets/character/manananggal/left/1.png");
+        LflyFrames[1] = LoadTexture("assets/character/manananggal/left/2.png");
+        LflyFrames[2] = LoadTexture("assets/character/manananggal/left/3.png");
+        LflyFrames[3] = LoadTexture("assets/character/manananggal/left/4.png");
+        LflyFrames[4] = LoadTexture("assets/character/manananggal/left/5.png");
+        LflyFrames[5] = LoadTexture("assets/character/manananggal/left/6.png");
+        
    
 
     srand(time(NULL));
@@ -1266,6 +1302,27 @@ int main()
 
 
             // PLAYER ANIMATIONS-----------------------------
+            
+            if (diff == MEDIUM || diff == HARD) {
+         
+         if (IsKeyDown(KEY_RIGHT)) {
+             currentMananAnim = FLY_RIGHT;
+         } else if (IsKeyDown(KEY_LEFT)) {
+             currentMananAnim = FLY_LEFT;
+         } else {
+             currentMananAnim = FLY_FRONT;
+         }
+
+         // Frame timing
+         pframeTimer += GetFrameTime();
+         if (pframeTimer >= pframeDelay) {
+         pframeTimer = 0.0f;
+         playerFrame++;
+         if (playerFrame >= 6) playerFrame = 0;
+         }
+         }
+            
+          else if (diff == EASY) {
             currentAnim = IDLE;
 
             // Walking right
@@ -1299,7 +1356,9 @@ int main()
                 }
             } else playerFrame = 0;
             
-        }
+        }}
+
+
         if (state == TROLL_VIDEO)
         {
             // add time every frame
@@ -1413,15 +1472,8 @@ int main()
 
             //character 
             
-            Texture2D texToDraw;
-
-            switch (currentAnim) {
-                case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
-                case WALK_LEFT:  texToDraw = LwalkFrames[playerFrame]; break;
-                case JUMP:       texToDraw = JumpFrames[playerFrame];  break;
-                default:         texToDraw = playerTex;                 break; 
-            }
-
+            Texture2D texToDraw; 
+            
             float scale = 0.85f;
 
             // keep player rect consistent with texture size
@@ -1435,6 +1487,26 @@ int main()
                 player.height   
             };
 
+
+             if (diff == EASY){
+
+            switch (currentAnim) {
+                case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
+                case WALK_LEFT:  texToDraw = LwalkFrames[playerFrame]; break;
+                case JUMP:       texToDraw = JumpFrames[playerFrame];  break;
+                default:         texToDraw = playerTex;                 break; 
+            }}
+
+           else if (diff == MEDIUM || diff == HARD) {
+
+             if (currentMananAnim == FLY_FRONT) 
+                  texToDraw = FlyFrames[playerFrame];
+             else if (currentMananAnim == FLY_RIGHT) 
+                  texToDraw = RflyFrames[playerFrame];
+             else if (currentMananAnim == FLY_LEFT) 
+                  texToDraw = LflyFrames[playerFrame];
+                }
+
             DrawTexturePro(
                 texToDraw,
                 {0, 0, (float)texToDraw.width, (float)texToDraw.height},
@@ -1443,7 +1515,6 @@ int main()
                 0.0f,
                 WHITE
                 );
-
             
 
             for (auto &it : items)
