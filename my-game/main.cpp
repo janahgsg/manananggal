@@ -39,7 +39,8 @@ enum ItemType
     TROLLFACE,
     ATAY,
     KRUS,
-    HOLYWATER
+    HOLYWATER,
+    BUNTOT_PAGI
 };
 
 struct Item
@@ -47,6 +48,11 @@ struct Item
     Rectangle rect; // items
     int type;
     float speed;
+    float acceleration; // added for more natural, varied falling speeds
+    float lateralSpeed; // horizontal movement (sway)
+    float sinTime;      // used for sine-wave movement
+    bool isIllusion;    // if true, it will change its type mid-fall
+    int illusionTarget; // the type it will change into
     bool active;
 };
 
@@ -66,7 +72,6 @@ enum EventType
     SLOW_BOOST,
     LUCKY_PARTY,
     MISFORTUNE,
-    SPIKES,
     INVERTED_SCREEN,
     FOG_BLIND,
     EARTHQUAKE
@@ -94,6 +99,10 @@ int currentFrame = 0;
 float frameTimer = 0;
 Sound trollSound;
 Music bgMusic;
+
+// Global Event History to prevent repeated events
+EventType lastEvent = NONE;
+EventType secondLastEvent = NONE;
 
 int main()
 {
@@ -161,6 +170,7 @@ int main()
     Texture2D holyTex = LoadTexture("assets/images/holywater.png");
     Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
     Texture2D hpTex = LoadTexture("assets/images/hearty.png");
+    Texture2D buntotTex = LoadTexture("assets/images/buntot.png");
 
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
@@ -250,7 +260,9 @@ int main()
     EventType secondEvent = NONE; // for HARD MODE extra event
 
     float eventTimer = 0.0f;
-    float eventCooldown = 10.0f;
+    float eventCooldown = 15.0f; // increased initial cooldown for fairer start
+    float eventWarningTimer = 0.0f; // used to show "Warning" before an event
+    
     // FOG EFFECT
     float fogAlpha = 0.0f;
     float fogTimer = 0.0f;
@@ -296,12 +308,15 @@ int main()
     bool showMinusText = false;
     bool showSlowText = false;
     bool showComboText = false;
+    bool showBuntotText = false;
     // timers
     float starTextTimer = 0;
     float minusTextTimer = 0;
     float slowTextTimer = 0;
+    float buntotTextTimer = 0;
 
     Difficulty diff = EASY;
+    Difficulty lastDiff = EASY; // track difficulty changes for grace periods
     // camera
     Camera2D camera = {0};
     camera.offset = {
@@ -561,35 +576,42 @@ int main()
                 baseY + shakeOffset.y
             };
 
-            // difficulty
-            if (score >= 50)
+            // Update difficulty and handle grace periods
+            lastDiff = diff;
+            if (score >= 400) // Increased thresholds for better progression
                 diff = HARD;
-            else if (score >= 20)
+            else if (score >= 150)
                 diff = MEDIUM;
             else
                 diff = EASY;
 
+            // If difficulty just increased, give the player a "Grace Period" (breather)
+            if (diff > lastDiff) 
+            {
+                eventCooldown = 15.0f; 
+                eventWarningTimer = 0;
+            }
+
             // SPAWNING------------
 
-            // spawn items every 1 second
-            spawnTimer += GetFrameTime(); // Add time per frame
+            spawnTimer += GetFrameTime(); 
             float spawnDelay;
             int spawnAmount;
             if (diff == EASY)
             {
-                spawnDelay = 0.85f;
+                spawnDelay = 1.1f; // Slower
                 spawnAmount = 1;
                 baseMove = 1.0f;
             }
             else if (diff == MEDIUM)
             {
-                spawnDelay = 0.55f;
+                spawnDelay = 0.75f; // Slower
                 spawnAmount = 2;
                 baseMove = 1.15f;
             }
             else if (diff == HARD)
             {
-                spawnDelay = 0.38f;
+                spawnDelay = 0.55f; // Slower
                 spawnAmount = 3;
                 baseMove = 1.3f;
             }
@@ -597,86 +619,94 @@ int main()
             if (spawnTimer > spawnDelay)
             {
                 spawnTimer = 0;
-                // spawnn items, no more overlap
+
+                // Segmented spawning to ensure spread and prevent overlapping
+                int segments = (diff == EASY) ? 3 : 4;
+                float segWidth = (float)screenWidth / segments;
+                int currentIndices[4] = {0, 1, 2, 3};
+                
+                // Shuffle segments
+                for (int s = 0; s < segments; s++) {
+                    int r = rand() % segments;
+                    int temp = currentIndices[s];
+                    currentIndices[s] = currentIndices[r];
+                    currentIndices[r] = temp;
+                }
+
                 for (int i = 0; i < spawnAmount; i++)
                 {
                     Item it;
-                    it.rect.width = 75;
-                    it.rect.height = 75;
-                    int laneWidth = screenWidth / 4;
-                    int lane = rand() % 4;
-                    it.rect.x = 80 + rand() % (screenWidth - 160);
-                    //avoid overlapping items
-                    bool isTooClose = false;
-                    for(auto &other : items){
-                        if (!other.active) continue;
+                    it.rect.width = 65;
+                    it.rect.height = 65;
 
-                        if (fabs(it.rect.x - other.rect.x) < 90 &&
-                            fabs(it.rect.y - other.rect.y) < 120)
-                        {
-                            isTooClose = true;
-                            break;
-                        }
-                    }
-                    if(isTooClose) continue;
+                    // Pick a segment from the shuffled list to guarantee horizontal separation
+                    int segIdx = currentIndices[i % segments];
+                    float margin = 60.0f; // More margin to prevent clustering
+                    float minX = (segIdx * segWidth) + margin;
+                    float maxX = ((segIdx + 1) * segWidth) - it.rect.width - margin;
+                    
+                    it.rect.x = minX + (rand() % (int)(maxX - minX + 1));
                     it.rect.y = -100 - rand() % 250;
 
-                    if (diff == EASY)
-                        it.speed = 240 + rand() % 30;
-                    else if (diff == MEDIUM)
-                        it.speed = 320 + rand() % 50;
-                    else if (diff == HARD)
-                        it.speed = 430 + rand() % 70;
+                    // Physics based on difficulty (Reduced speeds)
+                    if (diff == EASY) {
+                        it.speed = 180 + rand() % 40;
+                        it.acceleration = 25;
+                        it.lateralSpeed = 0;
+                    } else if (diff == MEDIUM) {
+                        it.speed = 250 + rand() % 50;
+                        it.acceleration = 35;
+                        it.lateralSpeed = (rand() % 100 < 30) ? (rand() % 81 - 40) : 0; 
+                    } else {
+                        it.speed = 320 + rand() % 80;
+                        it.acceleration = 50;
+                        it.lateralSpeed = (rand() % 91 - 45) * 1.2f; 
+                    }
 
+                    it.sinTime = (float)(rand() % 1000) / 100.0f;
                     it.active = true;
+                    it.isIllusion = false;
 
-                    //rare items
-                    if (score >= 500 && rand() % 100 < 15)
-                    {
-                        prizeSpawn = true;
-                        it.type = PRIZE;
+                    // ITEM SELECTION LOGIC
+                    if (currentEvent == LUCKY_PARTY) {
+                        int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, MEDKIT, CHILI, BUNTOT_PAGI};
+                        it.type = goodPool[rand() % 10];
                     }
-                    else if (hp == 1 && medkitCooldown <= 0 && rand() % 1000 < 8) 
-                    {
-                        it.type = MEDKIT;
-                        medkitCooldown = 12.0f;
+                    else if (currentEvent == MISFORTUNE) {
+                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, MEDKIT, BANDAGE};
+                        it.type = badPool[rand() % 9];
                     }
-                    else if (hp < 3 && rand() % 1000 < 15) 
-                        it.type = BANDAGE;
-
-                    else if (diff == EASY)
-                    {
-                        int pool[] = {POO, GARLIC, BABY, BLOOD, TROLLFACE};
-                        int randomIndex = rand() % 5;
-                        it.type = pool[randomIndex];
-                    }
-                    //items for each difficulties
-                    else if (diff == MEDIUM)
-                    {
-                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB,
-                                      POISON, MEAT, HEART, TROLLFACE, ATAY};
-                        int randomIndex = rand() % 10;
-                        it.type = pool[randomIndex];
-                    }
-                    else if (diff == HARD)
-                    {
-                        int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, MEAT, HEART, TROLLFACE, ATAY};
-
-                        int chance = rand() % 1000;
-                        if (chance < 860)
-                        {
-                            int randomIndex = rand() % 10;
-                            it.type = pool[randomIndex];
+                    else {
+                        if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 5) {
+                            it.type = MEDKIT;
+                            medkitCooldown = 15.0f;
                         }
-                        else if (chance < 940)
-                            it.type = MUSHROOM;
-                        else if (chance < 985)
-                            it.type = DICE;
-                        else
-                            it.type = STAR;
+                        else if (hp < 3 && rand() % 100 < 8) it.type = BANDAGE;
+                        else if (rand() % 100 < 3) it.type = TROLLFACE;
+                        else if (rand() % 100 < 2) it.type = BUNTOT_PAGI; 
+                        else if (diff == EASY) {
+                            int pool[] = {POO, GARLIC, BABY, BLOOD, BABY, ATAY};
+                            it.type = pool[rand() % 6];
+                        }
+                        else if (diff == MEDIUM) {
+                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, HEART, ATAY, BABY};
+                            it.type = pool[rand() % 9];
+                            if (rand() % 100 < 12) it.isIllusion = true; // Slightly higher chance
+                        }
+                        else { // HARD
+                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, MUSHROOM, DICE, STAR};
+                            it.type = pool[rand() % 11];
+                            if (rand() % 100 < 22) it.isIllusion = true; 
+                        }
                     }
 
-                    items.push_back(it); // add item to vector
+                    if (it.isIllusion) {
+                        if (it.type == BABY || it.type == HEART || it.type == BLOOD) it.illusionTarget = BOMB;
+                        else if (it.type == BOMB || it.type == POISON) it.illusionTarget = HEART;
+                        else it.isIllusion = false; 
+                    }
+
+                    items.push_back(it); 
                 }
             }
 
@@ -684,44 +714,69 @@ int main()
            
             // countdown before next event
             if (currentEvent == NONE)
+            {
                 eventCooldown -= GetFrameTime();
+                
+                // Show a warning when the event is about to start (3 seconds before)
+                if (eventCooldown <= 3.0f && diff != EASY)
+                {
+                    eventWarningTimer = eventCooldown;
+                }
+            }
 
             // start new event
             if (currentEvent == NONE && eventCooldown <= 0)
             {
-
                 // reset previous
                 secondEvent = NONE;
+                eventWarningTimer = 0;
 
                 if (diff == MEDIUM)
                 {
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    
+                    // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
+                    EventType chosen;
+                    int attempts = 0;
+                    do {
+                        chosen = (EventType)mediumEvents[rand() % 7];
+                        attempts++;
+                    } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
+                    
+                    currentEvent = chosen;
+                    secondLastEvent = lastEvent;
+                    lastEvent = currentEvent;
 
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN};
-                    currentEvent = (EventType)mediumEvents[rand() % 4];
                     eventTimer = 18.0f;
-                    // next event
                     eventCooldown = 20.0f;
                 }
 
                 else if (diff == HARD)
                 {
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
 
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE};
+                    // FAIRNESS: Same repeat-prevention for primary event
+                    EventType chosen;
+                    int attempts = 0;
+                    do {
+                        chosen = (EventType)hardEvents[rand() % 9];
+                        attempts++;
+                    } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
 
-                    currentEvent = (EventType)hardEvents[rand() % 7];
+                    currentEvent = chosen;
+                    secondLastEvent = lastEvent;
+                    lastEvent = currentEvent;
 
                     // 40% chance for DOUBLE EVENT
                     if (rand() % 100 < 40)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 7];
-                        // prevent same event twice
+                        secondEvent = (EventType)hardEvents[rand() % 9];
+                        // prevent same event twice in the double-event slot
                         while (secondEvent == currentEvent)
-                            secondEvent = (EventType)hardEvents[rand() % 7];
+                            secondEvent = (EventType)hardEvents[rand() % 9];
                     }
 
                     eventTimer = 25.0f;
-
-                    // HARD mode gets more frequent chaos
                     eventCooldown = 12.0f;
                 }
             }
@@ -971,14 +1026,47 @@ int main()
             {
                 if (!it.active)
                     continue;
-                    it.speed += 55 * GetFrameTime();
+
+                // Physics: items now accelerate at their own unique rates
+                it.speed += it.acceleration * GetFrameTime();
                 it.rect.y += it.speed * GetFrameTime();
 
-                // remove if off-screen
-                if (it.rect.y > screenHeight)
-                    it.active = false;
+                // Lateral movement (Sway / Zigzag)
+                if (it.lateralSpeed != 0) {
+                    it.sinTime += GetFrameTime() * 2.0f;
+                    it.rect.x += it.lateralSpeed * GetFrameTime() + sin(it.sinTime) * 3.0f;
+                    
+                    // Keep within screen
+                    if (it.rect.x < 10) { it.rect.x = 10; it.lateralSpeed *= -1; }
+                    if (it.rect.x > screenWidth - it.rect.width - 10) { it.rect.x = screenWidth - it.rect.width - 10; it.lateralSpeed *= -1; }
+                }
 
-                if (CheckCollisionRecs(player, it.rect))
+                // Illusion Shifting (Uncertainty)
+                if (it.isIllusion && it.rect.y > screenHeight * 0.30f) {
+                    // Shift to target type mid-air
+                    it.type = it.illusionTarget;
+                    it.isIllusion = false; // only shift once
+                    // add a little "poof" shake to the item
+                    it.rect.x += (rand() % 21 - 10);
+                }
+
+                // TIGHT COLLISION LOGIC (Padding)
+                // We shrink the effective hitbox to match the character's visual core
+                Rectangle playerHitbox = {
+                    player.x + player.width * 0.25f, // 25% padding on sides
+                    player.y + player.height * 0.15f, // 15% padding on top
+                    player.width * 0.5f,             // 50% width
+                    player.height * 0.75f            // 75% height
+                };
+
+                Rectangle itemHitbox = {
+                    it.rect.x + it.rect.width * 0.15f,
+                    it.rect.y + it.rect.height * 0.15f,
+                    it.rect.width * 0.7f,
+                    it.rect.height * 0.7f
+                };
+
+                if (CheckCollisionRecs(playerHitbox, itemHitbox))
                 {
                     // BAD ITEMS
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
@@ -995,6 +1083,18 @@ int main()
                     {
                         chiliBoost = 1.8f;      
                         speedBoostTimer = 5.0f; 
+                    }
+                    // POWERUP: BUNTOT PAGI (Clears bad items)
+                    else if (it.type == BUNTOT_PAGI) {
+                        for (auto &other : items) {
+                            if (other.active && (other.type == BOMB || other.type == POO || other.type == POISON || other.type == MUSHROOM)) {
+                                other.active = false;
+                            }
+                        }
+                        shakeTime = 0.3f;
+                        shakePower = 8.0f;
+                        showBuntotText = true;
+                        buntotTextTimer = 2.0f;
                     }
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART)
@@ -1148,6 +1248,13 @@ int main()
                 slowTextTimer -= GetFrameTime();
                 if (slowTextTimer <= 0)
                     showSlowText = false;
+            }
+
+            if (showBuntotText)
+            {
+                buntotTextTimer -= GetFrameTime();
+                if (buntotTextTimer <= 0)
+                    showBuntotText = false;
             }
 
             if (slowTimer > 0)
@@ -1343,7 +1450,15 @@ int main()
             {
                 if (!it.active)
                     continue;
+
                 Color col = WHITE;
+                
+                // Intensified ILLUSION HINT: Pulsing purple tint
+                if (it.isIllusion) {
+                    float pulse = (sin(GetTime() * 12.0f) + 1.0f) / 2.0f; // More aggressive pulse
+                    col = ColorLerp(WHITE, PURPLE, 0.45f * pulse); // Stronger tint
+                }
+
                 if (it.type == BOMB)
                     DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
@@ -1378,6 +1493,8 @@ int main()
                     DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
                     DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
+                if (it.type == BUNTOT_PAGI)
+                    DrawTexturePro(buntotTex, {0, 0, (float)buntotTex.width, (float)buntotTex.height}, it.rect, {0, 0}, 0.0f, GOLD); // Golden tint for powerup
                 if (it.type == PRIZE) //INSERT PRIZE IMAGE
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.22f, potionMedkitTex.height * 0.22f}, {0, 0}, 0.0f, col);
             }
@@ -1422,7 +1539,13 @@ int main()
             //score 
             DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
 
-        
+            // EVENT WARNING UI
+            if (eventWarningTimer > 0)
+            {
+                // Pulsing effect for the warning
+                float pulse = abs(sin(GetTime() * 10.0f));
+                DrawText("!!! PREPARE FOR CHAOS !!!", screenWidth / 2 - 240, 150, 40, Fade(RED, 0.5f + pulse * 0.5f));
+            }
 
             // POP UP TEXTS--------------------------------------
             
@@ -1432,6 +1555,8 @@ int main()
                 DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showSlowText)
                 DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+            if (showBuntotText)
+                DrawText("BUNTOT PAGI POWER!", screenWidth / 2 - 280, screenHeight - 150, 40, GOLD);
 
             if (quakeTimer > 1.0f && quakeTimer < 3.0f)
                 DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 250, screenHeight - 100, 40, RED);
@@ -1455,6 +1580,8 @@ int main()
                     return "CURSED FOG";
                 if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
                 if (e == EARTHQUAKE) return "EARTHQUAKE";
+                if (e == LUCKY_PARTY) return "JACKPOT";
+                if (e == MISFORTUNE) return "MISFORTUNE";
 
                 return "";
             };
@@ -1697,10 +1824,13 @@ int main()
         isGrounded = true;
     
         spawnTimer = 0;
-        eventCooldown = 10.0f;
+        eventCooldown = 15.0f; // Give a slightly longer breather on restart
         eventTimer = 0;
         currentEvent = NONE;
         secondEvent = NONE;
+        lastEvent = NONE;
+        secondLastEvent = NONE;
+        eventWarningTimer = 0;
         
         slowTimer = 0;
         speedBoostTimer = 0;
@@ -1761,10 +1891,13 @@ int main()
         isGrounded = true;
 
         spawnTimer = 0;
-        eventCooldown = 10.0f;
+        eventCooldown = 15.0f; 
         eventTimer = 0;
         currentEvent = NONE;
         secondEvent = NONE;
+        lastEvent = NONE;
+        secondLastEvent = NONE;
+        eventWarningTimer = 0;
 
         slowTimer = 0;
         speedBoostTimer = 0;
