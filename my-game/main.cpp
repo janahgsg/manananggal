@@ -1444,7 +1444,7 @@ int main()
                 WHITE
                 );
 
-            DrawRectangleLines(player.x, player.y, player.width, player.height, RED);
+            
 
             for (auto &it : items)
             {
