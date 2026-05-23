@@ -578,14 +578,14 @@ int main()
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
-            if (score >= 400) // Increased thresholds for better progression
+            if (score >= 400) 
                 diff = HARD;
             else if (score >= 150)
                 diff = MEDIUM;
             else
                 diff = EASY;
 
-            // If difficulty just increased, give the player a "Grace Period" (breather)
+            // If difficulty just increased, give the player a "Grace Period"
             if (diff > lastDiff) 
             {
                 eventCooldown = 15.0f; 
@@ -599,19 +599,19 @@ int main()
             int spawnAmount;
             if (diff == EASY)
             {
-                spawnDelay = 1.1f; // Slower
+                spawnDelay = 1.1f; 
                 spawnAmount = 1;
                 baseMove = 1.0f;
             }
             else if (diff == MEDIUM)
             {
-                spawnDelay = 0.75f; // Slower
+                spawnDelay = 0.75f; 
                 spawnAmount = 2;
                 baseMove = 1.15f;
             }
             else if (diff == HARD)
             {
-                spawnDelay = 0.55f; // Slower
+                spawnDelay = 0.55f; 
                 spawnAmount = 3;
                 baseMove = 1.3f;
             }
@@ -648,7 +648,7 @@ int main()
                     it.rect.x = minX + (rand() % (int)(maxX - minX + 1));
                     it.rect.y = -100 - rand() % 250;
 
-                    // Physics based on difficulty (Reduced speeds)
+                    // Physics based on difficulty 
                     if (diff == EASY) {
                         it.speed = 180 + rand() % 40;
                         it.acceleration = 25;
@@ -1689,7 +1689,6 @@ int main()
             
 
     // BACKGROUND
-    // i2 gameover bg !!
     DrawTexturePro(
         gameOverBg,
         {0, 0, (float)gameOverBg.width, (float)gameOverBg.height},
@@ -1824,7 +1823,7 @@ int main()
         isGrounded = true;
     
         spawnTimer = 0;
-        eventCooldown = 15.0f; // Give a slightly longer breather on restart
+        eventCooldown = 15.0f; 
         eventTimer = 0;
         currentEvent = NONE;
         secondEvent = NONE;
