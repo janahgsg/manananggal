@@ -897,6 +897,7 @@ int main()
                     }
                 }
             }
+        
 
             // EARTHQUAKE PIT
             if (quakeActive)
@@ -960,6 +961,8 @@ int main()
                                     break;
                                 }
                             }
+
+                        
 
                         } while (tooClose);
 
@@ -1356,7 +1359,7 @@ int main()
                 }
             } else playerFrame = 0;
             
-        }}
+        }
 
 
         if (state == TROLL_VIDEO)
@@ -1385,6 +1388,7 @@ int main()
              state = PLAYING;
             }
         }
+    }
 
         if (state == GAMEOVER_ANIM)
         {
@@ -2012,7 +2016,7 @@ int main()
 }
 }
         EndDrawing();
-    }
+}
 
     for (auto &t : videoFrames)
         UnloadTexture(t);
