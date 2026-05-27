@@ -17,6 +17,7 @@ enum GameState
     BG1_TRANSITION,
     BG2_TRANSITION,
     TROLL_VIDEO,
+    PAUSED,
     GAMEOVER_ANIM
 };
 
@@ -449,10 +450,48 @@ int main()
             }
 
 
+
+else if (state == PAUSED)
+{
+    BeginDrawing();
+
+    // Draw a translucent overlay instead of clearing to black
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
+
+    // Centered pause text
+    DrawText("PAUSED",
+             screenWidth/2 - MeasureText("PAUSED", 60)/2,
+             screenHeight/2 - 30,
+             60,
+             WHITE);
+
+    DrawText("Press SPACE to resume",
+             screenWidth/2 - MeasureText("Press SPACE to resume", 30)/2,
+             screenHeight/2 + 40,
+             30,
+             WHITE);
+
+    EndDrawing();
+
+    // Resume check
+    if (IsKeyPressed(KEY_SPACE)) {
+            if (state == PLAYING) state = PAUSED;
+            else if (state == PAUSED) state = PLAYING;
+           }
+
+    }
+
+
+
         // GAMEPLAY-----------------------------------------
         else if (state == PLAYING)
         {
             UpdateMusicStream(bgMusic);
+
+            if (IsKeyPressed(KEY_SPACE)) {
+            if (state == PLAYING) state = PAUSED;
+            else if (state == PAUSED) state = PLAYING;
+           }
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
@@ -1400,6 +1439,8 @@ int main()
         }
 
 
+        
+
 
         if (state == TROLL_VIDEO)
         {
@@ -2068,7 +2109,7 @@ int main()
 }
 }
         EndDrawing();
-}
+    }
 
     for (auto &t : videoFrames)
         UnloadTexture(t);
