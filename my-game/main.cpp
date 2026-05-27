@@ -1752,6 +1752,12 @@ int main()
         }
         else if (state == TROLL_VIDEO)
         {
+            frameTimer += GetFrameTime();
+            if (frameTimer >= 0.2f) {   // adjust playback speed here
+                 frameTimer = 0.0f;
+                 currentFrame++;
+        }
+
             ClearBackground(WHITE);
             if (!videoFrames.empty() && currentFrame < videoFrames.size())
             {
@@ -1779,6 +1785,17 @@ int main()
                     25,
                     GRAY);
             }
+
+            if (IsKeyPressed(KEY_ENTER)) {
+             UnloadBg1TransitionVideo(); 
+            state = PLAYING; 
+            continue;          
+             }
+
+             if (!IsSoundPlaying(trollSound)) {   // or IsMusicStreamPlaying if you used LoadMusicStream
+             state = PLAYING;
+             continue;
+              }
         }
 
         if (hitFlash > 0)
