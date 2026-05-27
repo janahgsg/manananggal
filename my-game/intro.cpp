@@ -16,7 +16,7 @@ static bool bg2Finished = false;
 static float bg2Alpha = 0.0f;   // starts transparent
 static Texture2D bg2Frames[BG2_TOTAL_FRAMES];
 static float bg2FrameTimer = 0.0f;
-static float bg2FrameDelay = 0.04f; 
+static float bg2FrameDelay = 0.08f; 
 
 
 
@@ -59,10 +59,19 @@ float GetBg2TransitionProgress() {
 
 float GetBg2TransitionAlpha() {
     float progress = GetBg2TransitionProgress();
-    if (progress < 0.5f) 
-        return progress * 2.0f;        // fade in
-    else 
-        return (1.0f - progress) * 2.0f; // fade out
+
+    // Fade in during first 30% of video
+    if (progress < 0.2f) {
+        return progress / 0.2f;   // 0 → 1
+    }
+    // Stay fully visible until 90%
+    else if (progress < 0.9f) {
+        return 1.0f;
+    }
+    // Fade out during last 10%
+    else {
+        return (1.0f - progress) / 0.1f; // 1 → 0
+    }
 }
 
 
@@ -136,9 +145,20 @@ void DrawBg1TransitionVideo() {
 }
 
 float GetBg1TransitionAlpha() {
-    float progress = GetBg1TransitionProgress(); 
-    if (progress < 0.5f) return progress * 2.0f;     
-    else return (1.0f - progress) * 2.0f;              
+    float progress = GetBg1TransitionProgress();
+
+    // Fade in during first 30% of video
+    if (progress < 0.2f) {
+        return progress / 0.2f;   // 0 → 1
+    }
+    // Stay fully visible until 90%
+    else if (progress < 0.9f) {
+        return 1.0f;
+    }
+    // Fade out during last 10%
+    else {
+        return (1.0f - progress) / 0.1f; // 1 → 0
+    }
 }
 
 

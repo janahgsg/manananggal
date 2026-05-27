@@ -434,8 +434,6 @@ int main()
              BeginDrawing();
              ClearBackground(BLACK);
              DrawBg2TransitionVideo();
-
-    
              
 
          EndDrawing();
