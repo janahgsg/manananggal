@@ -42,7 +42,6 @@ enum ItemType
     ATAY,
     KRUS,
     HOLYWATER,
-    BUNTOT_PAGI
 };
 
 struct Item
@@ -183,7 +182,6 @@ int main()
     Texture2D holyTex = LoadTexture("assets/images/holywater.png");
     Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
     Texture2D hpTex = LoadTexture("assets/images/hearty.png");
-    Texture2D buntotTex = LoadTexture("assets/images/buntot.png");
 
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
@@ -347,12 +345,10 @@ int main()
     bool showMinusText = false;
     bool showSlowText = false;
     bool showComboText = false;
-    bool showBuntotText = false;
     // timers
     float starTextTimer = 0;
     float minusTextTimer = 0;
     float slowTextTimer = 0;
-    float buntotTextTimer = 0;
 
 
     Difficulty diff = EASY;
@@ -767,8 +763,8 @@ int main()
 
                     // ITEM SELECTION LOGIC
                     if (currentEvent == LUCKY_PARTY) {
-                        int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, MEDKIT, CHILI, BUNTOT_PAGI};
-                        it.type = goodPool[rand() % 10];
+                        int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, MEDKIT, CHILI};
+                        it.type = goodPool[rand() % 9];
                     }
                     else if (currentEvent == MISFORTUNE) {
                         int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, MEDKIT, BANDAGE};
@@ -781,7 +777,7 @@ int main()
                         }
                         else if (hp < 3 && rand() % 100 < 8) it.type = BANDAGE;
                         else if (rand() % 100 < 3) it.type = TROLLFACE;
-                        else if (rand() % 100 < 2) it.type = BUNTOT_PAGI; 
+                        else if (rand() % 100 < 2) it.type = DICE; 
                         else if (diff == EASY) {
                             int pool[] = {POO, GARLIC, BABY, BLOOD, BABY, ATAY};
                             it.type = pool[rand() % 6];
@@ -1185,18 +1181,7 @@ int main()
                         chiliBoost = 1.8f;      
                         speedBoostTimer = 5.0f; 
                     }
-                    // POWERUP: BUNTOT PAGI (Clears bad items)
-                    else if (it.type == BUNTOT_PAGI) {
-                        for (auto &other : items) {
-                            if (other.active && (other.type == BOMB || other.type == POO || other.type == POISON || other.type == MUSHROOM)) {
-                                other.active = false;
-                            }
-                        }
-                        shakeTime = 0.3f;
-                        shakePower = 8.0f;
-                        showBuntotText = true;
-                        buntotTextTimer = 2.0f;
-                    }
+                    
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART)
                     {
@@ -1350,14 +1335,6 @@ int main()
                 if (slowTextTimer <= 0)
                     showSlowText = false;
             }
-
-            if (showBuntotText)
-            {
-                buntotTextTimer -= GetFrameTime();
-                if (buntotTextTimer <= 0)
-                    showBuntotText = false;
-            }
-
             if (slowTimer > 0)
             {
                 slowTimer -= GetFrameTime();
@@ -1632,8 +1609,6 @@ int main()
                     DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
                     DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
-                if (it.type == BUNTOT_PAGI)
-                    DrawTexturePro(buntotTex, {0, 0, (float)buntotTex.width, (float)buntotTex.height}, it.rect, {0, 0}, 0.0f, GOLD); // Golden tint for powerup
                 if (it.type == PRIZE) //INSERT PRIZE IMAGE
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.22f, potionMedkitTex.height * 0.22f}, {0, 0}, 0.0f, col);
             }
@@ -1694,8 +1669,6 @@ int main()
                 DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showSlowText)
                 DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
-            if (showBuntotText)
-                DrawText("BUNTOT PAGI POWER!", screenWidth / 2 - 280, screenHeight - 150, 40, GOLD);
 
             if (quakeTimer > 1.0f && quakeTimer < 3.0f)
                 DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 250, screenHeight - 100, 40, RED);
