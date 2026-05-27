@@ -6,6 +6,152 @@
 #include <climits>
 #include <ctime>
 #include <string>
+#include <iostream>
+#define BG2_TOTAL_FRAMES 41
+
+static float introAlpha = 0.0f;   // starts fully transparent
+static bool fadeIn = true;
+static int bg2FrameIndex = 0;
+static bool bg2Finished = false;
+static float bg2Alpha = 0.0f;   // starts transparent
+static Texture2D bg2Frames[BG2_TOTAL_FRAMES];
+static float bg2FrameTimer = 0.0f;
+static float bg2FrameDelay = 0.04f; 
+
+
+
+
+void InitBg2TransitionVideo() {
+    
+    bg2FrameIndex = 0;
+    bg2Finished = false;
+    for (int i = 0; i < BG2_TOTAL_FRAMES; i++) {
+        bg2Frames[i] = LoadTexture(TextFormat("assets/videos/nighttrans/%d.png", i+1));
+    }
+}
+
+void UpdateBg2TransitionVideo() {
+    if (bg2Finished) return;
+
+    bg2FrameTimer += GetFrameTime(); // time since last frame
+    if (bg2FrameTimer >= bg2FrameDelay) {
+        bg2FrameTimer = 0.0f;
+        bg2FrameIndex++;
+        if (bg2FrameIndex >= BG2_TOTAL_FRAMES) {
+            bg2Finished = true;
+        }
+    }
+}
+
+void DrawBg2TransitionVideo() {
+    if (!bg2Finished) {
+        float alpha = GetBg2TransitionAlpha();
+        Color fadeColor = WHITE;
+        fadeColor.a = (unsigned char)(alpha * 255);
+        DrawTexture(bg2Frames[bg2FrameIndex], 0, 0, fadeColor);
+    }
+}
+
+
+float GetBg2TransitionProgress() {
+    return (float)bg2FrameIndex / (float)BG2_TOTAL_FRAMES;
+}
+
+float GetBg2TransitionAlpha() {
+    float progress = GetBg2TransitionProgress();
+    if (progress < 0.5f) 
+        return progress * 2.0f;        // fade in
+    else 
+        return (1.0f - progress) * 2.0f; // fade out
+}
+
+
+bool IsBg2TransitionFinished() {
+    return bg2Finished;
+}
+
+void UnloadBg2TransitionVideo() {
+    for (int i = 0; i < BG2_TOTAL_FRAMES; i++) {
+        UnloadTexture(bg2Frames[i]);
+    }
+}
+
+
+
+static std::vector<Texture2D> bg1Frames;
+static int bg1FrameIndex = 0;
+static float bg1FrameTimer = 0.0f;
+static float bg1FrameDelay = 0.08f; // ~12 fps
+static bool bg1Finished = false;
+
+void InitBg1TransitionVideo() {
+    bg1Frames.clear();
+    for (int i = 1; i <= 23; i++) {
+        std::string filename = "assets/videos/daytrans/" + std::to_string(i) + ".png";
+        std::cout << "Loading: " << filename << std::endl; // debug print
+        Texture2D tex = LoadTexture(filename.c_str());
+        if (tex.id == 0) {
+            std::cout << "Failed to load: " << filename << std::endl;
+        }
+        SetTextureFilter(tex, TEXTURE_FILTER_POINT);
+        bg1Frames.push_back(tex);
+    }
+    bg1FrameIndex = 0;
+    bg1FrameTimer = 0.0f;
+    bg1Finished = false;
+}
+
+void UpdateBg1TransitionVideo() {
+    if (bg1Finished) return;
+
+    bg1FrameTimer += GetFrameTime();
+    if (bg1FrameTimer >= bg1FrameDelay) {
+        bg1FrameIndex++;
+        bg1FrameTimer = 0.0f;
+    }
+
+    if (bg1FrameIndex >= (int)bg1Frames.size()) {
+        bg1Finished = true;
+    }
+}
+
+float GetBg1TransitionProgress() {
+    if (bg1Frames.empty()) return 0.0f;
+    return (float)bg1FrameIndex / (float)(bg1Frames.size() - 1);
+}
+
+
+void DrawBg1TransitionVideo() {
+    if (!bg1Finished && bg1FrameIndex < (int)bg1Frames.size()) {
+        Texture2D frame = bg1Frames[bg1FrameIndex];
+        DrawTexturePro(
+            frame,
+            {0, 0, (float)frame.width, (float)frame.height},
+            {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+            {0, 0},
+            0.0f,
+            WHITE
+        );
+    }
+}
+
+float GetBg1TransitionAlpha() {
+    float progress = GetBg1TransitionProgress(); 
+    if (progress < 0.5f) return progress * 2.0f;     
+    else return (1.0f - progress) * 2.0f;              
+}
+
+
+bool IsBg1TransitionFinished() {
+    return bg1Finished;
+}
+
+void UnloadBg1TransitionVideo() {
+    for (auto &tex : bg1Frames) {
+        UnloadTexture(tex);
+    }
+    bg1Frames.clear();
+}
 
 
 static Music introMusic;
@@ -19,6 +165,8 @@ static bool videoFinished = false;
 // ===== NEW: Info overlay state =====
 static bool showInfo = false;
 static Texture2D infoTexture;
+
+
 
 
 void InitIntroVideo() {
