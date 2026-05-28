@@ -226,6 +226,7 @@ int main()
 
     //character
     Texture2D playerTex = LoadTexture("assets/character/human/player.png");
+    Texture2D player1Tex = LoadTexture("assets/character/human/invisible.png");
 
     Texture2D RwalkFrames[6]; 
      RwalkFrames[0] = LoadTexture("assets/character/human/right/1.png");
@@ -1462,15 +1463,50 @@ else if (state == PAUSED)
              }
 
             // Jump trigger (physics only)
-             if (IsKeyPressed(KEY_UP) && isGrounded) {
-                velocityY = jumpForce;
-                isGrounded = false;
-        }
+            if (IsKeyPressed(KEY_UP) && isGrounded) {
+            velocityY = jumpForce;
+            isGrounded = false;
+
+             // reset jump animation
+             currentAnim = JUMP;
+             playerFrame = 0;
+             pframeTimer = 0.0f;
+            }
 
              // If airborne, force jump animation
                 if (!isGrounded) {
                 currentAnim = JUMP;
              }
+
+             // Animation state handling
+            if (currentAnim == JUMP) {
+            // advance jump frames only once
+            pframeTimer += GetFrameTime();
+             if (pframeTimer >= pframeDelay && playerFrame < 4) {
+               pframeTimer = 0.0f;
+               playerFrame++;
+            }
+            // hold last frame until landing
+            if (playerFrame >= 4) playerFrame = 4;
+
+
+              // when grounded again, switch back to idle/walk
+         if (isGrounded) {
+             if (IsKeyDown(KEY_LEFT)) currentAnim = WALK_LEFT;
+             else if (IsKeyDown(KEY_RIGHT)) currentAnim = WALK_RIGHT;
+             else currentAnim = IDLE;
+                  playerFrame = 0; // reset for next cycle
+            }
+           }
+         else {
+              // normal walking/idle animation
+              pframeTimer += GetFrameTime();
+              if (pframeTimer >= pframeDelay) {
+              pframeTimer = 0.0f;
+               playerFrame++;
+             if (playerFrame >= 6) playerFrame = 0;
+            }
+        }
 
              // Update frame timer for walk animations
             if (currentAnim == WALK_RIGHT || currentAnim == WALK_LEFT || currentAnim == JUMP) {
@@ -1598,15 +1634,6 @@ else if (state == PAUSED)
             if (diff == EASY)      currentBg = bgEasy;
             else if (diff == MEDIUM) currentBg = bgMedium;
             else if (diff == HARD)   currentBg = bgHard;
-          
-            DrawTexturePro(
-                 currentBg,
-                 {0, 0, (float)currentBg.width, (float)currentBg.height},
-                 {0, 0, (float)screenWidth, (float)screenHeight},
-                 {0, 0},
-                 0,
-                 WHITE
-                 );
 
             
             DrawTexturePro(
@@ -1658,6 +1685,14 @@ else if (state == PAUSED)
 
 
             //character 
+
+            // Draw invisible base 
+           DrawTexturePro(
+           player1Tex,
+           {0,0,(float)player1Tex.width,(float)player1Tex.height},
+           {player.x, player.y, player.width, player.height},
+           {0,0}, 0.0f, WHITE
+           );
             
             Texture2D texToDraw; 
             
