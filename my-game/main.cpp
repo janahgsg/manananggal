@@ -205,7 +205,7 @@ int main()
     Texture2D chiliTex = LoadTexture("assets/images/chili.png");
     Texture2D garlicTex = LoadTexture("assets/images/garlic.png");
     Texture2D fetusTex = LoadTexture("assets/images/fetus1.png");
-    Texture2D poisonTex = LoadTexture("assets/images/poision.png");
+    Texture2D poisonTex = LoadTexture("assets/images/poison.png");
     Texture2D saltTex = LoadTexture("assets/images/salt.png");
     Texture2D potionBandageTex = LoadTexture("assets/images/potion-bandage (2).png");
     Texture2D potionMedkitTex = LoadTexture("assets/images/potion-medkit (2).png");
@@ -317,9 +317,6 @@ int main()
     float shakeTime = 0;  // how long screen shakes
     float shakePower = 0; // strength of shake
     float hitFlash = 0;   // red flash when damaged
-    float playerScale = 1.0f; // for collection "pop" effect
-    float texWidth = 300; // actual texture width (dynamic)
-    float texHeight = 300; // actual texture height (dynamic)
 
     // game over
     float gameOverAnimTimer = 0.0f;
@@ -539,19 +536,12 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
-            if (score >= 400) 
+            if (score >= 100) 
                 diff = HARD;
-            else if (score >= 150)
+            else if (score >= 50)
                 diff = MEDIUM;
             else
                 diff = EASY;
-
-            // DYNAMIC PLAYER DIMENSIONS
-            float baseScale = 0.85f;
-            texWidth = (diff == HARD) ? (float)FlyFrames[0].width : (float)playerTex.width;
-            texHeight = (diff == HARD) ? (float)FlyFrames[0].height : (float)playerTex.height;
-            player.width = texWidth * baseScale;
-            player.height = texHeight * baseScale;
 
 
             // If difficulty just increased, give the player a "Grace Period"
@@ -1240,33 +1230,30 @@ else if (state == PAUSED)
                     it.rect.x += (rand() % 21 - 10);
                 }
 
-                // FORGIVING COLLISION LOGIC
-                // We shrink the effective hitbox slightly to be fair, but less than before
+                // TIGHT COLLISION LOGIC (Padding)
+                // We shrink the effective hitbox to match the character's visual core
                 Rectangle playerHitbox = {
-                    player.x + player.width * 0.12f, // 12% padding on sides
-                    player.y + player.height * 0.08f, // 8% padding on top
-                    player.width * 0.76f,             // 76% width
-                    player.height * 0.84f            // 84% height
+                    player.x + player.width * 0.25f, // 25% padding on sides
+                    player.y + player.height * 0.15f, // 15% padding on top
+                    player.width * 0.5f,             // 50% width
+                    player.height * 0.75f            // 75% height
                 };
 
                 Rectangle itemHitbox = {
-                    it.rect.x + it.rect.width * 0.08f,
-                    it.rect.y + it.rect.height * 0.08f,
-                    it.rect.width * 0.84f,
-                    it.rect.height * 0.84f
+                    it.rect.x + it.rect.width * 0.15f,
+                    it.rect.y + it.rect.height * 0.15f,
+                    it.rect.width * 0.7f,
+                    it.rect.height * 0.7f
                 };
 
                 if (CheckCollisionRecs(playerHitbox, itemHitbox))
                 {
-                    playerScale = 1.15f; // "pop" effect
-                    
                     // BAD ITEMS
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
                     {
                         hp--;
                         shakeTime = 0.22f;
                         shakePower = 14.0f;
-                        hitFlash = 0.4f; // Red flash
                         combo = 0;
                         comboTime = 0;
                         comboBroken = true;
@@ -1289,9 +1276,7 @@ else if (state == PAUSED)
                             score += combo;
                     }
                     else if (it.type == ATAY)
-                    {
                         score += 8;
-                    }
 
                     else if (it.type == BLOOD || it.type == MEAT)
                     { // blood
@@ -1310,9 +1295,7 @@ else if (state == PAUSED)
                             hp = 3;
                     }
                     else if (it.type == MEDKIT)
-                    {
                         hp = 3;
-                    }
                     // RANDOMNESS
                     else if (it.type == TROLLFACE)
                     {
@@ -1325,7 +1308,6 @@ else if (state == PAUSED)
                     {
                         move = 0.45f;
                         slowTimer = 4.0f;
-                        hitFlash = 0.3f;
                     }
 
                     // SPECIAL ITEMS
@@ -1347,7 +1329,6 @@ else if (state == PAUSED)
                             score -= 10;
                             showMinusText = true;
                             minusTextTimer = 2.0f;
-                            hitFlash = 0.3f;
                         }
                         else if (randomIndex == 2)
                         { // slowness
@@ -1355,13 +1336,10 @@ else if (state == PAUSED)
                             slowTimer = 4.0f;
                             showSlowText = true;
                             slowTextTimer = 2.0f;
-                            hitFlash = 0.3f;
                         }
                     }
                     else if (it.type == STAR)
-                    {
                         score += 10;
-                    }
 
                     // special prize(super rare)
                     else if (it.type == PRIZE)
@@ -1384,10 +1362,6 @@ else if (state == PAUSED)
             }
 
             // TIMERS-----------------------------
-            // juice decay
-            if (hitFlash > 0) hitFlash -= GetFrameTime() * 1.5f;
-            playerScale = Lerp(playerScale, 1.0f, 6.0f * GetFrameTime());
-
             // combo
             if (comboTime > 0)
             {
@@ -1687,14 +1661,17 @@ else if (state == PAUSED)
             
             Texture2D texToDraw; 
             
-            float baseScale = 0.85f;
-            float currentScale = baseScale * playerScale;
+            float scale = 0.85f;
+
+            // keep player rect consistent with texture size
+            player.width  = playerTex.width * scale;
+            player.height = playerTex.height * scale;
 
              Rectangle dest = {
-                player.x - (texWidth * (currentScale - baseScale)) / 2,
-                player.y - (texHeight * (currentScale - baseScale)),
-                texWidth * currentScale,   
-                texHeight * currentScale   
+                player.x,
+                player.y,
+                player.width,   
+                player.height   
             };
 
 
@@ -1747,7 +1724,7 @@ else if (state == PAUSED)
                 if (it.type == MEDKIT)
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect}, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
                     DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.22f, garlic1Tex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
@@ -1763,9 +1740,9 @@ else if (state == PAUSED)
                 if (it.type == DICE)
                     DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {it.rect.x, it.rect.y, mushroomTex.width * 0.22f, mushroomTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {it.rect.x, it.rect.y, poisonTex.width * 0.22f, poisonTex.height * 0.22f}, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
                     DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
                 if (it.type == HOLYWATER)
@@ -1822,49 +1799,41 @@ else if (state == PAUSED)
                 );
             }
 
-            // Collection & Hit Flashes
-            if (hitFlash > 0)     DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
-
             // UI   
             // CHAOS LEVEL UI (for research visibility)
             DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
             DrawRectangle(screenWidth - 215, 25, (int)(190 * chaosLevel), 15, ColorLerp(GREEN, RED, chaosLevel));
-            DrawTextEx(gamefont, "CHAOS LEVEL", {(float)screenWidth - 215, 50}, 20, 1, WHITE);
-
-            // HUD Panel
-            DrawRectangleRounded({10, 10, 280, 120}, 0.2f, 10, Fade(BLACK, 0.5f));
-            DrawRectangleRoundedLinesEx({10, 10, 280, 120}, 0.2f, 10, 2, Fade(WHITE, 0.3f));
+            DrawText("CHAOS LEVEL", screenWidth - 215, 50, 20, WHITE);
 
             //health
-            float hpScale = 0.12f; 
-            for (int i = 0; i < hp; i++) 
-                DrawTextureEx(hpTex, (Vector2){25 + i * (hpTex.width * hpScale + 8), 25}, 0.0f, hpScale, WHITE);
+            float hpScale = 0.1f; 
+            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
             
             //score 
-            DrawTextEx(nosifer, TextFormat("SCORE: %d", score), {25, 75}, 32, 2, WHITE);
+            DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
 
             // EVENT WARNING UI
             if (eventWarningTimer > 0)
             {
                 // Pulsing effect for the warning
                 float pulse = abs(sin(GetTime() * 10.0f));
-                DrawTextEx(nosifer, "!!! PREPARE FOR CHAOS !!!", {(float)screenWidth / 2 - 320, 150}, 32, 2, Fade(RED, 0.5f + pulse * 0.5f));
+                DrawText("!!! PREPARE FOR CHAOS !!!", screenWidth / 2 - 240, 150, 40, Fade(RED, 0.5f + pulse * 0.5f));
             }
 
             // POP UP TEXTS--------------------------------------
             
             if (showStarText)
-                DrawTextEx(gamefont, "STAR!", {(float)screenWidth / 2 - 50, (float)screenHeight - 150}, 40, 1, YELLOW);
+                DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showMinusText)
-                DrawTextEx(gamefont, "MINUS 10 HUHU", {(float)screenWidth / 2 - 120, (float)screenHeight - 150}, 40, 1, RED);
+                DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
             if (showSlowText)
-                DrawTextEx(gamefont, "SLOW MO", {(float)screenWidth / 2 - 80, (float)screenHeight - 150}, 40, 1, BLUE);
+                DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
 
             if (quakeTimer > 1.0f && quakeTimer < 3.0f)
-                DrawTextEx(nosifer, "THE GROUND IS SHAKING", {(float)screenWidth / 2 - 300, (float)screenHeight - 150}, 32, 2, RED);
+                DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 250, screenHeight - 100, 40, RED);
             
             if (quakeTimer > 3.0f && quakeTimer < 5.5f)
-                DrawTextEx(nosifer, "RUN AWAY!!!", {(float)screenWidth / 2 - 150, (float)screenHeight - 150}, 42, 2, WHITE);
+                DrawText("RUN AWAY!!!", screenWidth / 2 - 180, screenHeight - 100, 50, WHITE);
 
              string eventName = "";// events
 
@@ -1898,9 +1867,8 @@ else if (state == PAUSED)
 
             if (currentEvent != NONE)
             {
-                DrawRectangleRounded({screenWidth / 2.0f - 250, 20, 500, 50}, 0.5f, 10, Fade(RED, 0.7f));
-                Vector2 evSize = MeasureTextEx(nosifer, eventName.c_str(), 24, 2);
-                DrawTextEx(nosifer, eventName.c_str(), {screenWidth / 2.0f - evSize.x/2, 33}, 24, 2, WHITE);
+                DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
+                DrawText(eventName.c_str(), 25, 100, 28, RED);
             }
             //effect when the player fell into the pit
             if (fallingInPit)
@@ -1923,23 +1891,24 @@ else if (state == PAUSED)
             }
 
             // combo 
-            if (combo > 1) {
-                float comboScale = 1.0f + (sin(GetTime() * 10) * 0.1f);
-                Color comboCol = YELLOW;
-                const char* comboText = TextFormat("COMBO x%d", combo);
-                if (combo >= 5) { comboCol = ORANGE; comboText = "HOTSTREAK!!"; }
-                if (combo >= 10) { comboCol = RED; comboText = "UNSTOPPABLE"; }
-                
-                Vector2 cSize = MeasureTextEx(nosifer, comboText, 32 * comboScale, 2);
-                DrawTextEx(nosifer, comboText, {screenWidth / 2.0f - cSize.x/2, 85}, 32 * comboScale, 2, comboCol);
-            }
+            if (combo >= 10)
+                DrawText("UNSTOPPABLE", screenWidth / 2 - 140, 20, 45, RED);
+            else if (combo >= 5)
+                DrawText("HOTSTREAK!!", screenWidth / 2 - 120, 20, 40, ORANGE);
+            else if (combo > 1)
+                DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
 
             if (comboBroken)
-                DrawTextEx(gamefont, "COMBO LOST!", {(float)screenWidth / 2 - 100, 130}, 32, 1, RED);
-            
+                DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
             if (quakeTimer > 1.2f && quakeTimer < 2.0f)
             {
-                DrawTextEx(gamefont, "THE GROUND IS CRACKING!", {(float)screenWidth / 2 - 180, 180}, 32, 1, RED);
+                DrawText(
+                    "THE GROUND IS CRACKING!",
+                    screenWidth / 2 - 220,
+                    120,
+                    35,
+                    RED
+                );
             }
         }
         else if (state == TROLL_VIDEO)
@@ -1990,14 +1959,14 @@ else if (state == PAUSED)
               }
         }
 
-        // REMOVE: if (hitFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
-        // (Moved inside PLAYING state for better control)
+        if (hitFlash > 0)
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
         // heartbeat text
         if (hp == 1)
         {
-            int pulse = 24 + sin(GetTime() * 8) * 6;
-            DrawTextEx(nosifer, "WARNING!", {(float)screenWidth / 2 - 100, 200}, (float)pulse, 2, RED);
+            int pulse = 20 + sin(GetTime() * 8) * 10;
+            DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
         }
 
         // GAME OVER----------------------------------------------------
