@@ -158,6 +158,7 @@ int main()
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
+    Texture2D pauseBg = LoadTexture("assets/images/PAUSED UI (1).png");
     InitInfoTexture();
 
     // items
@@ -450,26 +451,15 @@ int main()
             }
 
 
-
 else if (state == PAUSED)
 {
     BeginDrawing();
-
-    // Draw a translucent overlay instead of clearing to black
-    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
-
-    // Centered pause text
-    DrawText("PAUSED",
-             screenWidth/2 - MeasureText("PAUSED", 60)/2,
-             screenHeight/2 - 30,
-             60,
-             WHITE);
-
-    DrawText("Press SPACE to resume",
-             screenWidth/2 - MeasureText("Press SPACE to resume", 30)/2,
-             screenHeight/2 + 40,
-             30,
-             WHITE);
+    DrawTexturePro(pauseBg,
+                   {0, 0, (float)pauseBg.width, (float)pauseBg.height},
+                   {0, 0, (float)screenWidth, (float)screenHeight},
+                   {0, 0},
+                   0.0f,
+                   WHITE);
 
     EndDrawing();
 
