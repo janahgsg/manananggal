@@ -58,6 +58,13 @@ struct Item
     bool active;
 };
 
+struct PopEffect {
+    Vector2 pos;
+    float timer;
+    float maxTime;
+    Color color;
+};
+
 enum Difficulty
 {
     EASY,
@@ -305,6 +312,7 @@ int main()
 
     // ITEMS
     vector<Item> items;
+    vector<PopEffect> popEffects;
     float spawnTimer = 0; // time has spawned
 
     // COMBO
@@ -749,6 +757,23 @@ else if (state == PAUSED)
                 shakeTime -= GetFrameTime();
                 if (shakeTime < 0)
                     shakeTime = 0;
+            }
+
+            // hit flash
+            if (hitFlash > 0)
+            {
+                hitFlash -= GetFrameTime() * 3.0f; // fade out fast
+                if (hitFlash < 0) hitFlash = 0;
+            }
+
+            // update pop effects
+            for (int i = popEffects.size() - 1; i >= 0; i--)
+            {
+                popEffects[i].timer -= GetFrameTime();
+                if (popEffects[i].timer <= 0)
+                {
+                    popEffects.erase(popEffects.begin() + i);
+                }
             }
 
             Vector2 shakeOffset = {0, 0};
@@ -1249,9 +1274,17 @@ else if (state == PAUSED)
 
                 if (CheckCollisionRecs(playerHitbox, itemHitbox))
                 {
+                    // Trigger Pop Effect
+                    PopEffect pe;
+                    pe.pos = { it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2 };
+                    pe.timer = 0.35f;
+                    pe.maxTime = 0.35f;
+
                     // BAD ITEMS
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
                     {
+                        pe.color = RED;
+                        hitFlash = 0.4f;
                         hp--;
                         shakeTime = 0.22f;
                         shakePower = 14.0f;
@@ -1262,6 +1295,7 @@ else if (state == PAUSED)
                     }
                     else if (it.type == CHILI)
                     {
+                        pe.color = ORANGE;
                         chiliBoost = 1.8f;      
                         speedBoostTimer = 5.0f; 
                     }
@@ -1269,6 +1303,7 @@ else if (state == PAUSED)
                     // SCORE++
                     else if (it.type == BABY || it.type == HEART)
                     {
+                        pe.color = GOLD;
                         score += 5;
 
                         combo++;
@@ -1277,10 +1312,14 @@ else if (state == PAUSED)
                             score += combo;
                     }
                     else if (it.type == ATAY)
+                    {
+                        pe.color = GOLD;
                         score += 8;
+                    }
 
                     else if (it.type == BLOOD || it.type == MEAT)
                     { // blood
+                        pe.color = RED;
                         score += 3;
 
                         combo++;
@@ -1291,15 +1330,20 @@ else if (state == PAUSED)
                     // HEAL
                     else if (it.type == BANDAGE)
                     { // bandage
+                        pe.color = GREEN;
                         hp += 1;
                         if (hp > 3)
                             hp = 3;
                     }
                     else if (it.type == MEDKIT)
+                    {
+                        pe.color = GREEN;
                         hp = 3;
+                    }
                     // RANDOMNESS
                     else if (it.type == TROLLFACE)
                     {
+                        pe.color = WHITE;
                         state = TROLL_VIDEO;
                         currentFrame = 0;
                         frameTimer = 0;
@@ -1307,6 +1351,7 @@ else if (state == PAUSED)
                     }
                     else if (it.type == POISON)
                     {
+                        pe.color = PURPLE;
                         move = 0.45f;
                         slowTimer = 4.0f;
                     }
@@ -1314,6 +1359,7 @@ else if (state == PAUSED)
                     // SPECIAL ITEMS
                     else if (it.type == DICE)
                     { // dice(good effects)
+                        pe.color = WHITE;
                         int randomIndex = rand() % 4;
                         if (randomIndex == 1)
                         {
@@ -1324,12 +1370,14 @@ else if (state == PAUSED)
                     }
                     else if (it.type == MUSHROOM)
                     { // mushroom(bad effects)
+                        pe.color = MAGENTA;
                         int randomIndex = rand() % 4;
                         if (randomIndex == 1)
                         { // -10
                             score -= 10;
                             showMinusText = true;
                             minusTextTimer = 2.0f;
+                            hitFlash = 0.35f;
                         }
                         else if (randomIndex == 2)
                         { // slowness
@@ -1340,13 +1388,18 @@ else if (state == PAUSED)
                         }
                     }
                     else if (it.type == STAR)
+                    {
+                        pe.color = YELLOW;
                         score += 10;
+                    }
 
                     // special prize(super rare)
                     else if (it.type == PRIZE)
                     { // gift?
+                        pe.color = PINK;
                     }
 
+                    popEffects.push_back(pe);
                     it.active = false; // remove item after collision
                 }
             }
@@ -1790,6 +1843,21 @@ else if (state == PAUSED)
                     DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.22f, potionMedkitTex.height * 0.22f}, {0, 0}, 0.0f, col);
             }
 
+            // draw pop effects
+            for (auto &pe : popEffects)
+            {
+                float t = 1.0f - (pe.timer / pe.maxTime); // 0 to 1
+                for (int i = 0; i < 8; i++)
+                {
+                    float angle = i * 45.0f * DEG2RAD;
+                    Vector2 p = {
+                        pe.pos.x + cos(angle) * t * 80.0f,
+                        pe.pos.y + sin(angle) * t * 80.0f
+                    };
+                    DrawCircleV(p, 6.0f * (1.0f - t), Fade(pe.color, 1.0f - t));
+                }
+            }
+
             //EVENTS DESIGNS------------------------------------------------------
             // TEXTURE OF FOG EFFECT
             if(fogActive && fogAlpha > 0){
@@ -2140,6 +2208,7 @@ else if (state == PAUSED)
         comboBrokenTimer = 0;
         comboTime = 0;
         items.clear();
+        popEffects.clear();
         player.x = (screenWidth - player.width) / 2;
         player.y = screenHeight * 0.75f;
         move = 1.0f;
@@ -2207,6 +2276,7 @@ else if (state == PAUSED)
         comboBrokenTimer = 0;
         comboTime = 0;
         items.clear();
+        popEffects.clear();
         player.x = (screenWidth - player.width) / 2;
         player.y = screenHeight * 0.75f;
         move = 1.0f;
