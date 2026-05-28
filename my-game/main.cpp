@@ -2073,34 +2073,31 @@ else if (state == PAUSED)
         }
 
         // GAME OVER----------------------------------------------------
-        if (state == GAMEOVER_ANIM) {
-
-             UpdateMusicStream(gameOverMusic);
-             ClearBackground(BLACK);
-            
+        if (state == GAMEOVER_ANIM)
+{
+    UpdateMusicStream(gameOverMusic);
+    ClearBackground(BLACK);
 
     // BACKGROUND
     DrawTexturePro(
         gameOverBg,
         {0, 0, (float)gameOverBg.width, (float)gameOverBg.height},
         {0, 0, (float)screenWidth, (float)screenHeight},
-        {0, 0},
-        0.0f,
-        WHITE
+        {0, 0}, 0.0f, WHITE
     );
 
     // dark overlay
-    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.55f));
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.45f));
 
+    // FLASH EFFECT (first 2.5s)
     if (gameOverAnimTimer < 2.5f)
     {
         if (gameOverFlash > 0)
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
 
-        // GAME (white) stacked on OVER (red)
         float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
         int fontSize = (int)(160 * scale);
-        
+
         Vector2 gameSize = MeasureTextEx(nosifer, "GAME", (float)fontSize, 4);
         Vector2 overSize = MeasureTextEx(nosifer, "OVER", (float)fontSize, 4);
 
@@ -2109,102 +2106,82 @@ else if (state == PAUSED)
         float gameY = screenHeight / 2.0f - gameSize.y - 10;
         float overY = screenHeight / 2.0f;
 
-        // GAME - white with shadow
         DrawTextEx(nosifer, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
         DrawTextEx(nosifer, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
-
-        // OVER - red with shadow
         DrawTextEx(nosifer, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
         DrawTextEx(nosifer, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
     }
 
     if (gameOverAnimTimer >= 2.5f)
-{
-    if (score > highScore) highScore = score;
-
-        // ===== UPPER LEFT INFO =====
-        float infoX = 60;
-        float infoY = 60;
-
-        // YOUR SCORE
-        DrawTextEx(nosifer, "YOUR SCORE", {infoX, infoY}, 18, 1, {160, 160, 160, 255});
-        DrawTextEx(nosifer, TextFormat("%d", score), {infoX, infoY + 24}, 52, 1, {220, 150, 30, 255});
-
-        // HIGHEST SCORE
-        DrawTextEx(nosifer, "HIGHEST SCORE", {infoX, infoY + 90}, 18, 1, {160, 160, 160, 255});
-        DrawTextEx(nosifer, TextFormat("%d", highScore), {infoX, infoY + 114}, 52, 1, {60, 140, 220, 255});
-
-        // RESEARCH METRICS
-        DrawTextEx(nosifer, "RESEARCH DATA", {infoX, infoY + 180}, 18, 1, {160, 160, 160, 255});
-        DrawTextEx(gamefont, TextFormat("Time Played: %.1fs", totalTimePlayed), {infoX, infoY + 204}, 22, 1, LIGHTGRAY);
-        DrawTextEx(gamefont, TextFormat("Max Chaos: %.0f%%", chaosLevel * 100), {infoX, infoY + 230}, 22, 1, LIGHTGRAY);
-
-        // DIFFICULTY
-        const char* diffLabel = (diff == HARD) ? "HARD MODE" : (diff == MEDIUM) ? "MEDIUM MODE" : "EASY MODE";
-        Color diffCol = (diff == HARD) ? RED : (diff == MEDIUM) ? ORANGE : GREEN;
-        DrawTextEx(nosifer, "DIFFICULTY", {infoX, infoY + 280}, 18, 1, {160, 160, 160, 255});
-        DrawTextEx(nosifer, diffLabel, {infoX, infoY + 304}, 28, 1, diffCol);
-
-    // NEW HIGH SCORE badge
-    if (score > 0 && score >= highScore)
     {
-            DrawTextEx(nosifer, "* NEW HIGH SCORE!", {infoX, infoY + 348}, 18, 1, {80, 220, 120, 255});
-        }
+        if (score > highScore) highScore = score;
+       
 
-        // ===== STACKED TITLE =====
-        Vector2 gameSize = MeasureTextEx(nosifer, "GAME", 160, 4);
-        Vector2 overSize = MeasureTextEx(nosifer, "OVER", 160, 4);
+        // ── TOP-RIGHT: Score + High Score (no box) ──
+        float scoreX = (float)(screenWidth - 220);
 
-        float gameX = screenWidth / 2.0f - gameSize.x / 2.0f;
-        float overX = screenWidth / 2.0f - overSize.x / 2.0f;
-        float gameY = screenHeight / 2.0f - gameSize.y - 80;
-        float overY = screenHeight / 2.0f - 70;
-        
-        DrawTextEx(nosifer, "GAME", {gameX + 5, gameY + 5}, 160, 4, {40, 40, 40, 255});
-        DrawTextEx(nosifer, "GAME", {gameX, gameY}, 160, 4, WHITE);
-        DrawTextEx(nosifer, "OVER", {overX + 5, overY + 5}, 160, 4, {60, 0, 0, 255});
-        DrawTextEx(nosifer, "OVER", {overX, overY}, 160, 4, {200, 20, 20, 255});
+        DrawTextEx(gamefont, "SCORE", {scoreX, 20}, 28, 1, {200, 200, 200, 255});
+        DrawTextEx(nosifer, TextFormat("%d", score), {scoreX, 52}, 48, 1, {200, 20, 20, 255});
 
-        // ===== BUTTONS =====
-        float btnW = 340, btnH = 52;
-    float btnX = screenWidth / 2.0f - btnW / 2.0f;
-        float btnStartY = overY + overSize.y + 40;
+        DrawTextEx(gamefont, "HIGH SCORE", {scoreX, 110}, 24, 1, {170, 170, 204, 255});
+        DrawTextEx(nosifer, TextFormat("%d", highScore), {scoreX, 138}, 44, 1, {120, 200, 255, 255});
 
-        // PLAY AGAIN button — thin red border style
-        Rectangle btnPlay = {btnX, btnStartY, btnW, btnH};
-    bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), btnPlay);
-        Color btnPlayBg = hoverPlay ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
-        Color btnPlayBorder = {139, 0, 0, 255};
-        DrawRectangleRounded(btnPlay, 0.3f, 10, btnPlayBg);
+        if (score >= highScore)
+             DrawTextEx(gamefont, "* NEW BEST!", {scoreX, 190}, 22, 1, {200, 20, 20, 255});
 
-        Vector2 playSize = MeasureTextEx(gamefont, "PLAY AGAIN ", 26, 1);
-        DrawTextEx(gamefont, "PLAY AGAIN",
-            {btnX + btnW / 2 - playSize.x / 2, btnStartY + btnH / 2 - playSize.y / 2},
-            26, 1, hoverPlay ? WHITE : Color{200, 200, 200, 255});
+        // ── GAME OVER TITLE
+        Vector2 goSize = MeasureTextEx(nosifer, "GAME OVER", 140, 4);
+        float goX = screenWidth / 2.0f - goSize.x / 2.0f;
+        float goY = screenHeight / 2.0f - goSize.y - 80;
 
-        // MAIN MENU button 
-        float btn2Y = btnStartY + btnH + 10;
-    Rectangle btnMenu = {btnX, btn2Y, btnW, btnH};
-    bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), btnMenu);
-        Color btnMenuBg = hoverMenu ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
-        DrawRectangleRounded(btnMenu, 0.3f, 10, btnMenuBg);
+        // Shadow
+        DrawTextEx(nosifer, "GAME OVER", {goX + 5, goY + 5}, 140, 4, {40, 40, 40, 255});
 
-        Vector2 menuSize = MeasureTextEx(gamefont, "MAIN MENU", 26, 1);
-        DrawTextEx(gamefont, "MAIN MENU",
-        {btnX + btnW / 2 - menuSize.x / 2, btn2Y + btnH / 2 - menuSize.y / 2},
-            26, 1, hoverMenu ? WHITE : Color{180, 180, 180, 255});
+        // Draw "GAME" in white
+        Vector2 gameWordSize = MeasureTextEx(nosifer, "GAME ", 140, 4);
+        DrawTextEx(nosifer, "GAME ", {goX, goY}, 140, 4, WHITE);
 
-    // INPUT
-    if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
-    {
-        StopMusicStream(gameOverMusic);  
-        PlayMusicStream(bgMusic);     
-        //RESET EVERYTHING   
-        state = PLAYING;
-        hp = 3;
-        score = 0;
-        combo = 0;
-        comboBroken = false;
+        // Draw "OVER" in red right after "GAME "
+        DrawTextEx(nosifer, "OVER", {goX + gameWordSize.x, goY}, 140, 4, {200, 20, 20, 255});   
+
+        // ── TRY AGAIN? + YES / NO ──
+        float menuY = goY + goSize.y + 100;
+
+        Vector2 trySize = MeasureTextEx(gamefont, "TRY AGAIN?", 60, 1);
+        DrawTextEx(gamefont, "TRY AGAIN?",
+         {screenWidth / 2.0f - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
+
+        menuY += 80;
+
+        // YES
+        bool hoverPlay = CheckCollisionPointRec(GetMousePosition(),
+            {screenWidth / 2.0f - 80, menuY, 160, 50});
+        Color yesCol = hoverPlay ? Color{200, 20, 20, 255} : WHITE;
+        Vector2 yesSize = MeasureTextEx(gamefont, "YES", 60, 1);
+        DrawTextEx(gamefont, hoverPlay ? "> YES" : "YES",
+          {screenWidth / 2.0f - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
+
+        menuY += 75;
+
+        // NO
+        bool hoverMenu = CheckCollisionPointRec(GetMousePosition(),
+            {screenWidth / 2.0f - 80, menuY, 160, 50});
+        Color noCol = hoverMenu ? Color{200, 20, 20, 255} : WHITE;
+        Vector2 noSize = MeasureTextEx(gamefont, "NO", 60, 1);
+        DrawTextEx(gamefont, hoverMenu ? "> NO" : "NO",
+            {screenWidth / 2.0f - noSize.x / 2.0f, menuY}, 60, 1, noCol);
+
+        // ── INPUT ──
+        float btn2Y = goY + goSize.y + 30 + 46 + 38;
+
+        if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
+        {
+            StopMusicStream(gameOverMusic);
+            PlayMusicStream(bgMusic);
+            // ... your existing reset code ...
+            state = PLAYING;
+            hp = 3; score = 0; combo = 0;
+            comboBroken = false;
         comboBrokenTimer = 0;
         comboTime = 0;
         items.clear();
@@ -2264,15 +2241,13 @@ else if (state == PAUSED)
         gameOverAnimTimer = 0.0f;
         diff = EASY;
     }
-    if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
-    {
-        StopMusicStream(gameOverMusic);
-        //RESET EVERYTHING
-        state = MENU;
-        hp = 3;
-        score = 0;
-        combo = 0;
-        comboBroken = false;
+        if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
+        {
+            StopMusicStream(gameOverMusic);
+            // ... your existing reset + go to MENU code ...
+            state = MENU;
+            hp = 3; score = 0; combo = 0;
+            comboBroken = false;
         comboBrokenTimer = 0;
         comboTime = 0;
         items.clear();
@@ -2335,8 +2310,8 @@ else if (state == PAUSED)
         introMusic = LoadMusicStream("assets/sounds/intro.mp3");
         SetMusicVolume(introMusic, 0.5f);
         PlayMusicStream(introMusic);
+        }
     }
-}
 }
         EndDrawing();
     }
