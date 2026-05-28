@@ -14,7 +14,10 @@ enum GameState
     MENU,
     TRANSITION,
     PLAYING,
+    BG1_TRANSITION,
+    BG2_TRANSITION,
     TROLL_VIDEO,
+    PAUSED,
     GAMEOVER_ANIM
 };
 
@@ -143,6 +146,7 @@ int main()
     // load frames
     for (int i = 1; i <= 110; i++) 
     videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
+
     
     // MEME POP-UP
     struct MemePop {
@@ -382,6 +386,7 @@ int main()
     float minusTextTimer = 0;
     float slowTextTimer = 0;
 
+
     Difficulty diff = EASY;
     Difficulty lastDiff = EASY; // track difficulty changes for grace periods
     // camera
@@ -423,7 +428,7 @@ int main()
             DrawIntro(highScore, introTex);
         }
 
-        if (state == TRANSITION) {
+        else if (state == TRANSITION) {
             UpdateMusicStream(batmusic);
              UpdateIntroVideo();
              BeginDrawing();
@@ -440,12 +445,121 @@ int main()
              }
          }
 
+         else if (state == BG1_TRANSITION) {
+        UpdateBg1TransitionVideo();
+        BeginDrawing();
+        ClearBackground(BLACK);
+        DrawBg1TransitionVideo();
+
+        EndDrawing();
+
+        if (IsBg1TransitionFinished()) {
+            float fadeAlpha = GetBg1TransitionAlpha(); 
+           Color fadeColor = Fade(BLACK, fadeAlpha);
+           DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
+            UnloadBg1TransitionVideo();
+            state = PLAYING;
+        }
+        continue; 
+        }
+
+
+        else if (state == BG2_TRANSITION) {
+             UpdateBg2TransitionVideo();
+
+             BeginDrawing();
+             ClearBackground(BLACK);
+             DrawBg2TransitionVideo();
+             
+
+         EndDrawing();
+
+        if (IsBg2TransitionFinished()) {
+            float fadeAlpha = GetBg2TransitionAlpha(); 
+             Color fadeColor = Fade(BLACK, fadeAlpha);
+             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
+             UnloadBg2TransitionVideo();
+             state = PLAYING;   // resume gameplay with HARD background
+             }
+         continue;
+            }
+
+
+
+else if (state == PAUSED)
+{
+    BeginDrawing();
+
+    // Draw a translucent overlay instead of clearing to black
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
+
+    // Centered pause text
+    DrawText("PAUSED",
+             screenWidth/2 - MeasureText("PAUSED", 60)/2,
+             screenHeight/2 - 30,
+             60,
+             WHITE);
+
+    DrawText("Press SPACE to resume",
+             screenWidth/2 - MeasureText("Press SPACE to resume", 30)/2,
+             screenHeight/2 + 40,
+             30,
+             WHITE);
+
+    EndDrawing();
+
+    // Resume check
+    if (IsKeyPressed(KEY_SPACE)) {
+            if (state == PLAYING) state = PAUSED;
+            else if (state == PAUSED) state = PLAYING;
+           }
+
+    }
+
+
+
         // GAMEPLAY-----------------------------------------
-        if (state == PLAYING)
+        else if (state == PLAYING)
         {
             UpdateMusicStream(bgMusic);
 
-            // movements
+            if (IsKeyPressed(KEY_SPACE)) {
+            if (state == PLAYING) state = PAUSED;
+            else if (state == PAUSED) state = PLAYING;
+           }
+
+            // Update difficulty and handle grace periods
+            lastDiff = diff;
+            if (score >= 400) 
+                diff = HARD;
+            else if (score >= 150)
+                diff = MEDIUM;
+            else
+                diff = EASY;
+
+
+            // If difficulty just increased, give the player a "Grace Period"
+            if (diff > lastDiff) 
+            {
+                eventCooldown = 15.0f; 
+                eventWarningTimer = 0;
+            }
+
+             // >>> Trigger transition video when EASY → MEDIUM
+            if (diff == MEDIUM && lastDiff == EASY) {
+                 InitBg1TransitionVideo();
+                 state = BG1_TRANSITION;
+                 continue;
+                   
+                 }
+
+             else if (diff == HARD && lastDiff == MEDIUM) {
+                 InitBg2TransitionVideo();
+                 state = BG2_TRANSITION;
+                 continue;
+                   
+                 }
+            // movements 
             float accel = 2200.0f;  // how fast player gains speed
             float friction = 0.92f; // slows naturally
             float maxSpeed = 520.0f * move * chiliBoost * eventBoost;
@@ -643,22 +757,7 @@ int main()
                 baseY + shakeOffset.y
             };
 
-            // Update difficulty and handle grace periods
-            lastDiff = diff;
-            if (score >= 400) 
-                diff = HARD;
-            else if (score >= 150)
-                diff = MEDIUM;
-            else
-                diff = EASY;
-
-            // If difficulty just increased, give the player a "Grace Period"
-            if (diff > lastDiff) 
-            {
-                eventCooldown = 15.0f; 
-                eventWarningTimer = 0;
-            }
-
+            
             // SPAWNING------------
 
             spawnTimer += GetFrameTime(); 
@@ -1318,7 +1417,7 @@ int main()
 
             // PLAYER ANIMATIONS-----------------------------
             
-            if (diff == MEDIUM || diff == HARD) {
+            if (diff == HARD) {
          
          if (IsKeyDown(KEY_RIGHT)) {
              currentMananAnim = FLY_RIGHT;
@@ -1329,6 +1428,7 @@ int main()
          }
 
          // Frame timing
+
          pframeTimer += GetFrameTime();
          if (pframeTimer >= pframeDelay) {
          pframeTimer = 0.0f;
@@ -1337,7 +1437,7 @@ int main()
          }
          }
             
-          else if (diff == EASY) {
+          else if (diff == EASY || diff == MEDIUM) {
             currentAnim = IDLE;
 
             // Walking right
@@ -1372,6 +1472,9 @@ int main()
             } else playerFrame = 0;
             
         }
+
+
+        
 
 
         if (state == TROLL_VIDEO)
@@ -1561,7 +1664,7 @@ int main()
             };
 
 
-             if (diff == EASY){
+             if (diff == EASY || diff == MEDIUM) {
 
             switch (currentAnim) {
                 case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
@@ -1570,7 +1673,7 @@ int main()
                 default:         texToDraw = playerTex;                 break; 
             }}
 
-           else if (diff == MEDIUM || diff == HARD) {
+           else if (diff == HARD) {
 
              if (currentMananAnim == FLY_FRONT) 
                   texToDraw = FlyFrames[playerFrame];
@@ -1799,6 +1902,12 @@ int main()
         }
         else if (state == TROLL_VIDEO)
         {
+            frameTimer += GetFrameTime();
+            if (frameTimer >= 0.2f) {   // adjust playback speed here
+                 frameTimer = 0.0f;
+                 currentFrame++;
+        }
+
             ClearBackground(WHITE);
             if (!videoFrames.empty() && currentFrame < videoFrames.size())
             {
@@ -1826,6 +1935,17 @@ int main()
                     25,
                     GRAY);
             }
+
+            if (IsKeyPressed(KEY_ENTER)) {
+             UnloadBg1TransitionVideo(); 
+            state = PLAYING; 
+            continue;          
+             }
+
+             if (!IsSoundPlaying(trollSound)) {   // or IsMusicStreamPlaying if you used LoadMusicStream
+             state = PLAYING;
+             continue;
+              }
         }
 
         if (hitFlash > 0)
@@ -2103,7 +2223,7 @@ int main()
 }
 }
         EndDrawing();
-}
+    }
 
     for (auto &t : videoFrames)
         UnloadTexture(t);
