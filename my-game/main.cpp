@@ -148,6 +148,26 @@ int main()
     videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
 
     
+    // MEME POP-UP
+    struct MemePop {
+        Texture2D tex;
+        Vector2 pos;
+        float speed;
+        bool active;
+        int lastIndex;
+        int soundIndex;
+    };
+    vector<Texture2D> memeTextures;
+    vector<Sound> memeSounds;
+    MemePop currentMeme = { {0}, {0, 0}, 0, false, -1, -1 };
+    float memeSpawnTimer = 0.0f;
+
+    // RESEARCH TRACKING
+    float totalTimePlayed = 0.0f;
+    int eventsSurvived = 0;
+    int totalItemsCollected = 0;
+    float chaosLevel = 0.0f; // 0.0 to 1.0 based on difficulty and score progress
+
     // load images
     // bg
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
@@ -158,8 +178,23 @@ int main()
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
-    Texture2D pauseBg = LoadTexture("assets/images/PAUSED UI (1).png");
+    Texture2D pauseBg = LoadTexture("assets/images/PAUSED UI (3).png");
     InitInfoTexture();
+
+    // MEME POP-UP TEXTURES
+    // ADD MORE MEMES HERE: Just add more textures to the memeTextures vector
+    memeTextures.push_back(LoadTexture("assets/images/nyek.png"));
+    memeTextures.push_back(LoadTexture("assets/images/nani.png"));
+    memeTextures.push_back(LoadTexture("assets/images/sigma.png"));
+    memeTextures.push_back(LoadTexture("assets/images/blush.png"));
+    memeTextures.push_back(LoadTexture("assets/images/trollFace.png"));
+
+    // MEME SOUNDS
+    memeSounds.push_back(LoadSound("assets/sounds/getOut.mp3"));
+    memeSounds.push_back(LoadSound("assets/sounds/plankton.mp3"));
+    memeSounds.push_back(LoadSound("assets/sounds/auugh.mp3"));
+    memeSounds.push_back(LoadSound("assets/sounds/cookedDog.mp3"));
+    memeSounds.push_back(LoadSound("assets/sounds/goodbye.mp3"));
 
     // items
     Texture2D bombTex = LoadTexture("assets/images/bomb.png");
@@ -257,7 +292,7 @@ int main()
 
     // CAMERA
     player.x = (screenWidth - player.width) / 2;
-    player.y = screenHeight * 0.85f;
+    player.y = screenHeight * 0.75f;
 
     //INVERTED SCREEN
     bool invertedScreen = false;
@@ -359,7 +394,7 @@ int main()
     Camera2D camera = {0};
     camera.offset = {
         screenWidth / 2.0f,
-        screenHeight * 0.85f};
+        screenHeight * 0.75f};
     camera.target = {
         player.x + player.width / 2,
         player.y + player.height / 2
@@ -454,12 +489,28 @@ int main()
 else if (state == PAUSED)
 {
     BeginDrawing();
-    DrawTexturePro(pauseBg,
-                   {0, 0, (float)pauseBg.width, (float)pauseBg.height},
-                   {0, 0, (float)screenWidth, (float)screenHeight},
-                   {0, 0},
-                   0.0f,
-                   WHITE);
+
+    ClearBackground(BLACK);
+
+    // Centered "PAUSED" text
+    const char* pausedText = "PAUSED";
+    int fontSize = 60;
+    int textWidth = MeasureText(pausedText, fontSize);
+    DrawText(pausedText,
+             screenWidth/2 - textWidth/2,
+             screenHeight/2 - fontSize,
+             fontSize,
+             WHITE);
+
+    // Witty quotation
+    const char* quote = "\"Press SPACE to breathe life again.\"";
+    int quoteSize = 30;
+    int quoteWidth = MeasureText(quote, quoteSize);
+    DrawText(quote,
+             screenWidth/2 - quoteWidth/2,
+             screenHeight/2 + 40,
+             quoteSize,
+             GRAY);
 
     EndDrawing();
 
@@ -559,7 +610,7 @@ else if (state == PAUSED)
                 }
             }
             //EARTHQUAKE ground-------------------------
-            float groundY = screenHeight * 0.89f; //ground level
+            float groundY = screenHeight * 0.79f; //ground level
 
             // GROUND and PIT COLLISION
             float playerBottom = player.y + player.height;
@@ -705,7 +756,7 @@ else if (state == PAUSED)
             }
 
             //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f + -420 : screenHeight * 0.85f;
+            float baseY = invertedScreen ? screenHeight / 2.0f + -420 : screenHeight * 0.75f;
 
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
@@ -1053,7 +1104,7 @@ else if (state == PAUSED)
 
                         Rectangle newPit = {
                             randomX,
-                            screenHeight * 0.89f,
+                            screenHeight * 0.79f,
                             0,
                             220
                         };
@@ -1087,7 +1138,7 @@ else if (state == PAUSED)
 
                         pits[i] = {
                             pitCenters[i] - pitOpens[i] / 2,
-                            screenHeight * 0.89f,
+                            screenHeight * 0.79f,
                             pitOpens[i],
                             220
                         };
@@ -1458,6 +1509,63 @@ else if (state == PAUSED)
              state = PLAYING;
             }
         }
+
+        // MEME POP-UP UPDATE
+        if (state == PLAYING) {
+            totalTimePlayed += GetFrameTime();
+            
+            // CHAOS LEVEL CALCULATION (for research metrics)
+            float scoreTarget = 1000.0f;
+            chaosLevel = Clamp((float)score / scoreTarget, 0.0f, 0.7f);
+            if (diff == MEDIUM) chaosLevel += 0.15f;
+            if (diff == HARD) chaosLevel += 0.3f;
+            chaosLevel = Clamp(chaosLevel, 0.0f, 1.0f);
+
+            memeSpawnTimer += GetFrameTime();
+            
+            // Trigger: Random (Rarer: 45 to 100 seconds) or Press 'F'
+            bool manualTrigger = IsKeyPressed(KEY_F);
+            
+            if (!currentMeme.active && (memeSpawnTimer > GetRandomValue(45, 100) || manualTrigger)) {
+                memeSpawnTimer = 0;
+                int index;
+                if (!memeTextures.empty()) {
+                    do {
+                        index = GetRandomValue(0, memeTextures.size() - 1);
+                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
+
+                    currentMeme.tex = memeTextures[index];
+                    currentMeme.lastIndex = index;
+                    currentMeme.active = true;
+                    currentMeme.speed = (float)GetRandomValue(2200, 3200); // Much faster sliding
+                    
+                    // Rare Sound Trigger (25% chance or manual)
+                    if (GetRandomValue(1, 100) <= 25 || manualTrigger) {
+                        currentMeme.soundIndex = GetRandomValue(0, memeSounds.size() - 1);
+                        PlaySound(memeSounds[currentMeme.soundIndex]);
+                    } else {
+                        currentMeme.soundIndex = -1;
+                    }
+
+                    bool fromLeft = GetRandomValue(0, 1) == 0;
+                    if (fromLeft) {
+                        currentMeme.pos.x = -(float)screenWidth * 1.5f; // Start further back
+                    } else {
+                        currentMeme.pos.x = (float)screenWidth * 1.5f;
+                        currentMeme.speed = -currentMeme.speed;
+                    }
+                    currentMeme.pos.y = 0;
+                }
+            }
+
+            if (currentMeme.active) {
+                currentMeme.pos.x += currentMeme.speed * GetFrameTime();
+                
+                // End conditions (Accounting for extra width)
+                if (currentMeme.speed > 0 && currentMeme.pos.x > screenWidth * 1.5f) currentMeme.active = false;
+                if (currentMeme.speed < 0 && currentMeme.pos.x < -screenWidth * 1.5f) currentMeme.active = false;
+            }
+        }
     }
 
         if (state == GAMEOVER_ANIM)
@@ -1674,7 +1782,24 @@ else if (state == PAUSED)
 
             EndMode2D();
 
+            // DRAW MEME POP-UP (Stretched to full height)
+            if (currentMeme.active) {
+                DrawTexturePro(
+                    currentMeme.tex,
+                    { 0, 0, (float)currentMeme.tex.width, (float)currentMeme.tex.height },
+                    { currentMeme.pos.x, 0, (float)screenWidth, (float)screenHeight }, // Stretched to screen height
+                    { 0, 0 },
+                    0,
+                    Fade(WHITE, 0.4f)
+                );
+            }
+
             // UI   
+            // CHAOS LEVEL UI (for research visibility)
+            DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
+            DrawRectangle(screenWidth - 215, 25, (int)(190 * chaosLevel), 15, ColorLerp(GREEN, RED, chaosLevel));
+            DrawText("CHAOS LEVEL", screenWidth - 215, 50, 20, WHITE);
+
             //health
             float hpScale = 0.1f; 
             for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
@@ -1743,7 +1868,7 @@ else if (state == PAUSED)
             //effect when the player fell into the pit
             if (fallingInPit)
             {
-                float fallStartY = screenHeight * 0.85f;
+                float fallStartY = screenHeight * 0.75f;
                 float fallDistance = player.y - fallStartY;
 
                 float alpha = fallDistance / 400.0f;
@@ -1901,16 +2026,21 @@ else if (state == PAUSED)
         DrawTextEx(nosifer, "HIGHEST SCORE", {infoX, infoY + 90}, 18, 1, {160, 160, 160, 255});
         DrawTextEx(nosifer, TextFormat("%d", highScore), {infoX, infoY + 114}, 52, 1, {60, 140, 220, 255});
 
+        // RESEARCH METRICS
+        DrawTextEx(nosifer, "RESEARCH DATA", {infoX, infoY + 180}, 18, 1, {160, 160, 160, 255});
+        DrawTextEx(gamefont, TextFormat("Time Played: %.1fs", totalTimePlayed), {infoX, infoY + 204}, 22, 1, LIGHTGRAY);
+        DrawTextEx(gamefont, TextFormat("Max Chaos: %.0f%%", chaosLevel * 100), {infoX, infoY + 230}, 22, 1, LIGHTGRAY);
+
         // DIFFICULTY
         const char* diffLabel = (diff == HARD) ? "HARD MODE" : (diff == MEDIUM) ? "MEDIUM MODE" : "EASY MODE";
         Color diffCol = (diff == HARD) ? RED : (diff == MEDIUM) ? ORANGE : GREEN;
-        DrawTextEx(nosifer, "DIFFICULTY", {infoX, infoY + 180}, 18, 1, {160, 160, 160, 255});
-        DrawTextEx(nosifer, diffLabel, {infoX, infoY + 204}, 28, 1, diffCol);
+        DrawTextEx(nosifer, "DIFFICULTY", {infoX, infoY + 280}, 18, 1, {160, 160, 160, 255});
+        DrawTextEx(nosifer, diffLabel, {infoX, infoY + 304}, 28, 1, diffCol);
 
     // NEW HIGH SCORE badge
     if (score > 0 && score >= highScore)
     {
-            DrawTextEx(nosifer, "* NEW HIGH SCORE!", {infoX, infoY + 248}, 18, 1, {80, 220, 120, 255});
+            DrawTextEx(nosifer, "* NEW HIGH SCORE!", {infoX, infoY + 348}, 18, 1, {80, 220, 120, 255});
         }
 
         // ===== STACKED TITLE =====
@@ -1971,7 +2101,7 @@ else if (state == PAUSED)
         comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
-        player.y = screenHeight * 0.85f;
+        player.y = screenHeight * 0.75f;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
@@ -2038,7 +2168,7 @@ else if (state == PAUSED)
         comboTime = 0;
         items.clear();
         player.x = (screenWidth - player.width) / 2;
-        player.y = screenHeight * 0.85f;
+        player.y = screenHeight * 0.75f;
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
@@ -2104,6 +2234,9 @@ else if (state == PAUSED)
     for (auto &t : videoFrames)
         UnloadTexture(t);
 
+    for (auto &t : memeTextures)
+        UnloadTexture(t);
+
     UnloadTexture(introTex);
     UnloadInfoTexture(); 
     UnloadTexture(gameOverBg);  
@@ -2112,6 +2245,9 @@ else if (state == PAUSED)
 
     currentFrame = 0;
     frameTimer = 0;
+
+    for (auto &s : memeSounds)
+        UnloadSound(s);
 
     // unload
     UnloadSound(trollSound);
