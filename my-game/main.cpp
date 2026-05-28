@@ -761,7 +761,7 @@ else if (state == PAUSED)
             }
 
             //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f + -420 : screenHeight * 0.75f;
+            float baseY = invertedScreen ? screenHeight / 2.0f + -220 : screenHeight * 0.75f;
 
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
