@@ -722,6 +722,11 @@ else if (state == PAUSED)
             // smooth follow
             camera.target.x += (wantedX - camera.target.x) * 0.12f;
 
+            // Clamp camera to world boundaries
+            float minX = (screenWidth / 2.0f) / camera.zoom;
+            float maxX = screenWidth - (screenWidth / 2.0f) / camera.zoom;
+            camera.target.x = Clamp(camera.target.x, minX, maxX);
+
             // keep Y fixed so player remains bottom
             camera.target.y = player.y + player.height / 2;
 
