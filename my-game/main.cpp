@@ -234,6 +234,7 @@ int main()
     // font
     Font nosifer = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
     Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
+    Font tinyFont = LoadFontEx("assets/font/Jersey10-Regular.ttf", 64, 0, 0);
 
     //character
     Texture2D playerTex = LoadTexture("assets/character/human/player.png");
@@ -1943,33 +1944,35 @@ else if (state == PAUSED)
 
             //health
             float hpScale = 0.1f; 
-            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10 + i * (hpTex.width * hpScale + 5), 10}, 0.0f, hpScale, WHITE);
+            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10.0f + i * (hpTex.width * hpScale + 5.0f), 10.0f}, 0.0f, hpScale, WHITE);
             
             //score 
-            DrawText(TextFormat("score: %d", score), 20, 50, 40, WHITE);
+            DrawTextEx(tinyFont, TextFormat("score: %d", score), {20.0f, 50.0f}, 45, 2, WHITE);
 
             // EVENT WARNING UI
             if (eventWarningTimer > 0)
             {
                 // Pulsing effect for the warning
                 float pulse = abs(sin(GetTime() * 10.0f));
-                DrawText("!!! PREPARE FOR CHAOS !!!", screenWidth / 2 - 240, 150, 40, Fade(RED, 0.5f + pulse * 0.5f));
+                const char* warningText = "!!! PREPARE FOR CHAOS !!!";
+                Vector2 textSize = MeasureTextEx(tinyFont, warningText, 50, 2);
+                DrawTextEx(tinyFont, warningText, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 150.0f }, 50, 2, Fade(RED, 0.5f + pulse * 0.5f));
             }
 
             // POP UP TEXTS--------------------------------------
             
             if (showStarText)
-                DrawText("STAR!", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                DrawTextEx(tinyFont, "STAR!", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
             if (showMinusText)
-                DrawText("MINUS 10 HUHU", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                DrawTextEx(tinyFont, "MINUS 10 HUHU", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
             if (showSlowText)
-                DrawText("SLOW MO", screenWidth / 2 - 220, screenHeight - 100, 40, WHITE);
+                DrawTextEx(tinyFont, "SLOW MO", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
 
             if (quakeTimer > 1.0f && quakeTimer < 3.0f)
-                DrawText("THE GROUND IS SHAKING", screenWidth / 2 - 250, screenHeight - 100, 40, RED);
+                DrawTextEx(tinyFont, "THE GROUND IS SHAKING", { (float)screenWidth / 2.0f - 250.0f, (float)screenHeight - 100.0f }, 45, 2, RED);
             
             if (quakeTimer > 3.0f && quakeTimer < 5.5f)
-                DrawText("RUN AWAY!!!", screenWidth / 2 - 180, screenHeight - 100, 50, WHITE);
+                DrawTextEx(tinyFont, "RUN AWAY!!!", { (float)screenWidth / 2.0f - 180.0f, (float)screenHeight - 100.0f }, 55, 2, WHITE);
 
              string eventName = "";// events
 
@@ -2004,7 +2007,7 @@ else if (state == PAUSED)
             if (currentEvent != NONE)
             {
                 DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
-                DrawText(eventName.c_str(), 25, 100, 28, RED);
+                DrawTextEx(tinyFont, eventName.c_str(), {25.0f, 100.0f}, 32, 2, RED);
             }
             //effect when the player fell into the pit
             if (fallingInPit)
@@ -2028,21 +2031,20 @@ else if (state == PAUSED)
 
             // combo 
             if (combo >= 10)
-                DrawText("UNSTOPPABLE", screenWidth / 2 - 140, 20, 45, RED);
+                DrawTextEx(tinyFont, "UNSTOPPABLE", { (float)screenWidth / 2.0f - 140.0f, 20.0f }, 50, 2, RED);
             else if (combo >= 5)
-                DrawText("HOTSTREAK!!", screenWidth / 2 - 120, 20, 40, ORANGE);
+                DrawTextEx(tinyFont, "HOTSTREAK!!", { (float)screenWidth / 2.0f - 120.0f, 20.0f }, 45, 2, ORANGE);
             else if (combo > 1)
-                DrawText(TextFormat("COMBO x%d", combo), screenWidth / 2 - 100, 20, 35, YELLOW);
+                DrawTextEx(tinyFont, TextFormat("COMBO x%d", combo), { (float)screenWidth / 2.0f - 100.0f, 20.0f }, 40, 2, YELLOW);
 
             if (comboBroken)
-                DrawText("COMBO LOST!", screenWidth / 2 - 120, 70, 35, RED);
+                DrawTextEx(tinyFont, "COMBO LOST!", { (float)screenWidth / 2.0f - 120.0f, 70.0f }, 40, 2, RED);
             if (quakeTimer > 1.2f && quakeTimer < 2.0f)
             {
-                DrawText(
+                DrawTextEx(tinyFont,
                     "THE GROUND IS CRACKING!",
-                    screenWidth / 2 - 220,
-                    120,
-                    35,
+                    { (float)screenWidth / 2.0f - 220.0f, 120.0f },
+                    40, 2,
                     RED
                 );
             }
@@ -2070,16 +2072,15 @@ else if (state == PAUSED)
                     0,
                     WHITE);
 
-                DrawText("RELAPSE ", screenWidth / 2 - 350, screenHeight - 100, 40, BLUE);
-                DrawText("KA ", screenWidth / 2 - 350 + MeasureText("RELAPSE ", 40), screenHeight - 100, 40, YELLOW);
-                DrawText("MUNA ", screenWidth / 2 - 350 + MeasureText("RELAPSE KA ", 40), screenHeight - 100, 40, BLUE);
-                DrawText("BOI HAHA :((", screenWidth / 2 - 350 + MeasureText("RELAPSE KA MUNA ", 40), screenHeight - 100, 40, YELLOW);
+                DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+                DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
+                DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+                DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
 
-                DrawText(
+                DrawTextEx(tinyFont,
                     "Press ENTER to skip",
-                    screenWidth / 2 - 130,
-                    screenHeight - 50,
-                    25,
+                    { (float)screenWidth / 2.0f - 130.0f, (float)screenHeight - 50.0f },
+                    30, 2,
                     GRAY);
             }
 
@@ -2101,8 +2102,10 @@ else if (state == PAUSED)
         // heartbeat text
         if (hp == 1)
         {
-            int pulse = 20 + sin(GetTime() * 8) * 10;
-            DrawText("WARNING!", screenWidth / 2 - 100, 50, pulse, RED);
+            int pulse = 30 + sin(GetTime() * 8) * 15;
+            const char* hpWarning = "WARNING!";
+            Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pulse, 2);
+            DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pulse, 2, RED);
         }
 
         // GAME OVER----------------------------------------------------
@@ -2375,6 +2378,7 @@ else if (state == PAUSED)
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
     UnloadFont(gamefont);
+    UnloadFont(tinyFont);
 
     CloseAudioDevice();
     CloseWindow();
