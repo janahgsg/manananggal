@@ -40,9 +40,7 @@ enum ItemType
     PRIZE,
     STAR,
     TROLLFACE,
-    ATAY,
-    KRUS,
-    HOLYWATER,
+    ATAY
 };
 
 struct Item
@@ -215,19 +213,15 @@ int main()
     Texture2D trollFaceTex = LoadTexture("assets/images/trollFace.png");
     Texture2D chiliTex = LoadTexture("assets/images/chili.png");
     Texture2D garlicTex = LoadTexture("assets/images/garlic.png");
-    Texture2D fetusTex = LoadTexture("assets/images/fetus1.png");
     Texture2D poisonTex = LoadTexture("assets/images/poison.png");
     Texture2D saltTex = LoadTexture("assets/images/salt.png");
-    Texture2D potionBandageTex = LoadTexture("assets/images/potion-bandage (2).png");
-    Texture2D potionMedkitTex = LoadTexture("assets/images/potion-medkit (2).png");
-    Texture2D garlic1Tex = LoadTexture("assets/images/garlic-1.png");
+    Texture2D potionBandageTex = LoadTexture("assets/images/potion-bandage.png");
+    Texture2D potionMedkitTex = LoadTexture("assets/images/potion-medkit.png");
     Texture2D bloodTex = LoadTexture("assets/images/blood.png");
     Texture2D pooTex = LoadTexture("assets/images/poo.png");
     Texture2D heartTex = LoadTexture("assets/images/heart.png");
     Texture2D atayTex = LoadTexture("assets/images/atay.png");
-    Texture2D crossTex = LoadTexture("assets/images/cross.png");
     Texture2D diceTex = LoadTexture("assets/images/dice.png");
-    Texture2D holyTex = LoadTexture("assets/images/holywater.png");
     Texture2D mushroomTex = LoadTexture("assets/images/mushroom.png");
     Texture2D hpTex = LoadTexture("assets/images/hearty.png");
 
@@ -550,12 +544,12 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
-            if (score >= 400) 
+            if (score >= 20) 
                 diff = HARD;
-            else if (score >= 150)
-                diff = MEDIUM;
+            else if (score >= 10)
+                diff = HARD;
             else
-                diff = EASY;
+                diff = HARD;
 
 
             // If difficulty just increased, give the player a "Grace Period"
@@ -1831,50 +1825,48 @@ else if (state == PAUSED)
                     visualScale = 1.0f + (0.15f * pulse);               // Grow up to 15% larger
                 }
 
-                Rectangle drawRect = it.rect;
-                if (visualScale != 1.0f) {
-                    drawRect.width *= visualScale;
-                    drawRect.height *= visualScale;
-                    drawRect.x -= (drawRect.width - it.rect.width) / 2.0f;
-                    drawRect.y -= (drawRect.height - it.rect.height) / 2.0f;
-                }
+                // Smaller item size
+                float smallScale = 0.80f; // 80% size
+
+                Rectangle smallRect = {
+                    drawRect.x + (drawRect.width * (1.0f - smallScale) / 2),
+                    drawRect.y + (drawRect.height * (1.0f - smallScale) / 2),
+                    drawRect.width * smallScale,
+                    drawRect.height * smallScale
+                };
 
                 if (it.type == BOMB)
-                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)garlicTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
-                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
-                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == BLOOD)
-                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
-                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
-                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, drawRect, {0, 0}, 0.0f, col);
-                if (it.type == HOLYWATER)
-                    DrawTexturePro(holyTex, {0, 0, (float)holyTex.width, (float)holyTex.height}, drawRect, {0, 0}, 0.0f, col);
-                if (it.type == KRUS)
-                    DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, drawRect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
-                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, drawRect, {0, 0}, 0.0f, col);
-                if (it.type == PRIZE) //INSERT PRIZE IMAGE
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);
+                //if (it.type == PRIZE) //INSERT PRIZE IMAGE
+                   
             }
 
             // draw pop effects
