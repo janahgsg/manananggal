@@ -361,7 +361,7 @@ void DrawIntro(int highScore, Texture2D introTex) {
     const char* title = "Curse of the Wings";
     int titleSize = 120;
 
-    Font scaryFont = LoadFontEx("assets/font/Nosifer-Regular.ttf", 64, 0, 0);
+    Font scaryFont = LoadFontEx("assets/font/PermanentMarker-Regular.ttf", 64, 0, 0);
     Vector2 textSize = MeasureTextEx(scaryFont, title, (float)titleSize, 2);
 
     float titleX = screenWidth / 2.0f - textSize.x / 2;
