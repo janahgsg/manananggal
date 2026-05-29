@@ -549,9 +549,9 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
-            if (score >= 100) 
+            if (score >= 400) 
                 diff = HARD;
-            else if (score >= 50)
+            else if (score >= 150)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -843,38 +843,10 @@ else if (state == PAUSED)
                 for (int i = 0; i < spawnAmount; i++)
                 {
                     Item it;
-                    it.rect.width = 65;
-                    it.rect.height = 65;
-
-                    // Pick a segment from the shuffled list to guarantee horizontal separation
-                    int segIdx = currentIndices[i % segments];
-                    float margin = 60.0f; // More margin to prevent clustering
-                    float minX = (segIdx * segWidth) + margin;
-                    float maxX = ((segIdx + 1) * segWidth) - it.rect.width - margin;
-                    
-                    it.rect.x = minX + (rand() % (int)(maxX - minX + 1));
-                    it.rect.y = -100 - rand() % 250;
-
-                    // Physics based on difficulty 
-                    if (diff == EASY) {
-                        it.speed = 180 + rand() % 40;
-                        it.acceleration = 25;
-                        it.lateralSpeed = 0;
-                    } else if (diff == MEDIUM) {
-                        it.speed = 250 + rand() % 50;
-                        it.acceleration = 35;
-                        it.lateralSpeed = (rand() % 100 < 30) ? (rand() % 81 - 40) : 0; 
-                    } else {
-                        it.speed = 320 + rand() % 80;
-                        it.acceleration = 50;
-                        it.lateralSpeed = (rand() % 91 - 45) * 1.2f; 
-                    }
-
-                    it.sinTime = (float)(rand() % 1000) / 100.0f;
                     it.active = true;
                     it.isIllusion = false;
 
-                    // ITEM SELECTION LOGIC
+                    // 1. ITEM SELECTION LOGIC (Moved up to determine size)
                     if (currentEvent == LUCKY_PARTY) {
                         int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, MEDKIT, CHILI};
                         it.type = goodPool[rand() % 9];
@@ -898,7 +870,7 @@ else if (state == PAUSED)
                         else if (diff == MEDIUM) {
                             int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, HEART, ATAY, BABY};
                             it.type = pool[rand() % 9];
-                            if (rand() % 100 < 12) it.isIllusion = true; // Slightly higher chance
+                            if (rand() % 100 < 12) it.isIllusion = true; 
                         }
                         else { // HARD
                             int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, MUSHROOM, DICE, STAR};
@@ -913,6 +885,48 @@ else if (state == PAUSED)
                         else it.isIllusion = false; 
                     }
 
+                    // 2. SET DIMENSIONS BASED ON TYPE (Larger and unsqueezed)
+                    it.rect.width = 70;  // Slightly larger base
+                    it.rect.height = 70;
+
+                    if (it.type == POO || it.type == POISON || it.type == TROLLFACE) {
+                        it.rect.width = 95;
+                        it.rect.height = 95;
+                    }
+                    else if (it.type == GARLIC || it.type == MUSHROOM || it.type == CHILI || it.type == BOMB) {
+                        it.rect.width = 85;
+                        it.rect.height = 85;
+                    }
+                    else if (it.type == MEDKIT || it.type == BANDAGE || it.type == ATAY) {
+                        it.rect.width = 90;
+                        it.rect.height = 90;
+                    }
+
+                    // 3. POSITION LOGIC (using final width)
+                    int segIdx = currentIndices[i % segments];
+                    float margin = 60.0f; 
+                    float minX = (segIdx * segWidth) + margin;
+                    float maxX = ((segIdx + 1) * segWidth) - it.rect.width - margin;
+                    
+                    it.rect.x = minX + (rand() % (int)(maxX - minX + 1));
+                    it.rect.y = -100 - rand() % 250;
+
+                    // 4. PHYSICS
+                    if (diff == EASY) {
+                        it.speed = 180 + rand() % 40;
+                        it.acceleration = 25;
+                        it.lateralSpeed = 0;
+                    } else if (diff == MEDIUM) {
+                        it.speed = 250 + rand() % 50;
+                        it.acceleration = 35;
+                        it.lateralSpeed = (rand() % 100 < 30) ? (rand() % 81 - 40) : 0; 
+                    } else {
+                        it.speed = 320 + rand() % 80;
+                        it.acceleration = 50;
+                        it.lateralSpeed = (rand() % 91 - 45) * 1.2f; 
+                    }
+
+                    it.sinTime = (float)(rand() % 1000) / 100.0f;
                     items.push_back(it); 
                 }
             }
@@ -1807,49 +1821,59 @@ else if (state == PAUSED)
                     continue;
 
                 Color col = WHITE;
+                float visualScale = 1.0f;
                 
-                // Intensified ILLUSION HINT: Pulsing purple tint
+                // HIGHLY VISIBLE ILLUSION HINT: Pulsing magenta tint + size oscillation
                 if (it.isIllusion) {
-                    float pulse = (sin(GetTime() * 12.0f) + 1.0f) / 2.0f; // More aggressive pulse
-                    col = ColorLerp(WHITE, PURPLE, 0.45f * pulse); // Stronger tint
+                    float pulse = (sin(GetTime() * 15.0f) + 1.0f) / 2.0f; // Fast pulse
+                    col = ColorLerp(WHITE, MAGENTA, 0.7f * pulse);       // Strong magenta tint
+                    visualScale = 1.0f + (0.15f * pulse);               // Grow up to 15% larger
+                }
+
+                Rectangle drawRect = it.rect;
+                if (visualScale != 1.0f) {
+                    drawRect.width *= visualScale;
+                    drawRect.height *= visualScale;
+                    drawRect.x -= (drawRect.width - it.rect.width) / 2.0f;
+                    drawRect.y -= (drawRect.height - it.rect.height) / 2.0f;
                 }
 
                 if (it.type == BOMB)
-                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, {it.rect}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {it.rect.x, it.rect.y, potionBandageTex.width * 0.15f, potionBandageTex.height * 0.15f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == GARLIC)
-                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {it.rect.x, it.rect.y, garlic1Tex.width * 0.22f, garlic1Tex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(garlic1Tex, {0, 0, (float)garlic1Tex.width, (float)garlic1Tex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {it.rect.x, it.rect.y, chiliTex.width * 0.22f, chiliTex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == TROLLFACE)
-                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == HEART)
-                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == BLOOD)
-                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {it.rect.x, it.rect.y, pooTex.width * 0.22f, pooTex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == DICE)
-                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {it.rect.x, it.rect.y, mushroomTex.width * 0.22f, mushroomTex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {it.rect.x, it.rect.y, poisonTex.width * 0.22f, poisonTex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
                 if (it.type == SALT)
-                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == HOLYWATER)
-                    DrawTexturePro(holyTex, {0, 0, (float)holyTex.width, (float)holyTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(holyTex, {0, 0, (float)holyTex.width, (float)holyTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == KRUS)
-                    DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(crossTex, {0, 0, (float)crossTex.width, (float)crossTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY)
-                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, it.rect, {0, 0}, 0.0f, col);
+                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, drawRect, {0, 0}, 0.0f, col);
                 if (it.type == PRIZE) //INSERT PRIZE IMAGE
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {it.rect.x, it.rect.y, potionMedkitTex.width * 0.22f, potionMedkitTex.height * 0.22f}, {0, 0}, 0.0f, col);
+                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, {drawRect.x, drawRect.y, drawRect.width, drawRect.height}, {0, 0}, 0.0f, col);
             }
 
             // draw pop effects
