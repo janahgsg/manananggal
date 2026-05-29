@@ -1826,6 +1826,7 @@ else if (state == PAUSED)
                 }
 
                 // Smaller item size
+                Rectangle drawRect = it.rect;
                 float smallScale = 0.80f; // 80% size
 
                 Rectangle smallRect = {
