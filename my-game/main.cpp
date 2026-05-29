@@ -195,6 +195,15 @@ int main()
     memeTextures.push_back(LoadTexture("assets/images/sigma.png"));
     memeTextures.push_back(LoadTexture("assets/images/blush.png"));
     memeTextures.push_back(LoadTexture("assets/images/trollFace.png"));
+    memeTextures.push_back(LoadTexture("assets/images/kapre.png"));
+    memeTextures.push_back(LoadTexture("assets/images/broomwitch.png"));
+    memeTextures.push_back(LoadTexture("assets/images/witch.png"));
+    memeTextures.push_back(LoadTexture("assets/images/mermaid.png"));
+    memeTextures.push_back(LoadTexture("assets/images/minion.png"));
+    memeTextures.push_back(LoadTexture("assets/images/tiyanak.png"));
+    memeTextures.push_back(LoadTexture("assets/images/tikbalang.png"));
+    memeTextures.push_back(LoadTexture("assets/images/dwende.png"));
+
 
     // MEME SOUNDS
     memeSounds.push_back(LoadSound("assets/sounds/getOut.mp3"));
