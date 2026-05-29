@@ -190,11 +190,6 @@ int main()
 
     // MEME POP-UP TEXTURES
     // ADD MORE MEMES HERE: Just add more textures to the memeTextures vector
-    memeTextures.push_back(LoadTexture("assets/images/nyek.png"));
-    memeTextures.push_back(LoadTexture("assets/images/nani.png"));
-    memeTextures.push_back(LoadTexture("assets/images/sigma.png"));
-    memeTextures.push_back(LoadTexture("assets/images/blush.png"));
-    memeTextures.push_back(LoadTexture("assets/images/trollFace.png"));
     memeTextures.push_back(LoadTexture("assets/images/kapre.png"));
     memeTextures.push_back(LoadTexture("assets/images/broomwitch.png"));
     memeTextures.push_back(LoadTexture("assets/images/witch.png"));
@@ -1265,20 +1260,25 @@ else if (state == PAUSED)
                     it.rect.x += (rand() % 21 - 10);
                 }
 
-                // TIGHT COLLISION LOGIC (Padding)
-                // We shrink the effective hitbox to match the character's visual core
+                // COLLISION LOGIC (Generous Hitboxes)
+                // We use padding to match the character's visual core, but keep it loose for better gameplay
+                float playerPadX = (diff == HARD) ? 0.05f : 0.15f; 
+                float playerPadY = 0.05f;
+                float playerWidthScale = 1.0f - (playerPadX * 2.0f);
+                float playerHeightScale = 1.0f - (playerPadY * 2.0f);
+
                 Rectangle playerHitbox = {
-                    player.x + player.width * 0.25f, // 25% padding on sides
-                    player.y + player.height * 0.15f, // 15% padding on top
-                    player.width * 0.5f,             // 50% width
-                    player.height * 0.75f            // 75% height
+                    player.x + player.width * playerPadX, 
+                    player.y + player.height * playerPadY,
+                    player.width * playerWidthScale,             
+                    player.height * playerHeightScale            
                 };
 
                 Rectangle itemHitbox = {
-                    it.rect.x + it.rect.width * 0.15f,
-                    it.rect.y + it.rect.height * 0.15f,
-                    it.rect.width * 0.7f,
-                    it.rect.height * 0.7f
+                    it.rect.x + it.rect.width * 0.05f,
+                    it.rect.y + it.rect.height * 0.05f,
+                    it.rect.width * 0.9f,
+                    it.rect.height * 0.9f
                 };
 
                 if (CheckCollisionRecs(playerHitbox, itemHitbox))
