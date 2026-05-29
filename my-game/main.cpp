@@ -366,6 +366,9 @@ int main()
     float pitAlpha = 1;
     bool fallingInPit = false;
 
+    float glitchTimer = 0.0f;
+    bool glitchActive = false;
+
     // MOVEMENTS
     float velocityX = 0; // player movement momentum
 
@@ -462,11 +465,36 @@ int main()
              }
          }
 
-         else if (state == BG1_TRANSITION) {
+            else if (state == BG1_TRANSITION) {
         UpdateBg1TransitionVideo();
+        glitchTimer += GetFrameTime();   // ADD
+
         BeginDrawing();
         ClearBackground(BLACK);
         DrawBg1TransitionVideo();
+
+        // ADD THIS ENTIRE BLOCK:
+        if (glitchTimer < 0.6f) {
+            float flicker = (float)(rand() % 100) / 100.0f;
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f + flicker * 0.4f));
+
+            int sliceCount = 6 + rand() % 6;
+            for (int i = 0; i < sliceCount; i++) {
+                int sliceY      = rand() % screenHeight;
+                int sliceHeight = 2 + rand() % 18;
+                int sliceOffset = (rand() % 80) - 40;
+                float sliceAlpha = 0.3f + (float)(rand() % 60) / 100.0f;
+                DrawRectangle(sliceOffset, sliceY, screenWidth, sliceHeight, Fade(BLACK, sliceAlpha));
+                if (rand() % 3 == 0) {
+                    Color fringe = (rand() % 2 == 0) ? Color{180, 0, 0, 80} : Color{0, 180, 180, 60};
+                    DrawRectangle(sliceOffset + (rand() % 20 - 10), sliceY, screenWidth, sliceHeight / 2, fringe);
+                }
+            }
+            for (int y = 0; y < screenHeight; y += 4)
+                DrawRectangle(0, y, screenWidth, 1, Fade(BLACK, 0.25f));
+            if (glitchTimer < 0.12f)
+                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.7f * (1.0f - glitchTimer / 0.12f)));
+        }
 
         EndDrawing();
 
@@ -497,15 +525,38 @@ int main()
         }
 
 
-        else if (state == BG2_TRANSITION) {
-             UpdateBg2TransitionVideo();
+         else if (state == BG2_TRANSITION) {
+            UpdateBg2TransitionVideo();
+            glitchTimer += GetFrameTime();   // ADD
 
-             BeginDrawing();
-             ClearBackground(BLACK);
-             DrawBg2TransitionVideo();
-             
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawBg2TransitionVideo();
 
-         EndDrawing();
+            // SAME GLITCH BLOCK AS ABOVE
+            if (glitchTimer < 0.6f) {
+                float flicker = (float)(rand() % 100) / 100.0f;
+                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f + flicker * 0.4f));
+
+                int sliceCount = 6 + rand() % 6;
+                for (int i = 0; i < sliceCount; i++) {
+                    int sliceY      = rand() % screenHeight;
+                    int sliceHeight = 2 + rand() % 18;
+                    int sliceOffset = (rand() % 80) - 40;
+                    float sliceAlpha = 0.3f + (float)(rand() % 60) / 100.0f;
+                    DrawRectangle(sliceOffset, sliceY, screenWidth, sliceHeight, Fade(BLACK, sliceAlpha));
+                    if (rand() % 3 == 0) {
+                        Color fringe = (rand() % 2 == 0) ? Color{180, 0, 0, 80} : Color{0, 180, 180, 60};
+                        DrawRectangle(sliceOffset + (rand() % 20 - 10), sliceY, screenWidth, sliceHeight / 2, fringe);
+                    }
+                }
+                for (int y = 0; y < screenHeight; y += 4)
+                    DrawRectangle(0, y, screenWidth, 1, Fade(BLACK, 0.25f));
+                if (glitchTimer < 0.12f)
+                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.7f * (1.0f - glitchTimer / 0.12f)));
+            }
+
+            EndDrawing();
 
         if (IsBg2TransitionFinished()) {
             float fadeAlpha = GetBg2TransitionAlpha(); 
@@ -583,15 +634,6 @@ else if (state == PAUSED)
            }
 
             // Update difficulty and handle grace periods
-<<<<<<< Updated upstream
-            lastDiff = diff;
-            if (score >= 100) 
-                diff = HARD;
-            else if (score >=50)
-                diff = MEDIUM;
-            else
-                diff = EASY;
-=======
             Difficulty prevDiff = diff;
                 if (score >= 20) 
             diff = HARD;
@@ -599,7 +641,6 @@ else if (state == PAUSED)
             diff = MEDIUM;
                 else
             diff = EASY;
->>>>>>> Stashed changes
 
             lastDiff = prevDiff; // lastDiff now correctly holds what diff WAS before this frame
 
@@ -622,6 +663,8 @@ else if (state == PAUSED)
                 pits.clear(); pitWidths.clear();
                 pitCenters.clear(); pitOpens.clear();
                 pitCreated = false;
+                glitchActive = true;   
+                glitchTimer = 0.0f;    
                 state = BG1_TRANSITION;
                 continue;
             }
@@ -637,6 +680,8 @@ else if (state == PAUSED)
                 pits.clear(); pitWidths.clear();
                 pitCenters.clear(); pitOpens.clear();
                 pitCreated = false;
+                glitchActive = true;   
+                glitchTimer = 0.0f;    
                 state = BG2_TRANSITION;
                 continue;
             }
