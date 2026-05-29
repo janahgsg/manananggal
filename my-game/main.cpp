@@ -183,7 +183,7 @@ int main()
     Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
-    Texture2D pauseBg = LoadTexture("assets/images/PAUSED UI (3).png");
+     
     InitInfoTexture();
 
     // MEME POP-UP TEXTURES
@@ -544,12 +544,12 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             lastDiff = diff;
-            if (score >= 20) 
+            if (score >= 100) 
                 diff = HARD;
-            else if (score >= 10)
-                diff = HARD;
+            else if (score >=50)
+                diff = MEDIUM;
             else
-                diff = HARD;
+                diff = EASY;
 
 
             // If difficulty just increased, give the player a "Grace Period"
