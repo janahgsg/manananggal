@@ -398,6 +398,9 @@ int main()
 
     Difficulty diff = EASY;
     Difficulty lastDiff = EASY; // track difficulty changes for grace periods
+    bool bg1Triggered = false;
+    bool bg2Triggered = false;
+
     // camera
     Camera2D camera = {0};
     camera.offset = {
@@ -410,8 +413,13 @@ int main()
     camera.rotation = 0.0f;
     camera.zoom = 1.30f;
 
+    InitBg1TransitionVideo();
+    InitBg2TransitionVideo();
+
     while (!WindowShouldClose())
     {
+    
+    
 
         // MENU-----------------------------------------------
         if (state == MENU)
@@ -462,13 +470,29 @@ int main()
 
         EndDrawing();
 
-        if (IsBg1TransitionFinished()) {
+       if (IsBg1TransitionFinished()) {
             float fadeAlpha = GetBg1TransitionAlpha(); 
-           Color fadeColor = Fade(BLACK, fadeAlpha);
-           DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
-            UnloadBg1TransitionVideo();
+            Color fadeColor = Fade(BLACK, fadeAlpha);
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
+
+            // Reset player to center
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            velocityX = 0;
+            velocityY = 0;
+            isGrounded = true;
+
+            // Reset items and spawn timer so they fall fresh from top
+            items.clear();
+            spawnTimer = 0;
+
+            // Reset camera to follow new player position
+            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+            camera.rotation = 0.0f;
+
             state = PLAYING;
         }
+
         continue; 
         }
 
@@ -485,11 +509,27 @@ int main()
 
         if (IsBg2TransitionFinished()) {
             float fadeAlpha = GetBg2TransitionAlpha(); 
-             Color fadeColor = Fade(BLACK, fadeAlpha);
-             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
-             UnloadBg2TransitionVideo();
-             state = PLAYING;   // resume gameplay with HARD background
-             }
+            Color fadeColor = Fade(BLACK, fadeAlpha);
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
+
+            // Reset player to center
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            velocityX = 0;
+            velocityY = 0;
+            isGrounded = true;
+
+            // Reset items and spawn timer so they fall fresh from top
+            items.clear();
+            spawnTimer = 0;
+
+            // Reset camera to follow new player position
+            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+            camera.rotation = 0.0f;
+
+            state = PLAYING;
+        }
+
          continue;
             }
 
@@ -543,6 +583,7 @@ else if (state == PAUSED)
            }
 
             // Update difficulty and handle grace periods
+<<<<<<< Updated upstream
             lastDiff = diff;
             if (score >= 100) 
                 diff = HARD;
@@ -550,7 +591,17 @@ else if (state == PAUSED)
                 diff = MEDIUM;
             else
                 diff = EASY;
+=======
+            Difficulty prevDiff = diff;
+                if (score >= 20) 
+            diff = HARD;
+                else if (score >= 10)
+            diff = MEDIUM;
+                else
+            diff = EASY;
+>>>>>>> Stashed changes
 
+            lastDiff = prevDiff; // lastDiff now correctly holds what diff WAS before this frame
 
             // If difficulty just increased, give the player a "Grace Period"
             if (diff > lastDiff) 
@@ -559,20 +610,37 @@ else if (state == PAUSED)
                 eventWarningTimer = 0;
             }
 
-             // >>> Trigger transition video when EASY → MEDIUM
-            if (diff == MEDIUM && lastDiff == EASY) {
-                 InitBg1TransitionVideo();
-                 state = BG1_TRANSITION;
-                 continue;
-                   
-                 }
+            // >>> Trigger transition video when EASY → MEDIUM
+            if (diff == MEDIUM && lastDiff == EASY && !bg1Triggered) {
+                bg1Triggered = true;
+                items.clear();
+                popEffects.clear();
+                currentEvent = NONE;
+                secondEvent = NONE;
+                shakeTime = 0; shakePower = 0; hitFlash = 0;
+                quakeActive = false;
+                pits.clear(); pitWidths.clear();
+                pitCenters.clear(); pitOpens.clear();
+                pitCreated = false;
+                state = BG1_TRANSITION;
+                continue;
+            }
 
-             else if (diff == HARD && lastDiff == MEDIUM) {
-                 InitBg2TransitionVideo();
-                 state = BG2_TRANSITION;
-                 continue;
-                   
-                 }
+             else if (diff == HARD && lastDiff == MEDIUM && !bg2Triggered) {
+                bg2Triggered = true;
+                items.clear();
+                popEffects.clear();
+                currentEvent = NONE;
+                secondEvent = NONE;
+                shakeTime = 0; shakePower = 0; hitFlash = 0;
+                quakeActive = false;
+                pits.clear(); pitWidths.clear();
+                pitCenters.clear(); pitOpens.clear();
+                pitCreated = false;
+                state = BG2_TRANSITION;
+                continue;
+            }
+
             // movements 
             float accel = 2200.0f;  // how fast player gains speed
             float friction = 0.92f; // slows naturally
@@ -2210,6 +2278,7 @@ else if (state == PAUSED)
             // ... your existing reset code ...
             state = PLAYING;
             hp = 3; score = 0; combo = 0;
+            lastDiff = EASY;
             comboBroken = false;
         comboBrokenTimer = 0;
         comboTime = 0;
@@ -2269,6 +2338,13 @@ else if (state == PAUSED)
         invertedScreen = false;
         gameOverAnimTimer = 0.0f;
         diff = EASY;
+        bg1Triggered = false;
+        bg2Triggered = false;
+        UnloadBg1TransitionVideo();
+        UnloadBg2TransitionVideo();
+        InitBg1TransitionVideo();
+        InitBg2TransitionVideo();
+
     }
         if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
         {
@@ -2276,6 +2352,7 @@ else if (state == PAUSED)
             // ... your existing reset + go to MENU code ...
             state = MENU;
             hp = 3; score = 0; combo = 0;
+            lastDiff = EASY;
             comboBroken = false;
         comboBrokenTimer = 0;
         comboTime = 0;
@@ -2335,6 +2412,12 @@ else if (state == PAUSED)
         invertedScreen = false;
         gameOverAnimTimer = 0.0f;
         diff = EASY;
+        bg1Triggered = false;
+        bg2Triggered = false;
+        UnloadBg1TransitionVideo();
+        UnloadBg2TransitionVideo();
+        InitBg1TransitionVideo();
+        InitBg2TransitionVideo();
 
         introMusic = LoadMusicStream("assets/sounds/intro.mp3");
         SetMusicVolume(introMusic, 0.5f);
@@ -2347,6 +2430,9 @@ else if (state == PAUSED)
 
     for (auto &t : videoFrames)
         UnloadTexture(t);
+
+    UnloadBg1TransitionVideo();
+    UnloadBg2TransitionVideo();
 
     for (auto &t : memeTextures)
         UnloadTexture(t);
