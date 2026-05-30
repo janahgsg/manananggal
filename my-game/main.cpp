@@ -63,6 +63,13 @@ struct PopEffect {
     Color color;
 };
 
+struct Warning {
+    float x;
+    float timer;
+    int type;
+    bool active;
+};
+
 enum Difficulty
 {
     EASY,
@@ -120,6 +127,14 @@ Music bgMusic;
 // Global Event History to prevent repeated events
 EventType lastEvent = NONE;
 EventType secondLastEvent = NONE;
+
+struct FloatingText {
+    Vector2 pos;
+    string text;
+    float timer;
+    Color color;
+};
+vector<FloatingText> floatingTexts;
 
 int main()
 {
@@ -418,6 +433,18 @@ int main()
 
     InitBg1TransitionVideo();
     InitBg2TransitionVideo();
+
+    // EXTRA SAFETY & FEEDBACK
+    float hitTimer = 0.0f; // grace period after taking damage
+    float nearMissTimer = 0.0f;
+    float milestoneCelebrationTimer = 0.0f;
+    vector<Warning> activeWarnings;
+
+    // JUICE & FEEL VARIABLES
+    Vector2 squashStretch = { 1.0f, 1.0f };
+    float playerRotation = 0.0f;
+    float hitStopTimer = 0.0f;
+    float landSquashTimer = 0.0f;
 
     while (!WindowShouldClose())
     {
@@ -878,6 +905,41 @@ else if (state == PAUSED)
                 if (hitFlash < 0) hitFlash = 0;
             }
 
+            // hit timer (grace period)
+            if (hitTimer > 0) {
+                hitTimer -= GetFrameTime();
+                if (hitTimer < 0) hitTimer = 0;
+            }
+            
+            if (nearMissTimer > 0) {
+                nearMissTimer -= GetFrameTime();
+                if (nearMissTimer < 0) nearMissTimer = 0;
+            }
+            
+            if (milestoneCelebrationTimer > 0) {
+                milestoneCelebrationTimer -= GetFrameTime();
+                if (milestoneCelebrationTimer < 0) milestoneCelebrationTimer = 0;
+            }
+
+            // JUICE: Kinematics (Squash & Stretch)
+            if (landSquashTimer > 0) {
+                landSquashTimer -= GetFrameTime();
+                squashStretch.x = Lerp(squashStretch.x, 1.15f, 20.0f * GetFrameTime());
+                squashStretch.y = Lerp(squashStretch.y, 0.85f, 20.0f * GetFrameTime());
+                if (landSquashTimer <= 0) landSquashTimer = 0;
+            } else if (!isGrounded) {
+                // Stretching while in air
+                squashStretch.x = Lerp(squashStretch.x, 0.90f, 15.0f * GetFrameTime());
+                squashStretch.y = Lerp(squashStretch.y, 1.10f, 15.0f * GetFrameTime());
+            } else {
+                // Return to normal
+                squashStretch.x = Lerp(squashStretch.x, 1.0f, 10.0f * GetFrameTime());
+                squashStretch.y = Lerp(squashStretch.y, 1.0f, 10.0f * GetFrameTime());
+            }
+
+            // JUICE: Leaning based on velocity
+            playerRotation = Lerp(playerRotation, (velocityX / maxSpeed) * 10.0f, 10.0f * GetFrameTime());
+
             // update pop effects
             for (int i = popEffects.size() - 1; i >= 0; i--)
             {
@@ -888,12 +950,25 @@ else if (state == PAUSED)
                 }
             }
 
-            Vector2 shakeOffset = {0, 0};
+            // JUICE: Update Floating Texts
+            for (int i = floatingTexts.size() - 1; i >= 0; i--) {
+                floatingTexts[i].timer -= GetFrameTime();
+                floatingTexts[i].pos.y -= 80.0f * GetFrameTime(); // Float up
+                if (floatingTexts[i].timer <= 0) {
+                    floatingTexts.erase(floatingTexts.begin() + i);
+                }
+            }
 
+            // JUICE: Hit-Stop Logic
+            if (hitStopTimer > 0) {
+                hitStopTimer -= GetFrameTime();
+                if (hitStopTimer <= 0) hitStopTimer = 0;
+            }
+
+            Vector2 shakeOffset = {0, 0};
             if (shakeTime > 0)
             {
                 float intensity = shakePower * (shakeTime / 0.25f);
-
                 shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
                 shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
             }
@@ -1384,10 +1459,9 @@ else if (state == PAUSED)
 
                 // COLLISION LOGIC (Literal Visual-Only)
                 // We use a centered "Core" for the player and a centered "Core" for items.
-                // This ensures you only hit the actual body/object, not the transparent air.
                 
                 float bodyWidth = player.width * 0.35f;   // Middle 35% of the sprite
-                float bodyHeight = player.height * 0.80f;  // Top 80% (avoiding extreme bottom empty space)
+                float bodyHeight = player.height * 0.80f;  // Top 80%
                 
                 Rectangle playerHitbox = {
                     player.x + (player.width - bodyWidth) / 2.0f, 
@@ -1396,7 +1470,25 @@ else if (state == PAUSED)
                     bodyHeight            
                 };
 
-                // Match item collision to its visual size (roughly 75% of the full rectangle)
+                // JUICE: Tongue Reach Passive (Snag good items from distance)
+                bool isGood = (it.type == BABY || it.type == HEART || it.type == BLOOD || it.type == MEAT || it.type == ATAY || it.type == STAR || it.type == CHILI);
+                if (isGood) {
+                    float dist = Vector2Distance(
+                        {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2},
+                        {player.x + player.width/2, player.y + player.height/2}
+                    );
+                    if (dist < 180.0f) {
+                        // Pull towards player
+                        Vector2 dir = Vector2Normalize(Vector2Subtract(
+                            {player.x + player.width/2, player.y + player.height/2},
+                            {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
+                        ));
+                        it.rect.x += dir.x * 500.0f * GetFrameTime();
+                        it.rect.y += dir.y * 500.0f * GetFrameTime();
+                    }
+                }
+
+                // Match item collision to its visual size
                 float itemCoreScale = 0.75f;
                 Rectangle itemHitbox = {
                     it.rect.x + (it.rect.width * (1.0f - itemCoreScale) / 2.0f),
@@ -1410,8 +1502,8 @@ else if (state == PAUSED)
                     // Trigger Pop Effect
                     PopEffect pe;
                     pe.pos = { it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2 };
-                    pe.timer = 0.35f;
-                    pe.maxTime = 0.35f;
+                    pe.timer = 0.45f;
+                    pe.maxTime = 0.45f;
 
                     // BAD ITEMS
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
@@ -1425,6 +1517,9 @@ else if (state == PAUSED)
                         comboTime = 0;
                         comboBroken = true;
                         comboBrokenTimer = 1.5f;
+
+                        // JUICE: Hit-Stop for impact
+                        hitStopTimer = 0.08f; 
                     }
                     else if (it.type == CHILI)
                     {
@@ -1441,9 +1536,15 @@ else if (state == PAUSED)
 
                         combo++;
                         comboTime = 2.5f;
-                        if (combo > 1)
+                        int added = 5;
+                        if (combo > 1) {
                             score += combo;
+                            added += combo;
+                        }
                         
+                        // JUICE: Floating text
+                        floatingTexts.push_back({ {it.rect.x, it.rect.y}, "+" + to_string(added), 1.5f, GOLD });
+
                         // JUICE: Subtle shake on combo
                         if (combo % 5 == 0) {
                             shakeTime = 0.1f;
@@ -1456,6 +1557,7 @@ else if (state == PAUSED)
                         score += 8;
                         shakeTime = 0.08f;
                         shakePower = 3.0f;
+                        floatingTexts.push_back({ {it.rect.x, it.rect.y}, "+8", 1.5f, GOLD });
                     }
 
                     else if (it.type == BLOOD || it.type == MEAT)
@@ -1465,8 +1567,13 @@ else if (state == PAUSED)
 
                         combo++;
                         comboTime = 2.5f;
-                        if (combo > 1)
+                        int added = 3;
+                        if (combo > 1) {
                             score += combo;
+                            added += combo;
+                        }
+                        
+                        floatingTexts.push_back({ {it.rect.x, it.rect.y}, "+" + to_string(added), 1.5f, RED });
 
                         if (combo % 5 == 0) {
                             shakeTime = 0.1f;
@@ -1828,20 +1935,44 @@ else if (state == PAUSED)
         {
             BeginMode2D(camera);
     
+            // DRAW PARALLAX BACKGROUND
             Texture2D currentBg;
-
             if (diff == EASY)      currentBg = bgEasy;
             else if (diff == MEDIUM) currentBg = bgMedium;
             else if (diff == HARD)   currentBg = bgHard;
 
+            float camX = camera.target.x;
             
+            // Layer 1: Far Background (Moves very slowly)
+            float farX = camX * 0.1f;
+            DrawTexturePro(
+                currentBg,
+                { farX, 0, (float)currentBg.width, (float)currentBg.height },
+                { 0, 0, (float)screenWidth, (float)screenHeight },
+                { 0, 0 },
+                0,
+                ColorAlpha(WHITE, 0.4f)
+            );
+
+            // Layer 2: Mid Background (Moves slowly)
+            float midX = camX * 0.4f;
+            DrawTexturePro(
+                currentBg,
+                { midX, 0, (float)currentBg.width, (float)currentBg.height },
+                { 0, 0, (float)screenWidth, (float)screenHeight },
+                { 0, 0 },
+                0,
+                ColorAlpha(WHITE, 0.6f)
+            );
+
+            // Layer 3: Near Ground (Moves at camera speed - normal drawing)
             DrawTexturePro(
                 currentBg,
                 {0, 0, (float)currentBg.width, (float)currentBg.height},
                 {0, 0, (float)screenWidth, (float)screenHeight},
                 {0, 0},
                 0,
-                ColorAlpha(WHITE, 0.7f) 
+                ColorAlpha(WHITE, 0.8f) 
                 );
 
             // WARNING BEFORE PIT OPENS
@@ -1931,12 +2062,12 @@ else if (state == PAUSED)
             DrawTexturePro(
                 texToDraw,
                 {0, 0, (float)texToDraw.width, (float)texToDraw.height},
-                dest,
-                {0, 0},
-                0.0f,
+                { dest.x + dest.width/2, dest.y + dest.height/2, dest.width * squashStretch.x, dest.height * squashStretch.y },
+                { (dest.width * squashStretch.x)/2.0f, (dest.height * squashStretch.y)/2.0f },
+                playerRotation,
                 WHITE
                 );
-            
+
 
             for (auto &it : items)
             {
@@ -2013,6 +2144,11 @@ else if (state == PAUSED)
                 }
             }
 
+            // JUICE: Draw Floating Texts
+            for (auto &ft : floatingTexts) {
+                DrawTextEx(tinyFont, ft.text.c_str(), ft.pos, 40, 2, Fade(ft.color, ft.timer / 1.5f));
+            }
+
             //EVENTS DESIGNS------------------------------------------------------
             // TEXTURE OF FOG EFFECT
             if(fogActive && fogAlpha > 0){
@@ -2027,15 +2163,15 @@ else if (state == PAUSED)
                         float y = row * 160;
             
                         DrawCircleGradient(
-                            {x, y},
-                            220,
+                            Vector2{x, y},
+                            220.0f,
                             Fade(LIGHTGRAY, fogAlpha),
                             Fade(WHITE, 0.0f)
                         );
             
                         DrawCircleGradient(
-                            {x + 100, y + 50},
-                            260,
+                            Vector2{x + 100.0f, y + 50.0f},
+                            260.0f,
                             Fade(GRAY, fogAlpha * 0.8f),
                             Fade(WHITE, 0.0f)
                         );
@@ -2065,10 +2201,10 @@ else if (state == PAUSED)
 
             //health
             float hpScale = 0.1f; 
-            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, (Vector2){10.0f + i * (hpTex.width * hpScale + 5.0f), 10.0f}, 0.0f, hpScale, WHITE);
+            for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, Vector2{10.0f + i * (hpTex.width * hpScale + 5.0f), 10.0f}, 0.0f, hpScale, WHITE);
             
             //score 
-            DrawTextEx(tinyFont, TextFormat("score: %d", score), {20.0f, 50.0f}, 45, 2, WHITE);
+            DrawTextEx(tinyFont, TextFormat("score: %d", score), Vector2{20.0f, 50.0f}, 45, 2, WHITE);
 
             // EVENT WARNING UI
             if (eventWarningTimer > 0)
