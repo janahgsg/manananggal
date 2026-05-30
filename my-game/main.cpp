@@ -956,19 +956,19 @@ else if (state == PAUSED)
 
                     // 1. ITEM SELECTION LOGIC (Moved up to determine size)
                     if (currentEvent == LUCKY_PARTY) {
-                        int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, MEDKIT, CHILI};
-                        it.type = goodPool[rand() % 9];
+                        int goodPool[] = {BABY, HEART, BLOOD, MEAT, ATAY, STAR, DICE, CHILI};
+                        it.type = goodPool[rand() % 8];
                     }
                     else if (currentEvent == MISFORTUNE) {
-                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, MEDKIT, BANDAGE};
+                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, BOMB, POISON};
                         it.type = badPool[rand() % 9];
                     }
                     else {
-                        if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 5) {
+                        if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 3) {
                             it.type = MEDKIT;
-                            medkitCooldown = 15.0f;
+                            medkitCooldown = 20.0f;
                         }
-                        else if (hp < 3 && rand() % 100 < 8) it.type = BANDAGE;
+                        else if (hp < 3 && rand() % 100 < 4) it.type = BANDAGE;
                         else if (rand() % 100 < 3) it.type = TROLLFACE;
                         else if (rand() % 100 < 2) it.type = DICE; 
                         else if (diff == EASY) {
@@ -1382,25 +1382,27 @@ else if (state == PAUSED)
                     it.rect.x += (rand() % 21 - 10);
                 }
 
-                // COLLISION LOGIC (Generous Hitboxes)
-                // We use padding to match the character's visual core, but keep it loose for better gameplay
-                float playerPadX = (diff == HARD) ? 0.05f : 0.15f; 
-                float playerPadY = 0.05f;
-                float playerWidthScale = 1.0f - (playerPadX * 2.0f);
-                float playerHeightScale = 1.0f - (playerPadY * 2.0f);
-
+                // COLLISION LOGIC (Literal Visual-Only)
+                // We use a centered "Core" for the player and a centered "Core" for items.
+                // This ensures you only hit the actual body/object, not the transparent air.
+                
+                float bodyWidth = player.width * 0.35f;   // Middle 35% of the sprite
+                float bodyHeight = player.height * 0.80f;  // Top 80% (avoiding extreme bottom empty space)
+                
                 Rectangle playerHitbox = {
-                    player.x + player.width * playerPadX, 
-                    player.y + player.height * playerPadY,
-                    player.width * playerWidthScale,             
-                    player.height * playerHeightScale            
+                    player.x + (player.width - bodyWidth) / 2.0f, 
+                    player.y + (player.height - bodyHeight) / 2.0f,
+                    bodyWidth,             
+                    bodyHeight            
                 };
 
+                // Match item collision to its visual size (roughly 75% of the full rectangle)
+                float itemCoreScale = 0.75f;
                 Rectangle itemHitbox = {
-                    it.rect.x + it.rect.width * 0.05f,
-                    it.rect.y + it.rect.height * 0.05f,
-                    it.rect.width * 0.9f,
-                    it.rect.height * 0.9f
+                    it.rect.x + (it.rect.width * (1.0f - itemCoreScale) / 2.0f),
+                    it.rect.y + (it.rect.height * (1.0f - itemCoreScale) / 2.0f),
+                    it.rect.width * itemCoreScale,
+                    it.rect.height * itemCoreScale
                 };
 
                 if (CheckCollisionRecs(playerHitbox, itemHitbox))
@@ -1951,15 +1953,15 @@ else if (state == PAUSED)
                     visualScale = 1.0f + (0.15f * pulse);               // Grow up to 15% larger
                 }
 
-                // Smaller item size
+                // Smaller item size + apply illusion visual scale
                 Rectangle drawRect = it.rect;
-                float smallScale = 0.80f; // 80% size
+                float finalScale = 0.80f * visualScale; // Apply pulsing visual scale
 
                 Rectangle smallRect = {
-                    drawRect.x + (drawRect.width * (1.0f - smallScale) / 2),
-                    drawRect.y + (drawRect.height * (1.0f - smallScale) / 2),
-                    drawRect.width * smallScale,
-                    drawRect.height * smallScale
+                    drawRect.x + (drawRect.width * (1.0f - finalScale) / 2),
+                    drawRect.y + (drawRect.height * (1.0f - finalScale) / 2),
+                    drawRect.width * finalScale,
+                    drawRect.height * finalScale
                 };
 
                 if (it.type == BOMB)
