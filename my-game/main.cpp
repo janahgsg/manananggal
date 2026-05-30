@@ -932,13 +932,12 @@ else if (state == PAUSED)
                 squashStretch.x = Lerp(squashStretch.x, 0.90f, 15.0f * GetFrameTime());
                 squashStretch.y = Lerp(squashStretch.y, 1.10f, 15.0f * GetFrameTime());
             } else {
-                // Return to normal
+                // return to normal squash/stretch
                 squashStretch.x = Lerp(squashStretch.x, 1.0f, 10.0f * GetFrameTime());
                 squashStretch.y = Lerp(squashStretch.y, 1.0f, 10.0f * GetFrameTime());
             }
 
-            // JUICE: Leaning based on velocity
-            playerRotation = Lerp(playerRotation, (velocityX / maxSpeed) * 10.0f, 10.0f * GetFrameTime());
+            // (Removed playerRotation leaning logic)
 
             // update pop effects
             for (int i = popEffects.size() - 1; i >= 0; i--)
@@ -1935,45 +1934,20 @@ else if (state == PAUSED)
         {
             BeginMode2D(camera);
     
-            // DRAW PARALLAX BACKGROUND
+            // DRAW BACKGROUND (Clean, single layer)
             Texture2D currentBg;
             if (diff == EASY)      currentBg = bgEasy;
             else if (diff == MEDIUM) currentBg = bgMedium;
             else if (diff == HARD)   currentBg = bgHard;
 
-            float camX = camera.target.x;
-            
-            // Layer 1: Far Background (Moves very slowly)
-            float farX = camX * 0.1f;
-            DrawTexturePro(
-                currentBg,
-                { farX, 0, (float)currentBg.width, (float)currentBg.height },
-                { 0, 0, (float)screenWidth, (float)screenHeight },
-                { 0, 0 },
-                0,
-                ColorAlpha(WHITE, 0.4f)
-            );
-
-            // Layer 2: Mid Background (Moves slowly)
-            float midX = camX * 0.4f;
-            DrawTexturePro(
-                currentBg,
-                { midX, 0, (float)currentBg.width, (float)currentBg.height },
-                { 0, 0, (float)screenWidth, (float)screenHeight },
-                { 0, 0 },
-                0,
-                ColorAlpha(WHITE, 0.6f)
-            );
-
-            // Layer 3: Near Ground (Moves at camera speed - normal drawing)
             DrawTexturePro(
                 currentBg,
                 {0, 0, (float)currentBg.width, (float)currentBg.height},
                 {0, 0, (float)screenWidth, (float)screenHeight},
                 {0, 0},
-                0,
+                0.0f,
                 ColorAlpha(WHITE, 0.8f) 
-                );
+            );
 
             // WARNING BEFORE PIT OPENS
             if (quakeTimer > 1.5f && quakeTimer < 3.5f)
