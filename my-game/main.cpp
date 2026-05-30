@@ -635,12 +635,12 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-                if (score >= 20) 
-            diff = HARD;
-                else if (score >= 10)
-            diff = MEDIUM;
-                else
-            diff = EASY;
+            if (score >= 350) 
+                diff = HARD;
+            else if (score >= 120)
+                diff = MEDIUM;
+            else
+                diff = EASY;
 
             lastDiff = prevDiff; // lastDiff now correctly holds what diff WAS before this frame
 
@@ -914,19 +914,19 @@ else if (state == PAUSED)
             int spawnAmount;
             if (diff == EASY)
             {
-                spawnDelay = 1.1f; 
+                spawnDelay = 1.35f; 
                 spawnAmount = 1;
                 baseMove = 1.0f;
             }
             else if (diff == MEDIUM)
             {
-                spawnDelay = 0.75f; 
+                spawnDelay = 0.95f; 
                 spawnAmount = 2;
                 baseMove = 1.15f;
             }
             else if (diff == HARD)
             {
-                spawnDelay = 0.55f; 
+                spawnDelay = 0.70f; 
                 spawnAmount = 3;
                 baseMove = 1.3f;
             }
@@ -1021,17 +1021,17 @@ else if (state == PAUSED)
 
                     // 4. PHYSICS
                     if (diff == EASY) {
-                        it.speed = 180 + rand() % 40;
-                        it.acceleration = 25;
+                        it.speed = 140 + rand() % 40;
+                        it.acceleration = 15;
                         it.lateralSpeed = 0;
                     } else if (diff == MEDIUM) {
-                        it.speed = 250 + rand() % 50;
-                        it.acceleration = 35;
-                        it.lateralSpeed = (rand() % 100 < 30) ? (rand() % 81 - 40) : 0; 
+                        it.speed = 195 + rand() % 50;
+                        it.acceleration = 25;
+                        it.lateralSpeed = (rand() % 100 < 40) ? (rand() % 61 - 30) : 0; 
                     } else {
-                        it.speed = 320 + rand() % 80;
-                        it.acceleration = 50;
-                        it.lateralSpeed = (rand() % 91 - 45) * 1.2f; 
+                        it.speed = 270 + rand() % 70;
+                        it.acceleration = 40;
+                        it.lateralSpeed = (rand() % 91 - 45) * 1.1f; 
                     }
 
                     it.sinTime = (float)(rand() % 1000) / 100.0f;
@@ -1076,8 +1076,8 @@ else if (state == PAUSED)
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
 
-                    eventTimer = 18.0f;
-                    eventCooldown = 20.0f;
+                    eventTimer = 13.0f;
+                    eventCooldown = 15.0f;
                 }
 
                 else if (diff == HARD)
@@ -1105,8 +1105,8 @@ else if (state == PAUSED)
                             secondEvent = (EventType)hardEvents[rand() % 9];
                     }
 
-                    eventTimer = 25.0f;
-                    eventCooldown = 12.0f;
+                    eventTimer = 16.0f;
+                    eventCooldown = 10.0f;
                 }
             }
 
@@ -1162,9 +1162,9 @@ else if (state == PAUSED)
 
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
-                       eventCooldown = 20.0f;
+                       eventCooldown = 15.0f;
                     else if (diff == HARD)
-                       eventCooldown = 12.0f;
+                       eventCooldown = 10.0f;
                 }
             }
 
@@ -1441,11 +1441,19 @@ else if (state == PAUSED)
                         comboTime = 2.5f;
                         if (combo > 1)
                             score += combo;
+                        
+                        // JUICE: Subtle shake on combo
+                        if (combo % 5 == 0) {
+                            shakeTime = 0.1f;
+                            shakePower = 4.0f;
+                        }
                     }
                     else if (it.type == ATAY)
                     {
                         pe.color = GOLD;
                         score += 8;
+                        shakeTime = 0.08f;
+                        shakePower = 3.0f;
                     }
 
                     else if (it.type == BLOOD || it.type == MEAT)
@@ -1457,6 +1465,11 @@ else if (state == PAUSED)
                         comboTime = 2.5f;
                         if (combo > 1)
                             score += combo;
+
+                        if (combo % 5 == 0) {
+                            shakeTime = 0.1f;
+                            shakePower = 4.0f;
+                        }
                     }
                     // HEAL
                     else if (it.type == BANDAGE)
