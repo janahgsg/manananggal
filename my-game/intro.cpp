@@ -185,6 +185,8 @@ static bool videoFinished = false;
 // ===== NEW: Info overlay state =====
 static bool showInfo = false;
 static Texture2D infoTexture;
+static Texture2D infoTexture2;
+static int infoPage = 1;
 
 
 
@@ -204,11 +206,13 @@ void InitIntroVideo() {
 // ===== NEW: Load info image =====
 void InitInfoTexture() {
     infoTexture = LoadTexture("assets/images/info.png"); 
+    infoTexture2 = LoadTexture("assets/images/info2.png");
 }
 
 // ===== NEW: Unload info image =====
 void UnloadInfoTexture() {
     UnloadTexture(infoTexture);
+    UnloadTexture(infoTexture2);
 }
 
 void UpdateIntroVideo() {
@@ -327,10 +331,12 @@ void UpdateInfo() {
 
     if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         showInfo = true;
+        infoPage = 1; // Reset to first page when opening
     }
 
-    // Close button when info is showing
+    // Controls when info is showing
     if (showInfo) {
+        // Close button
         Rectangle closeButton = {
             screenWidth / 2.0f - 75,
             screenHeight - 80.0f,
@@ -339,6 +345,31 @@ void UpdateInfo() {
         };
         if (CheckCollisionPointRec(mouse, closeButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             showInfo = false;
+        }
+
+        // Next button (if on page 1)
+        if (infoPage == 1) {
+            Rectangle nextButton = {
+                screenWidth / 2.0f + 100,
+                screenHeight - 80.0f,
+                150,
+                50
+            };
+            if (CheckCollisionPointRec(mouse, nextButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                infoPage = 2;
+            }
+        }
+        // Prev button (if on page 2)
+        else if (infoPage == 2) {
+            Rectangle prevButton = {
+                screenWidth / 2.0f - 250,
+                screenHeight - 80.0f,
+                150,
+                50
+            };
+            if (CheckCollisionPointRec(mouse, prevButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                infoPage = 1;
+            }
         }
     }
 }
@@ -452,14 +483,17 @@ void DrawIntro(int highScore, Texture2D introTex) {
         // Dark background overlay
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.8f));
 
+        // Select current texture
+        Texture2D currentTex = (infoPage == 1) ? infoTexture : infoTexture2;
+
         // Show the info image centered
-        float imgScale = fminf((float)screenWidth / infoTexture.width, (float)(screenHeight - 100) / infoTexture.height);
-        float imgW = infoTexture.width * imgScale;
-        float imgH = infoTexture.height * imgScale;
+        float imgScale = fminf((float)screenWidth / currentTex.width, (float)(screenHeight - 120) / currentTex.height);
+        float imgW = currentTex.width * imgScale;
+        float imgH = currentTex.height * imgScale;
 
         DrawTexturePro(
-            infoTexture,
-            {0, 0, (float)infoTexture.width, (float)infoTexture.height},
+            currentTex,
+            {0, 0, (float)currentTex.width, (float)currentTex.height},
             {screenWidth / 2.0f - imgW / 2, 20, imgW, imgH},
             {0, 0},
             0.0f,
@@ -478,5 +512,32 @@ void DrawIntro(int highScore, Texture2D introTex) {
 
         Vector2 closeTextSize = MeasureTextEx(gamefont, "CLOSE", 35, 0);
         DrawTextEx(gamefont, "CLOSE", {closeButton.x + closeButton.width / 2 - closeTextSize.x / 2, closeButton.y + closeButton.height / 2 - closeTextSize.y / 2}, 35, 0, WHITE);
+
+        // Next button (Page 1)
+        if (infoPage == 1) {
+            Rectangle nextButton = {
+                screenWidth / 2.0f + 100,
+                screenHeight - 80.0f,
+                150,
+                50
+            };
+            bool nextHovered = CheckCollisionPointRec(GetMousePosition(), nextButton);
+            DrawRectangleRounded(nextButton, 0.3f, 10, nextHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255});
+            Vector2 nextTextSize = MeasureTextEx(gamefont, "NEXT", 35, 0);
+            DrawTextEx(gamefont, "NEXT", {nextButton.x + nextButton.width / 2 - nextTextSize.x / 2, nextButton.y + nextButton.height / 2 - nextTextSize.y / 2}, 35, 0, WHITE);
+        }
+        // Prev button (Page 2)
+        else if (infoPage == 2) {
+            Rectangle prevButton = {
+                screenWidth / 2.0f - 250,
+                screenHeight - 80.0f,
+                150,
+                50
+            };
+            bool prevHovered = CheckCollisionPointRec(GetMousePosition(), prevButton);
+            DrawRectangleRounded(prevButton, 0.3f, 10, prevHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255});
+            Vector2 prevTextSize = MeasureTextEx(gamefont, "PREV", 35, 0);
+            DrawTextEx(gamefont, "PREV", {prevButton.x + prevButton.width / 2 - prevTextSize.x / 2, prevButton.y + prevButton.height / 2 - prevTextSize.y / 2}, 35, 0, WHITE);
+        }
     }
 }
