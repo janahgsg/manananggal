@@ -1449,7 +1449,7 @@ int main()
 
                         Rectangle newPit = {
                             randomX,
-                            screenHeight * 0.85f,
+                            screenHeight * 0.82f,
                             0,
                             220
                         };
@@ -1483,7 +1483,7 @@ int main()
 
                         pits[i] = {
                             pitCenters[i] - pitOpens[i] / 2,
-                            screenHeight * 0.85f,
+                            screenHeight * 0.82f,
                             pitOpens[i],
                             220
                         };
