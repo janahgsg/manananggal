@@ -136,6 +136,33 @@ struct FloatingText {
 };
 vector<FloatingText> floatingTexts;
 
+struct Notif {
+    string text;
+    Color  color;
+    float  timer;
+    float  maxTime;
+};
+vector<Notif> notifs;
+
+void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
+    if (v.size() >= 3) return;
+    v.push_back({text, col, dur, dur});
+}
+
+// ADD THIS above int main(), after PushNotif:
+string GetEventName(EventType e) {
+    if (e == SPEED_BOOST)    return "SPEED BOOST";
+    if (e == SLOW_BOOST)     return "SLOW CURSE";
+    if (e == SWAP_CONTROLS)  return "SWAPPED CONTROLS";
+    if (e == LOW_GRAVITY)    return "LOW GRAVITY";
+    if (e == FOG_BLIND)      return "CURSED FOG";
+    if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
+    if (e == EARTHQUAKE)     return "EARTHQUAKE";
+    if (e == LUCKY_PARTY)    return "JACKPOT";
+    if (e == MISFORTUNE)     return "MISFORTUNE";
+    return "";
+}
+
 int main()
 {
     SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
@@ -405,17 +432,6 @@ int main()
     float chiliBoost = 1.0f;
     float eventBoost = 1.0f;
 
-    // TEXTS POP UPS
-    bool showStarText = false;
-    bool showMinusText = false;
-    bool showSlowText = false;
-    bool showComboText = false;
-    // timers
-    float starTextTimer = 0;
-    float minusTextTimer = 0;
-    float slowTextTimer = 0;
-
-
     Difficulty diff = EASY;
     Difficulty lastDiff = EASY; // track difficulty changes for grace periods
     bool bg1Triggered = false;
@@ -641,6 +657,7 @@ int main()
             diff = EASY; bg1Triggered = false; bg2Triggered = false;
             lastDiff = EASY; comboBroken = false; comboBrokenTimer = 0; comboTime = 0;
             items.clear(); popEffects.clear();
+            notifs.clear(); 
             player.x = (screenWidth - player.width) / 2;
             player.y = screenHeight * 0.75f;
             move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
@@ -649,7 +666,6 @@ int main()
             currentEvent = NONE; secondEvent = NONE;
             lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
             slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
-            showStarText = false; showMinusText = false; showSlowText = false;
             shakeTime = 0; shakePower = 0; hitFlash = 0;
             fogActive = false; fogAlpha = 0;
             fallingInPit = false; pitCreated = false; pitSoundPlayed = false;
@@ -1138,8 +1154,10 @@ int main()
                 eventCooldown -= GetFrameTime();
                 
                 // Show a warning when the event is about to start (3 seconds before)
-                if (eventCooldown <= 3.0f && diff != EASY)
+               if (eventCooldown <= 3.0f && diff != EASY)
                 {
+                    if (eventCooldown > 2.95f)  // fires once as it crosses 3.0
+                        PushNotif(notifs, "INGAT... MAY PAPARATING!", {255, 68, 68, 255}, 3.0f);
                     eventWarningTimer = eventCooldown;
                 }
             }
@@ -1167,6 +1185,28 @@ int main()
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
 
+                    // Event-specific notif colors
+                    if (currentEvent == LUCKY_PARTY)
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == MISFORTUNE)
+                        PushNotif(notifs, "MISFORTUNE", {221, 68, 68, 255}, 3.5f);
+                    else if (currentEvent == INVERTED_SCREEN)
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                    else if (currentEvent == SWAP_CONTROLS)
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                    else if (currentEvent == SPEED_BOOST)
+                        PushNotif(notifs, "SPEED BOOST!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == SLOW_BOOST)
+                        PushNotif(notifs, "SLOW CURSE...", {136, 204, 255, 255}, 3.5f);
+                    else if (currentEvent == LOW_GRAVITY)
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                    else if (currentEvent == FOG_BLIND)
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                    else if (currentEvent == EARTHQUAKE)
+                        PushNotif(notifs, "EARTHQUAKE!", {255, 136, 34, 255}, 3.5f);
+                    else
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+
                     eventTimer = 13.0f;
                     eventCooldown = 15.0f;
                 }
@@ -1187,13 +1227,34 @@ int main()
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
 
-                    // 40% chance for DOUBLE EVENT
+                    // Event-specific notif colors (HARD)
+                    if (currentEvent == LUCKY_PARTY)
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == MISFORTUNE)
+                        PushNotif(notifs, "MISFORTUNE", {221, 68, 68, 255}, 3.5f);
+                    else if (currentEvent == INVERTED_SCREEN)
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                    else if (currentEvent == SWAP_CONTROLS)
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                    else if (currentEvent == SPEED_BOOST)
+                        PushNotif(notifs, "SPEED BOOST!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == SLOW_BOOST)
+                        PushNotif(notifs, "SLOW CURSE...", {136, 204, 255, 255}, 3.5f);
+                    else if (currentEvent == LOW_GRAVITY)
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                    else if (currentEvent == FOG_BLIND)
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                    else if (currentEvent == EARTHQUAKE)
+                        PushNotif(notifs, "EARTHQUAKE!", {255, 136, 34, 255}, 3.5f);
+                    else
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+
                     if (rand() % 100 < 40)
                     {
                         secondEvent = (EventType)hardEvents[rand() % 9];
-                        // prevent same event twice in the double-event slot
                         while (secondEvent == currentEvent)
                             secondEvent = (EventType)hardEvents[rand() % 9];
+                        PushNotif(notifs, string("+ ") + GetEventName(secondEvent), {221, 136, 255, 255}, 3.0f);
                     }
 
                     eventTimer = 16.0f;
@@ -1287,6 +1348,10 @@ int main()
             if (quakeActive)
             {
                 quakeTimer += GetFrameTime();
+                if (quakeTimer > 1.0f && quakeTimer < 1.05f)
+                    PushNotif(notifs, "THE EARTH TREMBLES!", {255, 170, 34, 255}, 2.5f);
+                if (quakeTimer > 3.5f && quakeTimer < 3.55f)
+                    PushNotif(notifs, "FLEE! FLEE! FLEE!", {238, 238, 238, 255}, 2.0f);
             
                 if(shakeTime <= 0){
                     shakeTime = 0.1f;
@@ -1533,6 +1598,7 @@ int main()
                         comboTime = 0;
                         comboBroken = true;
                         comboBrokenTimer = 1.5f;
+                        PushNotif(notifs, "STREAK BROKEN!", {255, 68, 68, 255}, 1.5f);
 
                         // JUICE: Hit-Stop for impact
                         hitStopTimer = 0.08f; 
@@ -1552,6 +1618,12 @@ int main()
 
                         combo++;
                         comboTime = 2.5f;
+                        if (combo == 10)
+                            PushNotif(notifs, "NAPAKAGALING!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo == 5)
+                            PushNotif(notifs, "HOTSTREAK!!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo > 1)
+                            PushNotif(notifs, TextFormat("COMBO x%d", combo), {255, 221, 51, 255}, 1.6f);
                         int added = 5;
                         if (combo > 1) {
                             score += combo;
@@ -1583,6 +1655,12 @@ int main()
 
                         combo++;
                         comboTime = 2.5f;
+                        if (combo == 10)
+                            PushNotif(notifs, "NAPAKAGALING!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo == 5)
+                            PushNotif(notifs, "HOTSTREAK!!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo > 1)
+                            PushNotif(notifs, TextFormat("COMBO x%d", combo), {255, 221, 51, 255}, 1.6f);
                         int added = 3;
                         if (combo > 1) {
                             score += combo;
@@ -1633,27 +1711,24 @@ int main()
                         if (randomIndex == 1)
                         {
                             score += 10;
-                            showStarText = true;
-                            starTextTimer = 2.0f;
+                            PushNotif(notifs, "LUCKY STAR!  +10", {255, 221, 51, 255});
                         }
                     }
                     else if (it.type == MUSHROOM)
                     { // mushroom(bad effects)
                         pe.color = MAGENTA;
                         int randomIndex = rand() % 4;
-                        if (randomIndex == 1)
-                        { // -10
-                            score -= 10;
-                            showMinusText = true;
-                            minusTextTimer = 2.0f;
-                            hitFlash = 0.35f;
-                        }
-                        else if (randomIndex == 2)
-                        { // slowness
-                            move = 0.45f;
-                            slowTimer = 4.0f;
-                            showSlowText = true;
-                            slowTextTimer = 2.0f;
+                    if (randomIndex == 1)
+                    {
+                        score -= 10;
+                        hitFlash = 0.35f;
+                        PushNotif(notifs, "CURSED!  -10 HUHU", {221, 136, 255, 255});
+                    }
+                    else if (randomIndex == 2)
+                    {
+                        move = 0.45f;
+                        slowTimer = 4.0f;
+                        PushNotif(notifs, "HEXED... SLOWED", {221, 136, 255, 255}, 2.2f);
                         }
                     }
                     else if (it.type == STAR)
@@ -1715,32 +1790,13 @@ int main()
                     chiliBoost = 1.0f;
             }
 
-            // STAR 
-            if(showStarText){
-                starTextTimer -= GetFrameTime();
-                if(starTextTimer <= 0) showStarText = false;
+           // Notif update
+            for (int i = notifs.size() - 1; i >= 0; i--) {
+                notifs[i].timer -= GetFrameTime();
+                if (notifs[i].timer <= 0)
+                    notifs.erase(notifs.begin() + i);
             }
-            // STAR
-            if (showStarText)
-            {
-                starTextTimer -= GetFrameTime();
-                if (starTextTimer <= 0)
-                    showStarText = false;
-            }
-            // MINUS
-            if (showMinusText)
-            {
-                minusTextTimer -= GetFrameTime();
-                if (minusTextTimer <= 0)
-                    showMinusText = false;
-            }
-            // SLOW
-            if (showSlowText)
-            {
-                slowTextTimer -= GetFrameTime();
-                if (slowTextTimer <= 0)
-                    showSlowText = false;
-            }
+
             if (slowTimer > 0)
             {
                 slowTimer -= GetFrameTime();
@@ -2189,6 +2245,38 @@ int main()
                 );
             }
 
+            // NOTIF DRAW
+{
+    float startY = 90.0f;
+    float fontSize = 30.0f;
+
+    for (int i = 0; i < (int)notifs.size(); i++) {
+        auto& n = notifs[i];
+        float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+
+        Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
+        float tx = screenWidth / 2.0f - tSize.x / 2.0f;
+        float ty = startY + i * 38.0f;
+
+        // black pixel outline (8 directions)
+        Color outline = Fade(BLACK, alpha);
+        for (int ox = -2; ox <= 2; ox += 2) {
+            for (int oy = -2; oy <= 2; oy += 2) {
+                if (ox == 0 && oy == 0) continue;
+                DrawTextEx(tinyFont, n.text.c_str(), {tx + ox, ty + oy}, fontSize, 0, outline);
+            }
+        }
+        // drop shadow
+        DrawTextEx(tinyFont, n.text.c_str(), {tx + 2, ty + 3}, fontSize, 0,
+            Fade({40, 0, 0, 255}, alpha * 0.8f));
+        // main colored text
+        DrawTextEx(tinyFont, n.text.c_str(), {tx, ty}, fontSize, 0,
+            Fade(n.color, alpha));
+    }
+}
+            if (hitFlash > 0)
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
+
             // UI   
             // CHAOS LEVEL UI (for research visibility)
             DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
@@ -2249,66 +2337,6 @@ int main()
                     30, 0, Fade(diffColor, pulse));
             }
 
-            // EVENT WARNING UI
-            if (eventWarningTimer > 0)
-            {
-                // Pulsing effect for the warning
-                float pulse = abs(sin(GetTime() * 10.0f));
-                const char* warningText = "INGAT... MAY PAPARATING!";
-                Vector2 textSize = MeasureTextEx(tinyFont, warningText, 30, 0);
-                DrawTextEx(tinyFont, warningText, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 150.0f }, 30, 0, Fade(RED, 0.5f + pulse * 0.5f));
-            }
-
-            // POP UP TEXTS--------------------------------------
-            
-            if (showStarText)
-                DrawTextEx(tinyFont, "LUCKY STAR! +10", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-            if (showMinusText)
-                DrawTextEx(tinyFont, "CURSED! -10", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-            if (showSlowText)
-                DrawTextEx(tinyFont, "HEXED! SLOWED...", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-
-            if (quakeTimer > 1.0f && quakeTimer < 3.0f)
-                DrawTextEx(tinyFont, "THE EARTH TREMBLES!", { (float)screenWidth / 2.0f - 250.0f, (float)screenHeight - 100.0f }, 45, 2, RED);
-            
-            if (quakeTimer > 3.0f && quakeTimer < 5.5f)
-                DrawTextEx(tinyFont, "FLEE! FLEE! FLEE!", { (float)screenWidth / 2.0f - 180.0f, (float)screenHeight - 100.0f }, 55, 2, WHITE);
-
-             string eventName = "";// events
-
-            auto GetEventName = [&](EventType e)
-            {
-                if (e == SPEED_BOOST)
-                    return "SPEED BOOST";
-                if (e == SLOW_BOOST)
-                    return "SLOW CURSE";
-                if (e == SWAP_CONTROLS)
-                    return "SWAPPED CONTROLS";
-                if (e == LOW_GRAVITY)
-                    return "LOW GRAVITY";
-                if (e == FOG_BLIND)
-                    return "CURSED FOG";
-                if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
-                if (e == EARTHQUAKE) return "EARTHQUAKE";
-                if (e == LUCKY_PARTY) return "JACKPOT";
-                if (e == MISFORTUNE) return "MISFORTUNE";
-
-                return "";
-            };
-
-            eventName = GetEventName(currentEvent);
-
-            if (secondEvent != NONE)
-            {
-                eventName += " + ";
-                eventName += GetEventName(secondEvent);
-            }
-
-            if (currentEvent != NONE)
-            {
-                DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
-                DrawTextEx(tinyFont, eventName.c_str(), {25.0f, 100.0f}, 28, 0, RED);
-            }
             //effect when the player fell into the pit
             if (fallingInPit)
             {
@@ -2328,27 +2356,8 @@ int main()
                     Fade(BLACK, alpha)
                 );
             }
-
-            // combo 
-            if (combo >= 10)
-                DrawTextEx(tinyFont, "NAPAKAGALING!", { (float)screenWidth / 2.0f - 140.0f, 20.0f }, 50, 2, RED);
-            else if (combo >= 5)
-                DrawTextEx(tinyFont, "HOTSTREAK!!", { (float)screenWidth / 2.0f - 120.0f, 20.0f }, 45, 2, ORANGE);
-            else if (combo > 1)
-                DrawTextEx(tinyFont, TextFormat("COMBO x%d", combo), { (float)screenWidth / 2.0f - 100.0f, 20.0f }, 40, 2, YELLOW);
-
-            if (comboBroken)
-                DrawTextEx(tinyFont, "STREAK BROKEN!", { (float)screenWidth / 2.0f - 120.0f, 70.0f }, 40, 2, RED);
-            if (quakeTimer > 1.2f && quakeTimer < 2.0f)
-            {
-                DrawTextEx(tinyFont,
-                    "CRACKS BENEATH YOU!",
-                    { (float)screenWidth / 2.0f - 220.0f, 120.0f },
-                    40, 2,
-                    RED
-                );
-            }
         }
+
         else if (state == TROLL_VIDEO)
         {
             frameTimer += GetFrameTime();
@@ -2395,9 +2404,6 @@ int main()
              continue;
               }
         }
-
-        if (hitFlash > 0)
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
         // heartbeat text
         if (hp == 1)
@@ -2580,13 +2586,8 @@ int main()
         slowTimer = 0;
         speedBoostTimer = 0;
         medkitCooldown = 0;
-        
-        showStarText = false;
-        showMinusText = false;
-        showSlowText = false;
-        starTextTimer = 0;
-        minusTextTimer = 0;
-        slowTextTimer = 0;
+
+        notifs.clear();
         
         shakeTime = 0;
         shakePower = 0;
@@ -2655,12 +2656,7 @@ int main()
         speedBoostTimer = 0;
         medkitCooldown = 0;
 
-        showStarText = false;
-        showMinusText = false;
-        showSlowText = false;
-        starTextTimer = 0;
-        minusTextTimer = 0;
-        slowTextTimer = 0;
+        notifs.clear();
 
         shakeTime = 0;
         shakePower = 0;
