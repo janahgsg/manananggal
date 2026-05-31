@@ -1163,7 +1163,7 @@ else if (state == PAUSED)
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
 
-                    eventTimer = 13.0f;
+                    eventTimer = 18.0f;
                     eventCooldown = 15.0f;
                 }
 
@@ -1199,7 +1199,7 @@ else if (state == PAUSED)
                         }
                     }
 
-                    eventTimer = 16.0f;
+                    eventTimer = 25.0f;
                     eventCooldown = 10.0f;
                 }
             }
