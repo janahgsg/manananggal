@@ -2150,7 +2150,13 @@ int main()
 
                 // Smaller item size + apply illusion visual scale
                 Rectangle drawRect = it.rect;
-                float finalScale = 0.80f * visualScale; // Apply pulsing visual scale
+
+                float itemScale = 0.80f;
+
+                if (it.type == HEART || it.type == BABY || it.type == SALT || it.type == BLOOD) itemScale = 0.95f;
+                if (it.type == TROLLFACE || it.type == GARLIC) itemScale = 0.75f;
+
+                float finalScale = itemScale * visualScale;  // Apply pulsing visual scale
 
                 Rectangle smallRect = {
                     drawRect.x + (drawRect.width * (1.0f - finalScale) / 2),
