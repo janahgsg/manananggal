@@ -136,6 +136,33 @@ struct FloatingText {
 };
 vector<FloatingText> floatingTexts;
 
+struct Notif {
+    string text;
+    Color  color;
+    float  timer;
+    float  maxTime;
+};
+vector<Notif> notifs;
+
+void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
+    if (v.size() >= 3) return;
+    v.push_back({text, col, dur, dur});
+}
+
+// ADD THIS above int main(), after PushNotif:
+string GetEventName(EventType e) {
+    if (e == SPEED_BOOST)    return "SPEED BOOST";
+    if (e == SLOW_BOOST)     return "SLOW CURSE";
+    if (e == SWAP_CONTROLS)  return "SWAPPED CONTROLS";
+    if (e == LOW_GRAVITY)    return "LOW GRAVITY";
+    if (e == FOG_BLIND)      return "CURSED FOG";
+    if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
+    if (e == EARTHQUAKE)     return "EARTHQUAKE";
+    if (e == LUCKY_PARTY)    return "JACKPOT";
+    if (e == MISFORTUNE)     return "MISFORTUNE";
+    return "";
+}
+
 int main()
 {
     SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
@@ -318,6 +345,8 @@ int main()
 
     //INVERTED SCREEN
     bool invertedScreen = false;
+
+    bool showPauseMenu = false;
 
     // SCORE & HEALTH
     int score = 0;
@@ -611,41 +640,57 @@ int main()
          continue;
             }
 
+        else if (state == PAUSED)
+          {
+        // Input only — drawing happens inside BeginDrawing() below
+        float panelW = 340, panelH = 260;
+        float panelX = screenWidth / 2.0f - panelW / 2.0f;
+        float panelY = screenHeight / 2.0f - panelH / 2.0f;
+        float btnW = 220, btnH = 50;
+        float btnX = panelX + panelW/2 - btnW/2;
+        float resumeY = panelY + 90;
+        float exitY = resumeY + btnH + 18;
 
-else if (state == PAUSED)
-{
-    BeginDrawing();
+        Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+        Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+        bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+        bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
-    ClearBackground(BLACK);
+        if ((hoverResume && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+            IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+            state = PLAYING;
+        }
 
-    // Centered "PAUSED" text
-    const char* pausedText = "PAUSED";
-    int fontSize = 60;
-    int textWidth = MeasureText(pausedText, fontSize);
-    DrawText(pausedText,
-             screenWidth/2 - textWidth/2,
-             screenHeight/2 - fontSize,
-             fontSize,
-             WHITE);
-
-    // Witty quotation
-    const char* quote = "\"Press SPACE to breathe life again.\"";
-    int quoteSize = 30;
-    int quoteWidth = MeasureText(quote, quoteSize);
-    DrawText(quote,
-             screenWidth/2 - quoteWidth/2,
-             screenHeight/2 + 40,
-             quoteSize,
-             GRAY);
-
-    EndDrawing();
-
-    // Resume check
-    if (IsKeyPressed(KEY_SPACE)) {
-            if (state == PLAYING) state = PAUSED;
-            else if (state == PAUSED) state = PLAYING;
-           }
-
+        if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            StopMusicStream(bgMusic);
+            state = MENU;
+            hp = 3; score = 0; combo = 0;
+            diff = EASY; bg1Triggered = false; bg2Triggered = false;
+            lastDiff = EASY; comboBroken = false; comboBrokenTimer = 0; comboTime = 0;
+            items.clear(); popEffects.clear();
+            notifs.clear(); 
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
+            gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
+            spawnTimer = 0; eventCooldown = 15.0f; eventTimer = 0;
+            currentEvent = NONE; secondEvent = NONE;
+            lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
+            slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
+            shakeTime = 0; shakePower = 0; hitFlash = 0;
+            fogActive = false; fogAlpha = 0;
+            fallingInPit = false; pitCreated = false; pitSoundPlayed = false;
+            quakeActive = false; quakeTimer = 0;
+            pits.clear(); pitWidths.clear(); pitCenters.clear(); pitOpens.clear();
+            camera.rotation = 0; camera.zoom = 1.30f;
+            camera.target = {player.x + player.width/2, player.y + player.height/2};
+            invertedScreen = false; gameOverAnimTimer = 0.0f;
+            UnloadBg1TransitionVideo(); UnloadBg2TransitionVideo();
+            InitBg1TransitionVideo();   InitBg2TransitionVideo();
+            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+            SetMusicVolume(introMusic, 0.5f);
+            PlayMusicStream(introMusic);
+        }
     }
 
 
@@ -655,16 +700,15 @@ else if (state == PAUSED)
         {
             UpdateMusicStream(bgMusic);
 
-            if (IsKeyPressed(KEY_SPACE)) {
-            if (state == PLAYING) state = PAUSED;
-            else if (state == PAUSED) state = PLAYING;
-           }
+           if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+             state = PAUSED;
+            }
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 350) 
+            if (score >= 100) 
                 diff = HARD;
-            else if (score >= 120)
+            else if (score >= 50)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -1123,6 +1167,8 @@ else if (state == PAUSED)
                 // Show a warning when the event is about to start (3 seconds before)
                 if (eventCooldown <= 3.0f)
                 {
+                    if (eventCooldown > 2.95f)  // fires once as it crosses 3.0
+                        PushNotif(notifs, "INGAT... MAY PAPARATING!", {255, 68, 68, 255}, 3.0f);
                     eventWarningTimer = eventCooldown;
                 }
             }
@@ -1184,7 +1230,28 @@ else if (state == PAUSED)
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
 
-                    // 40% chance for DOUBLE EVENT
+                    // Event-specific notif colors (HARD)
+                    if (currentEvent == LUCKY_PARTY)
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == MISFORTUNE)
+                        PushNotif(notifs, "MISFORTUNE", {221, 68, 68, 255}, 3.5f);
+                    else if (currentEvent == INVERTED_SCREEN)
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                    else if (currentEvent == SWAP_CONTROLS)
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                    else if (currentEvent == SPEED_BOOST)
+                        PushNotif(notifs, "SPEED BOOST!", {255, 221, 51, 255}, 3.5f);
+                    else if (currentEvent == SLOW_BOOST)
+                        PushNotif(notifs, "SLOW CURSE...", {136, 204, 255, 255}, 3.5f);
+                    else if (currentEvent == LOW_GRAVITY)
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                    else if (currentEvent == FOG_BLIND)
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                    else if (currentEvent == EARTHQUAKE)
+                        PushNotif(notifs, "EARTHQUAKE!", {255, 136, 34, 255}, 3.5f);
+                    else
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+
                     if (rand() % 100 < 40)
                     {
                         secondEvent = (EventType)hardEvents[rand() % 8];
@@ -1290,6 +1357,10 @@ else if (state == PAUSED)
             if (quakeActive)
             {
                 quakeTimer += GetFrameTime();
+                if (quakeTimer > 1.0f && quakeTimer < 1.05f)
+                    PushNotif(notifs, "THE EARTH TREMBLES!", {255, 170, 34, 255}, 2.5f);
+                if (quakeTimer > 3.5f && quakeTimer < 3.55f)
+                    PushNotif(notifs, "FLEE! FLEE! FLEE!", {238, 238, 238, 255}, 2.0f);
             
                 if(shakeTime <= 0){
                     shakeTime = 0.1f;
@@ -1536,6 +1607,7 @@ else if (state == PAUSED)
                         comboTime = 0;
                         comboBroken = true;
                         comboBrokenTimer = 1.5f;
+                        PushNotif(notifs, "STREAK BROKEN!", {255, 68, 68, 255}, 1.5f);
 
                         // JUICE: Hit-Stop for impact
                         hitStopTimer = 0.08f; 
@@ -1555,6 +1627,12 @@ else if (state == PAUSED)
 
                         combo++;
                         comboTime = 2.5f;
+                        if (combo == 10)
+                            PushNotif(notifs, "NAPAKAGALING!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo == 5)
+                            PushNotif(notifs, "HOTSTREAK!!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo > 1)
+                            PushNotif(notifs, TextFormat("COMBO x%d", combo), {255, 221, 51, 255}, 1.6f);
                         int added = 5;
                         if (combo > 1) {
                             score += combo;
@@ -1586,6 +1664,12 @@ else if (state == PAUSED)
 
                         combo++;
                         comboTime = 2.5f;
+                        if (combo == 10)
+                            PushNotif(notifs, "NAPAKAGALING!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo == 5)
+                            PushNotif(notifs, "HOTSTREAK!!", {255, 68, 68, 255}, 2.0f);
+                        else if (combo > 1)
+                            PushNotif(notifs, TextFormat("COMBO x%d", combo), {255, 221, 51, 255}, 1.6f);
                         int added = 3;
                         if (combo > 1) {
                             score += combo;
@@ -1636,27 +1720,24 @@ else if (state == PAUSED)
                         if (randomIndex == 1)
                         {
                             score += 10;
-                            showStarText = true;
-                            starTextTimer = 2.0f;
+                            PushNotif(notifs, "LUCKY STAR!  +10", {255, 221, 51, 255});
                         }
                     }
                     else if (it.type == MUSHROOM)
                     { // mushroom(bad effects)
                         pe.color = MAGENTA;
                         int randomIndex = rand() % 4;
-                        if (randomIndex == 1)
-                        { // -10
-                            score -= 10;
-                            showMinusText = true;
-                            minusTextTimer = 2.0f;
-                            hitFlash = 0.35f;
-                        }
-                        else if (randomIndex == 2)
-                        { // slowness
-                            move = 0.45f;
-                            slowTimer = 4.0f;
-                            showSlowText = true;
-                            slowTextTimer = 2.0f;
+                    if (randomIndex == 1)
+                    {
+                        score -= 10;
+                        hitFlash = 0.35f;
+                        PushNotif(notifs, "CURSED!  -10 HUHU", {221, 136, 255, 255});
+                    }
+                    else if (randomIndex == 2)
+                    {
+                        move = 0.45f;
+                        slowTimer = 4.0f;
+                        PushNotif(notifs, "HEXED... SLOWED", {221, 136, 255, 255}, 2.2f);
                         }
                     }
                     else if (it.type == STAR)
@@ -1718,32 +1799,13 @@ else if (state == PAUSED)
                     chiliBoost = 1.0f;
             }
 
-            // STAR 
-            if(showStarText){
-                starTextTimer -= GetFrameTime();
-                if(starTextTimer <= 0) showStarText = false;
+           // Notif update
+            for (int i = notifs.size() - 1; i >= 0; i--) {
+                notifs[i].timer -= GetFrameTime();
+                if (notifs[i].timer <= 0)
+                    notifs.erase(notifs.begin() + i);
             }
-            // STAR
-            if (showStarText)
-            {
-                starTextTimer -= GetFrameTime();
-                if (starTextTimer <= 0)
-                    showStarText = false;
-            }
-            // MINUS
-            if (showMinusText)
-            {
-                minusTextTimer -= GetFrameTime();
-                if (minusTextTimer <= 0)
-                    showMinusText = false;
-            }
-            // SLOW
-            if (showSlowText)
-            {
-                slowTextTimer -= GetFrameTime();
-                if (slowTextTimer <= 0)
-                    showSlowText = false;
-            }
+
             if (slowTimer > 0)
             {
                 slowTimer -= GetFrameTime();
@@ -2138,10 +2200,15 @@ else if (state == PAUSED)
                 }
             }
 
-            // JUICE: Draw Floating Texts
-            for (auto &ft : floatingTexts) {
-                DrawTextEx(tinyFont, ft.text.c_str(), ft.pos, 40, 2, Fade(ft.color, ft.timer / 1.5f));
-            }
+            
+             // JUICE: Draw Floating Texts
+                for (auto &ft : floatingTexts) {
+                    float alpha = ft.timer / 1.5f;
+                    DrawTextEx(tinyFont, ft.text.c_str(),
+                        { ft.pos.x + 2, ft.pos.y + 2 }, 28, 0, Fade(BLACK, alpha * 0.85f));
+                    DrawTextEx(tinyFont, ft.text.c_str(),
+                        ft.pos, 28, 0, Fade(ft.color, alpha));
+                }
 
             //EVENTS DESIGNS------------------------------------------------------
             // TEXTURE OF FOG EFFECT
@@ -2187,6 +2254,38 @@ else if (state == PAUSED)
                 );
             }
 
+            // NOTIF DRAW
+{
+    float startY = 90.0f;
+    float fontSize = 30.0f;
+
+    for (int i = 0; i < (int)notifs.size(); i++) {
+        auto& n = notifs[i];
+        float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+
+        Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
+        float tx = screenWidth / 2.0f - tSize.x / 2.0f;
+        float ty = startY + i * 38.0f;
+
+        // black pixel outline (8 directions)
+        Color outline = Fade(BLACK, alpha);
+        for (int ox = -2; ox <= 2; ox += 2) {
+            for (int oy = -2; oy <= 2; oy += 2) {
+                if (ox == 0 && oy == 0) continue;
+                DrawTextEx(tinyFont, n.text.c_str(), {tx + ox, ty + oy}, fontSize, 0, outline);
+            }
+        }
+        // drop shadow
+        DrawTextEx(tinyFont, n.text.c_str(), {tx + 2, ty + 3}, fontSize, 0,
+            Fade({40, 0, 0, 255}, alpha * 0.8f));
+        // main colored text
+        DrawTextEx(tinyFont, n.text.c_str(), {tx, ty}, fontSize, 0,
+            Fade(n.color, alpha));
+    }
+}
+            if (hitFlash > 0)
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
+
             // UI   
             // CHAOS LEVEL UI (for research visibility)
             DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
@@ -2196,70 +2295,57 @@ else if (state == PAUSED)
             //health
             float hpScale = 0.1f; 
             for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, Vector2{10.0f + i * (hpTex.width * hpScale + 5.0f), 10.0f}, 0.0f, hpScale, WHITE);
-            
+
             //score 
             DrawTextEx(tinyFont, TextFormat("score: %d", score), Vector2{20.0f, 50.0f}, 45, 2, WHITE);
 
-            // EVENT WARNING UI
-            if (eventWarningTimer > 0)
-            {
-                // Pulsing effect for the warning
-                float pulse = abs(sin(GetTime() * 10.0f));
-                const char* warningText = "!!! PREPARE FOR CHAOS !!!";
-                Vector2 textSize = MeasureTextEx(tinyFont, warningText, 50, 2);
-                DrawTextEx(tinyFont, warningText, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 150.0f }, 50, 2, Fade(RED, 0.5f + pulse * 0.5f));
+            // --- PAUSE BUTTON (below score, top-left) ---
+            Rectangle pauseBtn = {10, 100, 44, 44};
+            bool hoverPause = CheckCollisionPointRec(GetMousePosition(), pauseBtn);
+            DrawRectangleRounded(pauseBtn, 0.2f, 6,
+                hoverPause ? Color{80, 80, 80, 220} : Color{30, 30, 30, 180});
+            DrawRectangle(pauseBtn.x + 11, pauseBtn.y + 11, 8, 22,
+                hoverPause ? YELLOW : WHITE);
+            DrawRectangle(pauseBtn.x + 25, pauseBtn.y + 11, 8, 22,
+                hoverPause ? YELLOW : WHITE);
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+                CheckCollisionPointRec(GetMousePosition(), pauseBtn)) {
+                state = PAUSED;
             }
 
-            // POP UP TEXTS--------------------------------------
-            
-            if (showStarText)
-                DrawTextEx(tinyFont, "STAR!", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-            if (showMinusText)
-                DrawTextEx(tinyFont, "MINUS 10 HUHU", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-            if (showSlowText)
-                DrawTextEx(tinyFont, "SLOW MO", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
-
-            if (quakeTimer > 1.0f && quakeTimer < 3.0f)
-                DrawTextEx(tinyFont, "THE GROUND IS SHAKING", { (float)screenWidth / 2.0f - 250.0f, (float)screenHeight - 100.0f }, 45, 2, RED);
-            
-            if (quakeTimer > 3.0f && quakeTimer < 5.5f)
-                DrawTextEx(tinyFont, "RUN AWAY!!!", { (float)screenWidth / 2.0f - 180.0f, (float)screenHeight - 100.0f }, 55, 2, WHITE);
-
-             string eventName = "";// events
-
-            auto GetEventName = [&](EventType e)
+            // === DIFFICULTY BADGE ===
             {
-                if (e == SPEED_BOOST)
-                    return "SPEED BOOST";
-                if (e == SLOW_BOOST)
-                    return "SLOW CURSE";
-                if (e == SWAP_CONTROLS)
-                    return "SWAPPED CONTROLS";
-                if (e == LOW_GRAVITY)
-                    return "LOW GRAVITY";
-                if (e == FOG_BLIND)
-                    return "CURSED FOG";
-                if (e == INVERTED_SCREEN) return "UPSIDE DOWN";
-                if (e == EARTHQUAKE) return "EARTHQUAKE";
-                if (e == LUCKY_PARTY) return "JACKPOT";
-                if (e == MISFORTUNE) return "MISFORTUNE";
+                const char* diffLabel;
+                Color diffColor;
 
-                return "";
-            };
+                if (diff == EASY) {
+                    diffLabel = "EASY";
+                    diffColor = { 74, 255, 106, 255 };
+                } else if (diff == MEDIUM) {
+                    diffLabel = "MEDIUM";
+                    diffColor = { 255, 204, 0, 255 };
+                } else {
+                    diffLabel = "HARD";
+                    diffColor = { 255, 48, 48, 255 };
+                }
 
-            eventName = GetEventName(currentEvent);
+                float pulse = 0.65f + 0.35f * fabsf(sinf(
+                    GetTime() * (diff == HARD ? 5.0f : diff == MEDIUM ? 3.5f : 2.0f)
+                ));
 
-            if (secondEvent != NONE)
-            {
-                eventName += " + ";
-                eventName += GetEventName(secondEvent);
+                Vector2 labelSize = MeasureTextEx(tinyFont, diffLabel, 30, 0);
+                float badgeW = labelSize.x + 20;
+                float badgeH = 38;
+                float badgeX = screenWidth - badgeW - 14;
+                float badgeY = 75;
+
+                DrawRectangle((int)badgeX, (int)badgeY, (int)badgeW, (int)badgeH, Color{0, 0, 0, 200});
+                DrawRectangleLinesEx({ badgeX, badgeY, badgeW, badgeH }, 2, Fade(diffColor, pulse));
+                DrawTextEx(tinyFont, diffLabel,
+                    { badgeX + 10, badgeY + (badgeH - labelSize.y) / 2 },
+                    30, 0, Fade(diffColor, pulse));
             }
 
-            if (currentEvent != NONE)
-            {
-                DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
-                DrawTextEx(tinyFont, eventName.c_str(), {25.0f, 100.0f}, 32, 2, RED);
-            }
             //effect when the player fell into the pit
             if (fallingInPit)
             {
@@ -2279,27 +2365,8 @@ else if (state == PAUSED)
                     Fade(BLACK, alpha)
                 );
             }
-
-            // combo 
-            if (combo >= 10)
-                DrawTextEx(tinyFont, "UNSTOPPABLE", { (float)screenWidth / 2.0f - 140.0f, 20.0f }, 50, 2, RED);
-            else if (combo >= 5)
-                DrawTextEx(tinyFont, "HOTSTREAK!!", { (float)screenWidth / 2.0f - 120.0f, 20.0f }, 45, 2, ORANGE);
-            else if (combo > 1)
-                DrawTextEx(tinyFont, TextFormat("COMBO x%d", combo), { (float)screenWidth / 2.0f - 100.0f, 20.0f }, 40, 2, YELLOW);
-
-            if (comboBroken)
-                DrawTextEx(tinyFont, "COMBO LOST!", { (float)screenWidth / 2.0f - 120.0f, 70.0f }, 40, 2, RED);
-            if (quakeTimer > 1.2f && quakeTimer < 2.0f)
-            {
-                DrawTextEx(tinyFont,
-                    "THE GROUND IS CRACKING!",
-                    { (float)screenWidth / 2.0f - 220.0f, 120.0f },
-                    40, 2,
-                    RED
-                );
-            }
         }
+
         else if (state == TROLL_VIDEO)
         {
             frameTimer += GetFrameTime();
@@ -2323,10 +2390,10 @@ else if (state == PAUSED)
                     0,
                     WHITE);
 
-                DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-                DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
-                DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-                DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
+               DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+               DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
+               DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+               DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
 
                 DrawTextEx(tinyFont,
                     "Press ENTER to skip",
@@ -2347,16 +2414,48 @@ else if (state == PAUSED)
               }
         }
 
-        if (hitFlash > 0)
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
-
         // heartbeat text
         if (hp == 1)
         {
-            int pulse = 30 + sin(GetTime() * 8) * 15;
             const char* hpWarning = "WARNING!";
-            Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pulse, 2);
-            DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pulse, 2, RED);
+            int pixelPulse = 24 + (int)(sinf(GetTime() * 8) * 6);
+            Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pixelPulse, 0);
+            DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pixelPulse, 0, RED);
+        }
+
+        // PAUSED SCREEN DRAWING
+        if (state == PAUSED)
+        {
+            float panelW = 340, panelH = 260;
+            float panelX = screenWidth / 2.0f - panelW / 2.0f;
+            float panelY = screenHeight / 2.0f - panelH / 2.0f;
+            float btnW = 220, btnH = 50;
+            float btnX = panelX + panelW/2 - btnW/2;
+            float resumeY = panelY + 90;
+            float exitY = resumeY + btnH + 18;
+
+            Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+            Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+            bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+            bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
+
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.75f));
+            DrawRectangleRounded({panelX, panelY, panelW, panelH}, 0.15f, 8, {20, 20, 20, 230});
+            DrawRectangleRoundedLines({panelX, panelY, panelW, panelH}, 0.15f, 8, Color{180, 180, 180, 200});
+
+            Vector2 titleSize = MeasureTextEx(tinyFont, "PAUSED", 52, 0);
+            DrawTextEx(tinyFont, "PAUSED",
+                {panelX + panelW/2 - titleSize.x/2, panelY + 18}, 52, 0, WHITE);
+
+            DrawRectangleRounded(resumeRect, 0.3f, 6, hoverResume ? Color{60, 180, 60, 255} : Color{40, 120, 40, 220});
+            Vector2 resumeSize = MeasureTextEx(tinyFont, "RESUME", 30, 0);
+            DrawTextEx(tinyFont, "RESUME",
+                {btnX + btnW/2 - resumeSize.x/2, resumeY + btnH/2 - resumeSize.y/2}, 30, 0, WHITE);
+
+            DrawRectangleRounded(exitRect, 0.3f, 6, hoverExit ? Color{200, 40, 40, 255} : Color{130, 20, 20, 220});
+            Vector2 exitSize = MeasureTextEx(tinyFont, "EXIT TO MENU", 30, 0);
+            DrawTextEx(tinyFont, "EXIT TO MENU",
+                {btnX + btnW/2 - exitSize.x/2, exitY + btnH/2 - exitSize.y/2}, 30, 0, WHITE);
         }
 
         // GAME OVER----------------------------------------------------
@@ -2496,13 +2595,8 @@ else if (state == PAUSED)
         slowTimer = 0;
         speedBoostTimer = 0;
         medkitCooldown = 0;
-        
-        showStarText = false;
-        showMinusText = false;
-        showSlowText = false;
-        starTextTimer = 0;
-        minusTextTimer = 0;
-        slowTextTimer = 0;
+
+        notifs.clear();
         
         shakeTime = 0;
         shakePower = 0;
@@ -2571,12 +2665,7 @@ else if (state == PAUSED)
         speedBoostTimer = 0;
         medkitCooldown = 0;
 
-        showStarText = false;
-        showMinusText = false;
-        showSlowText = false;
-        starTextTimer = 0;
-        minusTextTimer = 0;
-        slowTextTimer = 0;
+        notifs.clear();
 
         shakeTime = 0;
         shakePower = 0;
