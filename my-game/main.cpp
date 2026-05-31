@@ -706,9 +706,9 @@ int main()
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 350) 
+            if (score >= 100) 
                 diff = HARD;
-            else if (score >= 120)
+            else if (score >= 50)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -911,16 +911,19 @@ int main()
 
             float wantedX = player.x + player.width / 2;
 
-            // smooth follow
+            // smooth follow X
             camera.target.x += (wantedX - camera.target.x) * 0.12f;
+
+            // smooth follow Y (if not falling in pit, it follows player center)
+            if (!fallingInPit)
+            {
+                camera.target.y = player.y + player.height / 2;
+            }
 
             // Clamp camera to world boundaries
             float minX = (screenWidth / 2.0f) / camera.zoom;
             float maxX = screenWidth - (screenWidth / 2.0f) / camera.zoom;
             camera.target.x = Clamp(camera.target.x, minX, maxX);
-
-            // keep Y fixed so player remains bottom
-            camera.target.y = player.y + player.height / 2;
 
             //inverted screen
             if (!fallingInPit)
@@ -1017,12 +1020,24 @@ int main()
             }
 
             //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f + -220 : screenHeight * 0.75f;
+            float baseY = invertedScreen ? screenHeight / 2.0f + -10 : screenHeight * 0.75f;
 
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
                 baseY + shakeOffset.y
             };
+
+            // FINAL CAMERA CLAMPING Y (to prevent seeing black outerscreen above/below)
+            float offsetY = camera.offset.y;
+            float minY, maxY;
+            if (camera.rotation == 180.0f) {
+                minY = (screenHeight - offsetY) / camera.zoom;
+                maxY = screenHeight - (offsetY / camera.zoom);
+            } else {
+                minY = offsetY / camera.zoom;
+                maxY = screenHeight - (screenHeight - offsetY) / camera.zoom;
+            }
+            camera.target.y = Clamp(camera.target.y, minY, maxY);
 
             
             // SPAWNING------------
