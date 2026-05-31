@@ -428,7 +428,7 @@ int main()
     bool bg2Triggered = false;
 
     // jump
-    float gravity = (diff == HARD) ? 1100.0f : 1800.0f;   // pull down
+    float gravity = (diff == HARD) ? 700.0f : 1800.0f;   // pull down
     float jumpForce = -700.0f; // jump strength (negative = up)
     bool isGrounded = true;
     // speed boost
@@ -802,7 +802,7 @@ int main()
                 }
             }
             //EARTHQUAKE ground-------------------------
-            float groundY = screenHeight * 0.79f; //ground level
+            float groundY = screenHeight * 0.85f; //ground level
 
             // GROUND and PIT COLLISION
             float playerBottom = player.y + player.height;
@@ -1286,7 +1286,7 @@ int main()
                 eventTimer -= GetFrameTime();
                 // reset effects every frame first
                 eventBoost = 1.0f;
-                gravity = (diff == HARD) ? 1100.0f : 1800.0f;
+                gravity = (diff == HARD) ? 700.0f : 1800.0f;
                 
 
                 // helper lambda
@@ -1321,7 +1321,7 @@ int main()
                     fogAlpha = 0.0f;
                     fogFadingOut = false;
 
-                    gravity = (diff == HARD) ? 1100.0f : 1800.0f;
+                    gravity = (diff == HARD) ? 700.0f : 1800.0f;
                     eventBoost = 1.0f;
 
                     invertedScreen = false;
@@ -1434,7 +1434,7 @@ int main()
 
                         Rectangle newPit = {
                             randomX,
-                            screenHeight * 0.79f,
+                            screenHeight * 0.85f,
                             0,
                             220
                         };
@@ -1468,7 +1468,7 @@ int main()
 
                         pits[i] = {
                             pitCenters[i] - pitOpens[i] / 2,
-                            screenHeight * 0.79f,
+                            screenHeight * 0.85f,
                             pitOpens[i],
                             220
                         };
