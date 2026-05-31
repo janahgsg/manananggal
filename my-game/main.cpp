@@ -319,6 +319,8 @@ int main()
     //INVERTED SCREEN
     bool invertedScreen = false;
 
+    bool showPauseMenu = false;
+
     // SCORE & HEALTH
     int score = 0;
     int highScore = 0;
@@ -611,41 +613,57 @@ int main()
          continue;
             }
 
+        else if (state == PAUSED)
+          {
+        // Input only — drawing happens inside BeginDrawing() below
+        float panelW = 340, panelH = 260;
+        float panelX = screenWidth / 2.0f - panelW / 2.0f;
+        float panelY = screenHeight / 2.0f - panelH / 2.0f;
+        float btnW = 220, btnH = 50;
+        float btnX = panelX + panelW/2 - btnW/2;
+        float resumeY = panelY + 90;
+        float exitY = resumeY + btnH + 18;
 
-else if (state == PAUSED)
-{
-    BeginDrawing();
+        Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+        Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+        bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+        bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
-    ClearBackground(BLACK);
+        if ((hoverResume && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+            IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+            state = PLAYING;
+        }
 
-    // Centered "PAUSED" text
-    const char* pausedText = "PAUSED";
-    int fontSize = 60;
-    int textWidth = MeasureText(pausedText, fontSize);
-    DrawText(pausedText,
-             screenWidth/2 - textWidth/2,
-             screenHeight/2 - fontSize,
-             fontSize,
-             WHITE);
-
-    // Witty quotation
-    const char* quote = "\"Press SPACE to breathe life again.\"";
-    int quoteSize = 30;
-    int quoteWidth = MeasureText(quote, quoteSize);
-    DrawText(quote,
-             screenWidth/2 - quoteWidth/2,
-             screenHeight/2 + 40,
-             quoteSize,
-             GRAY);
-
-    EndDrawing();
-
-    // Resume check
-    if (IsKeyPressed(KEY_SPACE)) {
-            if (state == PLAYING) state = PAUSED;
-            else if (state == PAUSED) state = PLAYING;
-           }
-
+        if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            StopMusicStream(bgMusic);
+            state = MENU;
+            hp = 3; score = 0; combo = 0;
+            diff = EASY; bg1Triggered = false; bg2Triggered = false;
+            lastDiff = EASY; comboBroken = false; comboBrokenTimer = 0; comboTime = 0;
+            items.clear(); popEffects.clear();
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
+            gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
+            spawnTimer = 0; eventCooldown = 15.0f; eventTimer = 0;
+            currentEvent = NONE; secondEvent = NONE;
+            lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
+            slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
+            showStarText = false; showMinusText = false; showSlowText = false;
+            shakeTime = 0; shakePower = 0; hitFlash = 0;
+            fogActive = false; fogAlpha = 0;
+            fallingInPit = false; pitCreated = false; pitSoundPlayed = false;
+            quakeActive = false; quakeTimer = 0;
+            pits.clear(); pitWidths.clear(); pitCenters.clear(); pitOpens.clear();
+            camera.rotation = 0; camera.zoom = 1.30f;
+            camera.target = {player.x + player.width/2, player.y + player.height/2};
+            invertedScreen = false; gameOverAnimTimer = 0.0f;
+            UnloadBg1TransitionVideo(); UnloadBg2TransitionVideo();
+            InitBg1TransitionVideo();   InitBg2TransitionVideo();
+            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+            SetMusicVolume(introMusic, 0.5f);
+            PlayMusicStream(introMusic);
+        }
     }
 
 
@@ -655,10 +673,9 @@ else if (state == PAUSED)
         {
             UpdateMusicStream(bgMusic);
 
-            if (IsKeyPressed(KEY_SPACE)) {
-            if (state == PLAYING) state = PAUSED;
-            else if (state == PAUSED) state = PLAYING;
-           }
+           if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+             state = PAUSED;
+            }
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
@@ -2181,9 +2198,23 @@ else if (state == PAUSED)
             //health
             float hpScale = 0.1f; 
             for (int i = 0; i < hp; i++) DrawTextureEx(hpTex, Vector2{10.0f + i * (hpTex.width * hpScale + 5.0f), 10.0f}, 0.0f, hpScale, WHITE);
-            
+
             //score 
             DrawTextEx(tinyFont, TextFormat("score: %d", score), Vector2{20.0f, 50.0f}, 45, 2, WHITE);
+
+            // --- PAUSE BUTTON (below score, top-left) ---
+            Rectangle pauseBtn = {10, 100, 44, 44};
+            bool hoverPause = CheckCollisionPointRec(GetMousePosition(), pauseBtn);
+            DrawRectangleRounded(pauseBtn, 0.2f, 6,
+                hoverPause ? Color{80, 80, 80, 220} : Color{30, 30, 30, 180});
+            DrawRectangle(pauseBtn.x + 11, pauseBtn.y + 11, 8, 22,
+                hoverPause ? YELLOW : WHITE);
+            DrawRectangle(pauseBtn.x + 25, pauseBtn.y + 11, 8, 22,
+                hoverPause ? YELLOW : WHITE);
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+                CheckCollisionPointRec(GetMousePosition(), pauseBtn)) {
+                state = PAUSED;
+            }
 
             // === DIFFICULTY BADGE ===
             {
@@ -2375,6 +2406,41 @@ else if (state == PAUSED)
             int pixelPulse = 24 + (int)(sinf(GetTime() * 8) * 6);
             Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pixelPulse, 0);
             DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pixelPulse, 0, RED);
+        }
+
+        // PAUSED SCREEN DRAWING
+        if (state == PAUSED)
+        {
+            float panelW = 340, panelH = 260;
+            float panelX = screenWidth / 2.0f - panelW / 2.0f;
+            float panelY = screenHeight / 2.0f - panelH / 2.0f;
+            float btnW = 220, btnH = 50;
+            float btnX = panelX + panelW/2 - btnW/2;
+            float resumeY = panelY + 90;
+            float exitY = resumeY + btnH + 18;
+
+            Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+            Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+            bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+            bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
+
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.75f));
+            DrawRectangleRounded({panelX, panelY, panelW, panelH}, 0.15f, 8, {20, 20, 20, 230});
+            DrawRectangleRoundedLines({panelX, panelY, panelW, panelH}, 0.15f, 8, Color{180, 180, 180, 200});
+
+            Vector2 titleSize = MeasureTextEx(tinyFont, "PAUSED", 52, 0);
+            DrawTextEx(tinyFont, "PAUSED",
+                {panelX + panelW/2 - titleSize.x/2, panelY + 18}, 52, 0, WHITE);
+
+            DrawRectangleRounded(resumeRect, 0.3f, 6, hoverResume ? Color{60, 180, 60, 255} : Color{40, 120, 40, 220});
+            Vector2 resumeSize = MeasureTextEx(tinyFont, "RESUME", 30, 0);
+            DrawTextEx(tinyFont, "RESUME",
+                {btnX + btnW/2 - resumeSize.x/2, resumeY + btnH/2 - resumeSize.y/2}, 30, 0, WHITE);
+
+            DrawRectangleRounded(exitRect, 0.3f, 6, hoverExit ? Color{200, 40, 40, 255} : Color{130, 20, 20, 220});
+            Vector2 exitSize = MeasureTextEx(tinyFont, "EXIT TO MENU", 30, 0);
+            DrawTextEx(tinyFont, "EXIT TO MENU",
+                {btnX + btnW/2 - exitSize.x/2, exitY + btnH/2 - exitSize.y/2}, 30, 0, WHITE);
         }
 
         // GAME OVER----------------------------------------------------
