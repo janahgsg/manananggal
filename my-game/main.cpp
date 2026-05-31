@@ -662,9 +662,9 @@ else if (state == PAUSED)
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 350) 
+            if (score >= 100) 
                 diff = HARD;
-            else if (score >= 120)
+            else if (score >= 50)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -2118,10 +2118,15 @@ else if (state == PAUSED)
                 }
             }
 
-            // JUICE: Draw Floating Texts
-            for (auto &ft : floatingTexts) {
-                DrawTextEx(tinyFont, ft.text.c_str(), ft.pos, 40, 2, Fade(ft.color, ft.timer / 1.5f));
-            }
+            
+             // JUICE: Draw Floating Texts
+                for (auto &ft : floatingTexts) {
+                    float alpha = ft.timer / 1.5f;
+                    DrawTextEx(tinyFont, ft.text.c_str(),
+                        { ft.pos.x + 2, ft.pos.y + 2 }, 28, 0, Fade(BLACK, alpha * 0.85f));
+                    DrawTextEx(tinyFont, ft.text.c_str(),
+                        ft.pos, 28, 0, Fade(ft.color, alpha));
+                }
 
             //EVENTS DESIGNS------------------------------------------------------
             // TEXTURE OF FOG EFFECT
@@ -2180,30 +2185,63 @@ else if (state == PAUSED)
             //score 
             DrawTextEx(tinyFont, TextFormat("score: %d", score), Vector2{20.0f, 50.0f}, 45, 2, WHITE);
 
+            // === DIFFICULTY BADGE ===
+            {
+                const char* diffLabel;
+                Color diffColor;
+
+                if (diff == EASY) {
+                    diffLabel = "EASY";
+                    diffColor = { 74, 255, 106, 255 };
+                } else if (diff == MEDIUM) {
+                    diffLabel = "MEDIUM";
+                    diffColor = { 255, 204, 0, 255 };
+                } else {
+                    diffLabel = "HARD";
+                    diffColor = { 255, 48, 48, 255 };
+                }
+
+                float pulse = 0.65f + 0.35f * fabsf(sinf(
+                    GetTime() * (diff == HARD ? 5.0f : diff == MEDIUM ? 3.5f : 2.0f)
+                ));
+
+                Vector2 labelSize = MeasureTextEx(tinyFont, diffLabel, 30, 0);
+                float badgeW = labelSize.x + 20;
+                float badgeH = 38;
+                float badgeX = screenWidth - badgeW - 14;
+                float badgeY = 75;
+
+                DrawRectangle((int)badgeX, (int)badgeY, (int)badgeW, (int)badgeH, Color{0, 0, 0, 200});
+                DrawRectangleLinesEx({ badgeX, badgeY, badgeW, badgeH }, 2, Fade(diffColor, pulse));
+                DrawTextEx(tinyFont, diffLabel,
+                    { badgeX + 10, badgeY + (badgeH - labelSize.y) / 2 },
+                    30, 0, Fade(diffColor, pulse));
+            }
+
             // EVENT WARNING UI
             if (eventWarningTimer > 0)
             {
                 // Pulsing effect for the warning
                 float pulse = abs(sin(GetTime() * 10.0f));
-                const char* warningText = "!!! PREPARE FOR CHAOS !!!";
-                Vector2 textSize = MeasureTextEx(tinyFont, warningText, 50, 2);
-                DrawTextEx(tinyFont, warningText, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 150.0f }, 50, 2, Fade(RED, 0.5f + pulse * 0.5f));
+                const char* warningText = "INGAT... MAY PAPARATING!";
+                Vector2 textSize = MeasureTextEx(tinyFont, warningText, 30, 0);
+                DrawTextEx(tinyFont, warningText, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 150.0f }, 30, 0, Fade(RED, 0.5f + pulse * 0.5f));
             }
 
             // POP UP TEXTS--------------------------------------
             
             if (showStarText)
-                DrawTextEx(tinyFont, "STAR!", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
+                DrawTextEx(tinyFont, "LUCKY STAR! +10", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
             if (showMinusText)
-                DrawTextEx(tinyFont, "MINUS 10 HUHU", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
+                DrawTextEx(tinyFont, "CURSED! -10", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
             if (showSlowText)
-                DrawTextEx(tinyFont, "SLOW MO", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
+                DrawTextEx(tinyFont, "HEXED! SLOWED...", { (float)screenWidth / 2.0f - 220.0f, (float)screenHeight - 100.0f }, 45, 2, WHITE);
 
             if (quakeTimer > 1.0f && quakeTimer < 3.0f)
-                DrawTextEx(tinyFont, "THE GROUND IS SHAKING", { (float)screenWidth / 2.0f - 250.0f, (float)screenHeight - 100.0f }, 45, 2, RED);
+                DrawTextEx(tinyFont, "THE EARTH TREMBLES!", { (float)screenWidth / 2.0f - 250.0f, (float)screenHeight - 100.0f }, 45, 2, RED);
             
             if (quakeTimer > 3.0f && quakeTimer < 5.5f)
-                DrawTextEx(tinyFont, "RUN AWAY!!!", { (float)screenWidth / 2.0f - 180.0f, (float)screenHeight - 100.0f }, 55, 2, WHITE);
+                DrawTextEx(tinyFont, "FLEE! FLEE! FLEE!", { (float)screenWidth / 2.0f - 180.0f, (float)screenHeight - 100.0f }, 55, 2, WHITE);
 
              string eventName = "";// events
 
@@ -2238,7 +2276,7 @@ else if (state == PAUSED)
             if (currentEvent != NONE)
             {
                 DrawRectangle(15, 90, 420, 40, Fade(BLACK, 0.5f));
-                DrawTextEx(tinyFont, eventName.c_str(), {25.0f, 100.0f}, 32, 2, RED);
+                DrawTextEx(tinyFont, eventName.c_str(), {25.0f, 100.0f}, 28, 0, RED);
             }
             //effect when the player fell into the pit
             if (fallingInPit)
@@ -2262,18 +2300,18 @@ else if (state == PAUSED)
 
             // combo 
             if (combo >= 10)
-                DrawTextEx(tinyFont, "UNSTOPPABLE", { (float)screenWidth / 2.0f - 140.0f, 20.0f }, 50, 2, RED);
+                DrawTextEx(tinyFont, "NAPAKAGALING!", { (float)screenWidth / 2.0f - 140.0f, 20.0f }, 50, 2, RED);
             else if (combo >= 5)
                 DrawTextEx(tinyFont, "HOTSTREAK!!", { (float)screenWidth / 2.0f - 120.0f, 20.0f }, 45, 2, ORANGE);
             else if (combo > 1)
                 DrawTextEx(tinyFont, TextFormat("COMBO x%d", combo), { (float)screenWidth / 2.0f - 100.0f, 20.0f }, 40, 2, YELLOW);
 
             if (comboBroken)
-                DrawTextEx(tinyFont, "COMBO LOST!", { (float)screenWidth / 2.0f - 120.0f, 70.0f }, 40, 2, RED);
+                DrawTextEx(tinyFont, "STREAK BROKEN!", { (float)screenWidth / 2.0f - 120.0f, 70.0f }, 40, 2, RED);
             if (quakeTimer > 1.2f && quakeTimer < 2.0f)
             {
                 DrawTextEx(tinyFont,
-                    "THE GROUND IS CRACKING!",
+                    "CRACKS BENEATH YOU!",
                     { (float)screenWidth / 2.0f - 220.0f, 120.0f },
                     40, 2,
                     RED
@@ -2303,10 +2341,10 @@ else if (state == PAUSED)
                     0,
                     WHITE);
 
-                DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-                DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
-                DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-                DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
+               DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+               DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
+               DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
+               DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
 
                 DrawTextEx(tinyFont,
                     "Press ENTER to skip",
@@ -2333,10 +2371,10 @@ else if (state == PAUSED)
         // heartbeat text
         if (hp == 1)
         {
-            int pulse = 30 + sin(GetTime() * 8) * 15;
             const char* hpWarning = "WARNING!";
-            Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pulse, 2);
-            DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pulse, 2, RED);
+            int pixelPulse = 24 + (int)(sinf(GetTime() * 8) * 6);
+            Vector2 textSize = MeasureTextEx(tinyFont, hpWarning, (float)pixelPulse, 0);
+            DrawTextEx(tinyFont, hpWarning, { (float)screenWidth / 2.0f - textSize.x / 2.0f, 50.0f }, (float)pixelPulse, 0, RED);
         }
 
         // GAME OVER----------------------------------------------------
