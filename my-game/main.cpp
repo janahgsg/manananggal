@@ -145,7 +145,7 @@ struct Notif {
 vector<Notif> notifs;
 
 void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
-    if (v.size() >= 3) return;
+    if (v.size() >= 3) v.erase(v.begin()); // Remove oldest to make room
     v.push_back({text, col, dur, dur});
 }
 
@@ -386,7 +386,7 @@ int main()
     EventType secondEvent = NONE; // for HARD MODE extra event
 
     float eventTimer = 0.0f;
-    float eventCooldown = 15.0f; // increased initial cooldown for fairer start
+    float eventCooldown = 30.0f; // increased initial cooldown for fairer start
     float eventWarningTimer = 0.0f; // used to show "Warning" before an event
     
     // FOG EFFECT
@@ -673,7 +673,7 @@ int main()
             player.y = screenHeight * 0.75f;
             move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
             gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
-            spawnTimer = 0; eventCooldown = 15.0f; eventTimer = 0;
+            spawnTimer = 0; eventCooldown = 30.0f; eventTimer = 0;
             currentEvent = NONE; secondEvent = NONE;
             lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
             slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
@@ -706,9 +706,9 @@ int main()
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 100) 
+            if (score >= 350) 
                 diff = HARD;
-            else if (score >= 50)
+            else if (score >= 120)
                 diff = MEDIUM;
             else
                 diff = EASY;
@@ -1082,11 +1082,12 @@ int main()
                         it.type = badPool[rand() % 9];
                     }
                     else {
-                        if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 3) {
+                        // Priority: Medkit if hp is low
+                        if (hp == 1 && medkitCooldown <= 0 && rand() % 100 < 12) {
                             it.type = MEDKIT;
-                            medkitCooldown = 20.0f;
+                            medkitCooldown = 15.0f; // shorter cooldown for survival
                         }
-                        else if (hp < 3 && rand() % 100 < 4) it.type = BANDAGE;
+                        else if (hp < 3 && rand() % 100 < 5) it.type = BANDAGE;
                         else if (rand() % 100 < 3) it.type = TROLLFACE;
                         else if (rand() % 100 < 2) it.type = DICE; 
                         else if (diff == EASY) {
@@ -1106,9 +1107,12 @@ int main()
                     }
 
                     if (it.isIllusion) {
-                        if (it.type == BABY || it.type == HEART || it.type == BLOOD) it.illusionTarget = BOMB;
-                        else if (it.type == BOMB || it.type == POISON) it.illusionTarget = HEART;
-                        else it.isIllusion = false; 
+                        if (it.type == BABY || it.type == HEART || it.type == BLOOD || it.type == ATAY) 
+                            it.illusionTarget = BOMB;
+                        else if (it.type == BOMB || it.type == POISON || it.type == POO || it.type == GARLIC) 
+                            it.illusionTarget = HEART;
+                        else 
+                            it.isIllusion = false; 
                     }
 
                     // 2. SET DIMENSIONS BASED ON TYPE (Larger and unsqueezed)
@@ -1192,6 +1196,8 @@ int main()
 
                     eventTimer = 11.0f; 
                     eventCooldown = 20.0f; // longer cooldown for easy
+
+                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, 3.0f);
                 }
                 else if (diff == MEDIUM)
                 {
@@ -1211,6 +1217,8 @@ int main()
 
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
+
+                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, 3.0f);
                 }
 
                 else if (diff == HARD)
@@ -1539,7 +1547,7 @@ int main()
                 }
 
                 // Illusion Shifting (Uncertainty)
-                if (it.isIllusion && it.rect.y > screenHeight * 0.30f) {
+                if (it.isIllusion && it.rect.y > screenHeight * 0.50f) {
                     // Shift to target type mid-air
                     it.type = it.illusionTarget;
                     it.isIllusion = false; // only shift once
@@ -2564,143 +2572,146 @@ int main()
         {
             StopMusicStream(gameOverMusic);
             PlayMusicStream(bgMusic);
-            // ... your existing reset code ...
+            
+            // Reset all gameplay variables
             state = PLAYING;
-            hp = 3; score = 0; combo = 0;
+            diff = EASY;
             lastDiff = EASY;
+            hp = 3; 
+            score = 0; 
+            combo = 0;
             comboBroken = false;
-        comboBrokenTimer = 0;
-        comboTime = 0;
-        items.clear();
-        popEffects.clear();
-        player.x = (screenWidth - player.width) / 2;
-        player.y = screenHeight * 0.75f;
-        move = 1.0f;
-        chiliBoost = 1.0f;
-        eventBoost = 1.0f;
-        gravity = (diff == HARD) ? 1100.0f : 1800.0f;
-        velocityY = 0;
-        velocityX = 0;
-        isGrounded = true;
+            comboBrokenTimer = 0;
+            comboTime = 0;
+            items.clear();
+            popEffects.clear();
+            notifs.clear();
+
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            move = 1.0f;
+            chiliBoost = 1.0f;
+            eventBoost = 1.0f;
+            gravity = 1800.0f; // Explicitly reset to Easy baseline
+            velocityY = 0;
+            velocityX = 0;
+            isGrounded = true;
     
-        spawnTimer = 0;
-        eventCooldown = 15.0f; 
-        eventTimer = 0;
-        currentEvent = NONE;
-        secondEvent = NONE;
-        lastEvent = NONE;
-        secondLastEvent = NONE;
-        eventWarningTimer = 0;
-        
-        slowTimer = 0;
-        speedBoostTimer = 0;
-        medkitCooldown = 0;
+            spawnTimer = 0;
+            eventCooldown = 30.0f; // Increased initial cooldown to prevent early events
+            eventTimer = 0;
+            currentEvent = NONE;
+            secondEvent = NONE;
+            lastEvent = NONE;
+            secondLastEvent = NONE;
+            eventWarningTimer = 0;
+            
+            slowTimer = 0;
+            speedBoostTimer = 0;
+            medkitCooldown = 0;
 
-        notifs.clear();
-        
-        shakeTime = 0;
-        shakePower = 0;
-        hitFlash = 0;
-        
-        fogActive = false;
-        fogAlpha = 0;
-        
-        fallingInPit = false;
-        pitCreated = false;
-        pitSoundPlayed = false;
-        quakeActive = false;
-        quakeTimer = 0;
-        pits.clear();
-        pitWidths.clear();
-        pitCenters.clear();
-        pitOpens.clear();
+            shakeTime = 0;
+            shakePower = 0;
+            hitFlash = 0;
+            
+            fogActive = false;
+            fogAlpha = 0;
+            
+            fallingInPit = false;
+            pitCreated = false;
+            pitSoundPlayed = false;
+            quakeActive = false;
+            quakeTimer = 0;
+            pits.clear();
+            pitWidths.clear();
+            pitCenters.clear();
+            pitOpens.clear();
     
-        camera.rotation = 0;
-        camera.zoom = 1.30f;
-        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+            camera.rotation = 0;
+            camera.zoom = 1.30f;
+            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
 
-        invertedScreen = false;
-        gameOverAnimTimer = 0.0f;
-        diff = EASY;
-        bg1Triggered = false;
-        bg2Triggered = false;
-        UnloadBg1TransitionVideo();
-        UnloadBg2TransitionVideo();
-        InitBg1TransitionVideo();
-        InitBg2TransitionVideo();
-
-    }
+            invertedScreen = false;
+            gameOverAnimTimer = 0.0f;
+            bg1Triggered = false;
+            bg2Triggered = false;
+            UnloadBg1TransitionVideo();
+            UnloadBg2TransitionVideo();
+            InitBg1TransitionVideo();
+            InitBg2TransitionVideo();
+        }
         if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
         {
             StopMusicStream(gameOverMusic);
-            // ... your existing reset + go to MENU code ...
             state = MENU;
-            hp = 3; score = 0; combo = 0;
+            diff = EASY;
             lastDiff = EASY;
+            hp = 3; 
+            score = 0; 
+            combo = 0;
             comboBroken = false;
-        comboBrokenTimer = 0;
-        comboTime = 0;
-        items.clear();
-        popEffects.clear();
-        player.x = (screenWidth - player.width) / 2;
-        player.y = screenHeight * 0.75f;
-        move = 1.0f;
-        chiliBoost = 1.0f;
-        eventBoost = 1.0f;
-        gravity = (diff == HARD) ? 1100.0f : 1800.0f;
-        velocityY = 0;
-        velocityX = 0;
-        isGrounded = true;
+            comboBrokenTimer = 0;
+            comboTime = 0;
+            items.clear();
+            popEffects.clear();
+            notifs.clear();
 
-        spawnTimer = 0;
-        eventCooldown = 15.0f; 
-        eventTimer = 0;
-        currentEvent = NONE;
-        secondEvent = NONE;
-        lastEvent = NONE;
-        secondLastEvent = NONE;
-        eventWarningTimer = 0;
+            player.x = (screenWidth - player.width) / 2;
+            player.y = screenHeight * 0.75f;
+            move = 1.0f;
+            chiliBoost = 1.0f;
+            eventBoost = 1.0f;
+            gravity = 1800.0f; // Explicitly reset to Easy baseline
+            velocityY = 0;
+            velocityX = 0;
+            isGrounded = true;
 
-        slowTimer = 0;
-        speedBoostTimer = 0;
-        medkitCooldown = 0;
+            spawnTimer = 0;
+            eventCooldown = 30.0f; // Increased initial cooldown
+            eventTimer = 0;
+            currentEvent = NONE;
+            secondEvent = NONE;
+            lastEvent = NONE;
+            secondLastEvent = NONE;
+            eventWarningTimer = 0;
 
-        notifs.clear();
+            slowTimer = 0;
+            speedBoostTimer = 0;
+            medkitCooldown = 0;
 
-        shakeTime = 0;
-        shakePower = 0;
-        hitFlash = 0;
+            shakeTime = 0;
+            shakePower = 0;
+            hitFlash = 0;
 
-        fogActive = false;
-        fogAlpha = 0;
+            fogActive = false;
+            fogAlpha = 0;
+            
+            fallingInPit = false;
+            pitCreated = false;
+            pitSoundPlayed = false;
+            quakeActive = false;
+            quakeTimer = 0;
+            pits.clear();
+            pitWidths.clear();
+            pitCenters.clear();
+            pitOpens.clear();
 
-        fallingInPit = false;
-        pitCreated = false;
-        pitSoundPlayed = false;
-        quakeActive = false;
-        quakeTimer = 0;
-        pits.clear();
-        pitWidths.clear();
-        pitCenters.clear();
-        pitOpens.clear();
+            camera.rotation = 0;
+            camera.zoom = 1.30f;
+            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
 
-        camera.rotation = 0;
-        camera.zoom = 1.30f;
-        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+            invertedScreen = false;
+            gameOverAnimTimer = 0.0f;
+            bg1Triggered = false;
+            bg2Triggered = false;
+            UnloadBg1TransitionVideo();
+            UnloadBg2TransitionVideo();
+            InitBg1TransitionVideo();
+            InitBg2TransitionVideo();
 
-        invertedScreen = false;
-        gameOverAnimTimer = 0.0f;
-        diff = EASY;
-        bg1Triggered = false;
-        bg2Triggered = false;
-        UnloadBg1TransitionVideo();
-        UnloadBg2TransitionVideo();
-        InitBg1TransitionVideo();
-        InitBg2TransitionVideo();
-
-        introMusic = LoadMusicStream("assets/sounds/intro.mp3");
-        SetMusicVolume(introMusic, 0.5f);
-        PlayMusicStream(introMusic);
+            introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+            SetMusicVolume(introMusic, 0.5f);
+            PlayMusicStream(introMusic);
         }
     }
 }
