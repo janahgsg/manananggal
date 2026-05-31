@@ -393,8 +393,13 @@ int main()
     float baseMove = 1.0f;
     float velocityY = 0; // vertical speed
     float slowTimer = 0.0f;
+    Difficulty diff = EASY;
+    Difficulty lastDiff = EASY; // track difficulty changes for grace periods
+    bool bg1Triggered = false;
+    bool bg2Triggered = false;
+
     // jump
-    float gravity = 1800.0f;   // pull down
+    float gravity = (diff == HARD) ? 1100.0f : 1800.0f;   // pull down
     float jumpForce = -700.0f; // jump strength (negative = up)
     bool isGrounded = true;
     // speed boost
@@ -413,11 +418,6 @@ int main()
     float minusTextTimer = 0;
     float slowTextTimer = 0;
 
-
-    Difficulty diff = EASY;
-    Difficulty lastDiff = EASY; // track difficulty changes for grace periods
-    bool bg1Triggered = false;
-    bool bg2Triggered = false;
 
     // camera
     Camera2D camera = {0};
@@ -1121,7 +1121,7 @@ else if (state == PAUSED)
                 eventCooldown -= GetFrameTime();
                 
                 // Show a warning when the event is about to start (3 seconds before)
-                if (eventCooldown <= 3.0f && diff != EASY)
+                if (eventCooldown <= 3.0f)
                 {
                     eventWarningTimer = eventCooldown;
                 }
@@ -1134,7 +1134,20 @@ else if (state == PAUSED)
                 secondEvent = NONE;
                 eventWarningTimer = 0;
 
-                if (diff == MEDIUM)
+                if (diff == EASY)
+                {
+                    // EASY MODE: Only Slowness and Swapped Controls
+                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS};
+                    EventType chosen = (EventType)easyEvents[rand() % 2];
+
+                    currentEvent = chosen;
+                    secondLastEvent = lastEvent;
+                    lastEvent = currentEvent;
+
+                    eventTimer = 11.0f; 
+                    eventCooldown = 20.0f; // longer cooldown for easy
+                }
+                else if (diff == MEDIUM)
                 {
                     int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
                     
@@ -1156,13 +1169,14 @@ else if (state == PAUSED)
 
                 else if (diff == HARD)
                 {
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, LOW_GRAVITY, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    // For Hard mode, LOW_GRAVITY is now a constant baseline, so removed from random events
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
 
                     // FAIRNESS: Same repeat-prevention for primary event
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)hardEvents[rand() % 9];
+                        chosen = (EventType)hardEvents[rand() % 8];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
 
@@ -1173,10 +1187,16 @@ else if (state == PAUSED)
                     // 40% chance for DOUBLE EVENT
                     if (rand() % 100 < 40)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 9];
-                        // prevent same event twice in the double-event slot
-                        while (secondEvent == currentEvent)
-                            secondEvent = (EventType)hardEvents[rand() % 9];
+                        secondEvent = (EventType)hardEvents[rand() % 8];
+                        // prevent same event twice or contradicting events
+                        while (secondEvent == currentEvent || 
+                               (currentEvent == MISFORTUNE && secondEvent == LUCKY_PARTY) ||
+                               (currentEvent == LUCKY_PARTY && secondEvent == MISFORTUNE) ||
+                               (currentEvent == SPEED_BOOST && secondEvent == SLOW_BOOST) ||
+                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST))
+                        {
+                            secondEvent = (EventType)hardEvents[rand() % 8];
+                        }
                     }
 
                     eventTimer = 16.0f;
@@ -1191,7 +1211,7 @@ else if (state == PAUSED)
                 eventTimer -= GetFrameTime();
                 // reset effects every frame first
                 eventBoost = 1.0f;
-                gravity = 1800.0f;
+                gravity = (diff == HARD) ? 1100.0f : 1800.0f;
                 
 
                 // helper lambda
@@ -1226,7 +1246,7 @@ else if (state == PAUSED)
                     fogAlpha = 0.0f;
                     fogFadingOut = false;
 
-                    gravity = 1800.0f;
+                    gravity = (diff == HARD) ? 1100.0f : 1800.0f;
                     eventBoost = 1.0f;
 
                     invertedScreen = false;
@@ -2459,7 +2479,7 @@ else if (state == PAUSED)
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
-        gravity = 1800.0f;
+        gravity = (diff == HARD) ? 1100.0f : 1800.0f;
         velocityY = 0;
         velocityX = 0;
         isGrounded = true;
@@ -2533,7 +2553,7 @@ else if (state == PAUSED)
         move = 1.0f;
         chiliBoost = 1.0f;
         eventBoost = 1.0f;
-        gravity = 1800.0f;
+        gravity = (diff == HARD) ? 1100.0f : 1800.0f;
         velocityY = 0;
         velocityX = 0;
         isGrounded = true;
