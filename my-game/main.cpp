@@ -172,14 +172,24 @@ int main()
     SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
     InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "Raylib - Wings of the Curse");
 
-    // load sound
-    InitAudioDevice();
+   InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
-    // music
-    bgMusic = LoadMusicStream("assets/sounds/bg_music.mp3");
-    SetMusicVolume(bgMusic, 1.0f);
-    PlayMusicStream(bgMusic);
+    Music bgEasy   = LoadMusicStream("assets/sounds/bg_easy.mp3");
+    Music bgMedium = LoadMusicStream("assets/sounds/bg_medium.mp3");
+    Music bgHard   = LoadMusicStream("assets/sounds/bg_hard.mp3");
+
+    float bgTargetVolume = 1.0f;
+    SetMusicVolume(bgEasy,   bgTargetVolume);
+    SetMusicVolume(bgMedium, bgTargetVolume);
+    SetMusicVolume(bgHard,   bgTargetVolume);
+
+    Music* currentBg = &bgEasy; 
+
+    bool isCrossfading = false;
+    Music* nextBg = nullptr;
+    float crossfadeTimer = 0.0f;
+    float crossfadeDuration = 0.5f; // seconds, change if you want longer/shorter fades
 
     // bat music
     Music batmusic= LoadMusicStream("assets/sounds/bat flying.mp3");
@@ -228,9 +238,9 @@ int main()
     Texture2D bgTex = LoadTexture("assets/images/bg.png");
     Texture2D groundTex = LoadTexture("assets/images/ground.png");
     Texture2D wallTex = LoadTexture("assets/images/wall.jpg");
-    Texture2D bgEasy   = LoadTexture("assets/images/easyy(1).png");
-    Texture2D bgMedium = LoadTexture("assets/images/mediumm.png");
-    Texture2D bgHard   = LoadTexture("assets/images/hardd.png");
+    Texture2D bgEasyTex   = LoadTexture("assets/images/easyy(1).png");
+    Texture2D bgMediumTex = LoadTexture("assets/images/mediumm.png");
+    Texture2D bgHardTex   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
      
@@ -520,17 +530,20 @@ int main()
              EndDrawing();
 
 
-             if (IsVideoFinished()) 
-             {
-             UnloadIntroVideo();
-             PlayMusicStream(bgMusic);  
-             state = PLAYING;
-             }
-         }
+            if (IsVideoFinished()) 
+            {
+                UnloadIntroVideo();
+                // Start the background music for the current difficulty
+                if (currentBg) {
+                    SetMusicVolume(*currentBg, bgTargetVolume);
+                    PlayMusicStream(*currentBg);
+                }
+                state = PLAYING;
+            }
+        }
 
         else if (state == PAUSED)
           {
-        // Input only — drawing happens inside BeginDrawing() below
         float panelW = 340, panelH = 260;
         float panelX = screenWidth / 2.0f - panelW / 2.0f;
         float panelY = screenHeight / 2.0f - panelH / 2.0f;
@@ -550,7 +563,9 @@ int main()
         }
 
         if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            StopMusicStream(bgMusic);
+            StopMusicStream(bgEasy);
+            StopMusicStream(bgMedium);
+            StopMusicStream(bgHard);
             state = MENU;
             hp = 3; score = 0; combo = 0;
             diff = EASY; bg1Triggered = false; bg2Triggered = false;
@@ -582,50 +597,126 @@ int main()
         }
     }
 
+       else if (state == TROLL_VIDEO)
+        {
+            frameTimer += GetFrameTime();
 
+            if (frameTimer >= 0.2f)
+            {
+                frameTimer = 0;
+                currentFrame++;
+            }
+
+            if (currentFrame >= (int)videoFrames.size())
+            {
+                StopSound(trollSound);
+                currentFrame = 0;
+                state = PLAYING;
+            }
+
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                StopSound(trollSound);
+                currentFrame = 0;
+                state = PLAYING;
+            }
+        }
 
         // GAMEPLAY-----------------------------------------
         else if (state == PLAYING)
         {
-            UpdateMusicStream(bgMusic);
-
-           if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
-             state = PAUSED;
-            }
-
-            // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 400) 
+
+            if (score >= 400)
                 diff = HARD;
             else if (score >= 100)
                 diff = MEDIUM;
             else
                 diff = EASY;
 
-            lastDiff = prevDiff; // lastDiff now correctly holds what diff WAS before this frame
+            lastDiff = prevDiff;
 
-            // Background frame logic
+            // --- Music update + crossfade handling ---
+            if (isCrossfading && currentBg && nextBg)
+            {
+                crossfadeTimer += GetFrameTime();
+                float t = crossfadeTimer / crossfadeDuration;
+                if (t > 1.0f) t = 1.0f;
+
+                float volOut = Lerp(bgTargetVolume, 0.0f, t);
+                float volIn  = Lerp(0.0f, bgTargetVolume, t);
+
+                SetMusicVolume(*currentBg, volOut);
+                SetMusicVolume(*nextBg, volIn);
+
+                UpdateMusicStream(*currentBg);
+                UpdateMusicStream(*nextBg);
+
+                if (t >= 1.0f)
+                {
+                    StopMusicStream(*currentBg);
+                    SetMusicVolume(*nextBg, bgTargetVolume);
+
+                    currentBg = nextBg;
+                    nextBg = nullptr;
+                    isCrossfading = false;
+                    crossfadeTimer = 0.0f;
+                }
+            }
+            else
+            {
+                if (currentBg) UpdateMusicStream(*currentBg);
+            }
+
+            if (diff != prevDiff)
+            {
+                Music* chosen = nullptr;
+                if (diff == EASY)    chosen = &bgEasy;
+                else if (diff == MEDIUM) chosen = &bgMedium;
+                else /* HARD */      chosen = &bgHard;
+
+                if (chosen != nullptr && chosen != currentBg)
+                {
+                    nextBg = chosen;
+                    isCrossfading = true;
+                    crossfadeTimer = 0.0f;
+
+                    SetMusicVolume(*nextBg, 0.0f);
+                    
+                    float startTime = 0.0f;
+                    if (nextBg == &bgMedium) startTime = 2.0f * 60.0f + 25.0f; 
+                    else if (nextBg == &bgHard)   startTime = 1.0f * 60.0f + 10.0f; 
+
+                    SeekMusicStream(*nextBg, startTime);
+                    PlayMusicStream(*nextBg);
+                }
+            }
+
+           if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+             state = PAUSED;
+            }
+
             if (diff == EASY) {
-                currentBgFrame = 0; // Frame 1
+                currentBgFrame = 0; 
             } else if (diff == MEDIUM) {
-                if (currentBgFrame < 49) { // Transition frames 2-49
+                if (currentBgFrame < 49) { 
                     bgFrameTimer += GetFrameTime();
                     if (bgFrameTimer >= bgFrameDelay) {
                         bgFrameTimer = 0;
                         currentBgFrame++;
                     }
                 } else {
-                    currentBgFrame = 49; // Frame 50
+                    currentBgFrame = 49; 
                 }
             } else if (diff == HARD) {
-                if (currentBgFrame < 99) { // Transition frames 51-99
+                if (currentBgFrame < 99) { 
                     bgFrameTimer += GetFrameTime();
                     if (bgFrameTimer >= bgFrameDelay) {
                         bgFrameTimer = 0;
                         currentBgFrame++;
                     }
                 } else {
-                    currentBgFrame = 99; // Frame 100
+                    currentBgFrame = 99; 
                 }
             }
 
@@ -1667,7 +1758,10 @@ int main()
                 PlaySound(gameOverSound);
                 shakeTime = 0.5f;
                 shakePower = 20.0f;
-                StopMusicStream(bgMusic);        
+                StopMusicStream(bgEasy);
+                StopMusicStream(bgMedium);
+                StopMusicStream(bgHard);
+    
             }
 
             // TIMERS-----------------------------
@@ -1795,45 +1889,7 @@ int main()
                playerFrame++;
              if (playerFrame >= 6) playerFrame = 0;
             }
-        }
-
-             // Update frame timer for walk animations
-            if (currentAnim == WALK_RIGHT || currentAnim == WALK_LEFT || currentAnim == JUMP) {
-                pframeTimer += GetFrameTime();
-                if (pframeTimer >= pframeDelay) {
-                    pframeTimer = 0.0f;
-                    playerFrame++;
-                    if (playerFrame >= 6) playerFrame = 0;
-                }
-            } else playerFrame = 0;
-            
-        }
-
-        if (state == TROLL_VIDEO)
-        {
-            // add time every frame
-            frameTimer += GetFrameTime();
-
-            // when enough time passed, next frame
-            if (frameTimer >= 0.2f)
-            {
-                frameTimer = 0;
-                currentFrame++;
-            }
-
-            // if video ended, go back to game
-            if (currentFrame >= videoFrames.size())
-            {
-                StopSound(trollSound); // stop audio
-                currentFrame = 0;      // reset video
-                state = PLAYING;       // resume game
-            }
-            if (IsKeyPressed(KEY_ENTER))
-            {
-            StopSound(trollSound);
-             currentFrame = 0;
-             state = PLAYING;
-            }
+         }
         }
 
         // MEME POP-UP UPDATE
@@ -1906,6 +1962,36 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
 
+       if (state == TROLL_VIDEO)
+        {
+            ClearBackground(BLACK);
+            if (currentFrame < (int)videoFrames.size())
+            {
+                DrawTexturePro(
+                    videoFrames[currentFrame],
+                    { 0, 0, (float)videoFrames[currentFrame].width, (float)videoFrames[currentFrame].height },
+                    { 0, 0, (float)screenWidth, (float)screenHeight },
+                    { 0, 0 }, 0.0f, WHITE
+                );
+            }
+            // "relapse ka muna boi" 
+            const char* trollText = "relapse ka muna boi :((";
+            Vector2 trollSize = MeasureTextEx(tinyFont, trollText, 48, 0);
+            float trollX = screenWidth / 2.0f - trollSize.x / 2.0f;
+            float trollY = screenHeight - 130.0f;
+            DrawTextEx(tinyFont, trollText, { trollX + 3, trollY + 3 }, 48, 0, Fade(BLACK, 0.8f));
+            DrawTextEx(tinyFont, trollText, { trollX, trollY }, 48, 0, RED);
+
+            // "press enter to skip" text
+            const char* skipText = "PRESS ENTER TO SKIP";
+            Vector2 skipSize = MeasureTextEx(tinyFont, skipText, 36, 0);
+            float skipX = screenWidth / 2.0f - skipSize.x / 2.0f;
+            float skipY = screenHeight - 70.0f;
+            float pulse = (sinf(GetTime() * 4.0f) + 1.0f) / 2.0f;
+            DrawTextEx(tinyFont, skipText, { skipX + 2, skipY + 2 }, 36, 0, Fade(BLACK, pulse));
+            DrawTextEx(tinyFont, skipText, { skipX, skipY }, 36, 0, Fade(WHITE, pulse));
+        }
+        
         // game
         if (state == PLAYING)
         {
@@ -1989,6 +2075,8 @@ int main()
                 player.height   
             };
 
+            if (currentAnim == JUMP && playerFrame > 4) playerFrame = 4;
+            if (playerFrame >= 6) playerFrame = 0;
 
              if (diff == EASY || diff == MEDIUM) {
 
@@ -2189,7 +2277,7 @@ int main()
             // CHAOS LEVEL UI 
             DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
             DrawRectangle(screenWidth - 215, 25, (int)(190 * chaosLevel), 15, ColorLerp(GREEN, RED, chaosLevel));
-            DrawText("CHAOS LEVEL", screenWidth - 215, 50, 20, WHITE);
+            DrawTextEx(tinyFont, "CHAOS LEVEL", {(float)(screenWidth - 215), 50.0f}, 20, 0, RED);
 
             //health
             float hpScale = 0.1f; 
@@ -2264,53 +2352,6 @@ int main()
                     Fade(BLACK, alpha)
                 );
             }
-        }
-
-        else if (state == TROLL_VIDEO)
-        {
-            frameTimer += GetFrameTime();
-            if (frameTimer >= 0.2f) {   // adjust playback speed here
-                 frameTimer = 0.0f;
-                 currentFrame++;
-        }
-
-            ClearBackground(WHITE);
-            if (!videoFrames.empty() && currentFrame < videoFrames.size())
-            {
-                DrawTexturePro(
-                    videoFrames[currentFrame],
-                    {0, 0,
-                     (float)videoFrames[currentFrame].width,
-                     (float)videoFrames[currentFrame].height},
-                    {0, 0,
-                     (float)screenWidth,
-                     (float)screenHeight},
-                    {0, 0},
-                    0,
-                    WHITE);
-
-               DrawTextEx(tinyFont, "RELAPSE ", { (float)screenWidth / 2.0f - 350.0f, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-               DrawTextEx(tinyFont, "KA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
-               DrawTextEx(tinyFont, "MUNA ", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, BLUE);
-               DrawTextEx(tinyFont, "BOI HAHA :((", { (float)screenWidth / 2.0f - 350.0f + MeasureTextEx(tinyFont, "RELAPSE KA MUNA ", 45, 2).x, (float)screenHeight - 100.0f }, 45, 2, YELLOW);
-
-                DrawTextEx(tinyFont,
-                    "Press ENTER to skip",
-                    { (float)screenWidth / 2.0f - 130.0f, (float)screenHeight - 50.0f },
-                    30, 2,
-                    GRAY);
-            }
-
-            if (IsKeyPressed(KEY_ENTER)) {
-             UnloadBg1TransitionVideo(); 
-            state = PLAYING; 
-            continue;          
-             }
-
-             if (!IsSoundPlaying(trollSound)) {   // or IsMusicStreamPlaying if you used LoadMusicStream
-             state = PLAYING;
-             continue;
-              }
         }
 
         // heartbeat text
@@ -2462,7 +2503,10 @@ int main()
         if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
         {
             StopMusicStream(gameOverMusic);
-            PlayMusicStream(bgMusic);
+            currentBg = &bgEasy;
+            SetMusicVolume(*currentBg, bgTargetVolume);
+            SeekMusicStream(*currentBg, 0.0f);
+            PlayMusicStream(*currentBg);
             
             // Reset all gameplay variables
             state = PLAYING;
@@ -2646,6 +2690,11 @@ int main()
     UnloadFont(nosifer);
     UnloadFont(gamefont);
     UnloadFont(tinyFont);
+
+    if (currentBg) StopMusicStream(*currentBg);
+    UnloadMusicStream(bgEasy);
+    UnloadMusicStream(bgMedium);
+    UnloadMusicStream(bgHard);
 
     CloseAudioDevice();
     CloseWindow();
