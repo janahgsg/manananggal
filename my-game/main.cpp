@@ -14,8 +14,6 @@ enum GameState
     MENU,
     TRANSITION,
     PLAYING,
-    BG1_TRANSITION,
-    BG2_TRANSITION,
     TROLL_VIDEO,
     PAUSED,
     GAMEOVER_ANIM
@@ -521,125 +519,6 @@ int main()
              }
          }
 
-            else if (state == BG1_TRANSITION) {
-        UpdateBg1TransitionVideo();
-        glitchTimer += GetFrameTime();   // ADD
-
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawBg1TransitionVideo();
-
-        // ADD THIS ENTIRE BLOCK:
-        if (glitchTimer < 0.6f) {
-            float flicker = (float)(rand() % 100) / 100.0f;
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f + flicker * 0.4f));
-
-            int sliceCount = 6 + rand() % 6;
-            for (int i = 0; i < sliceCount; i++) {
-                int sliceY      = rand() % screenHeight;
-                int sliceHeight = 2 + rand() % 18;
-                int sliceOffset = (rand() % 80) - 40;
-                float sliceAlpha = 0.3f + (float)(rand() % 60) / 100.0f;
-                DrawRectangle(sliceOffset, sliceY, screenWidth, sliceHeight, Fade(BLACK, sliceAlpha));
-                if (rand() % 3 == 0) {
-                    Color fringe = (rand() % 2 == 0) ? Color{180, 0, 0, 80} : Color{0, 180, 180, 60};
-                    DrawRectangle(sliceOffset + (rand() % 20 - 10), sliceY, screenWidth, sliceHeight / 2, fringe);
-                }
-            }
-            for (int y = 0; y < screenHeight; y += 4)
-                DrawRectangle(0, y, screenWidth, 1, Fade(BLACK, 0.25f));
-            if (glitchTimer < 0.12f)
-                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.7f * (1.0f - glitchTimer / 0.12f)));
-        }
-
-        EndDrawing();
-
-       if (IsBg1TransitionFinished()) {
-            float fadeAlpha = GetBg1TransitionAlpha(); 
-            Color fadeColor = Fade(BLACK, fadeAlpha);
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
-
-            // Reset player to center
-            player.x = (screenWidth - player.width) / 2;
-            player.y = screenHeight * 0.75f;
-            velocityX = 0;
-            velocityY = 0;
-            isGrounded = true;
-
-            // Reset items and spawn timer so they fall fresh from top
-            items.clear();
-            spawnTimer = 0;
-
-            // Reset camera to follow new player position
-            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
-            camera.rotation = 0.0f;
-
-            state = PLAYING;
-        }
-
-        continue; 
-        }
-
-
-         else if (state == BG2_TRANSITION) {
-            UpdateBg2TransitionVideo();
-            glitchTimer += GetFrameTime();   // ADD
-
-            BeginDrawing();
-            ClearBackground(BLACK);
-            DrawBg2TransitionVideo();
-
-            // SAME GLITCH BLOCK AS ABOVE
-            if (glitchTimer < 0.6f) {
-                float flicker = (float)(rand() % 100) / 100.0f;
-                DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f + flicker * 0.4f));
-
-                int sliceCount = 6 + rand() % 6;
-                for (int i = 0; i < sliceCount; i++) {
-                    int sliceY      = rand() % screenHeight;
-                    int sliceHeight = 2 + rand() % 18;
-                    int sliceOffset = (rand() % 80) - 40;
-                    float sliceAlpha = 0.3f + (float)(rand() % 60) / 100.0f;
-                    DrawRectangle(sliceOffset, sliceY, screenWidth, sliceHeight, Fade(BLACK, sliceAlpha));
-                    if (rand() % 3 == 0) {
-                        Color fringe = (rand() % 2 == 0) ? Color{180, 0, 0, 80} : Color{0, 180, 180, 60};
-                        DrawRectangle(sliceOffset + (rand() % 20 - 10), sliceY, screenWidth, sliceHeight / 2, fringe);
-                    }
-                }
-                for (int y = 0; y < screenHeight; y += 4)
-                    DrawRectangle(0, y, screenWidth, 1, Fade(BLACK, 0.25f));
-                if (glitchTimer < 0.12f)
-                    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.7f * (1.0f - glitchTimer / 0.12f)));
-            }
-
-            EndDrawing();
-
-        if (IsBg2TransitionFinished()) {
-            float fadeAlpha = GetBg2TransitionAlpha(); 
-            Color fadeColor = Fade(BLACK, fadeAlpha);
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), fadeColor);
-
-            // Reset player to center
-            player.x = (screenWidth - player.width) / 2;
-            player.y = screenHeight * 0.75f;
-            velocityX = 0;
-            velocityY = 0;
-            isGrounded = true;
-
-            // Reset items and spawn timer so they fall fresh from top
-            items.clear();
-            spawnTimer = 0;
-
-            // Reset camera to follow new player position
-            camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
-            camera.rotation = 0.0f;
-
-            state = PLAYING;
-        }
-
-         continue;
-            }
-
         else if (state == PAUSED)
           {
         // Input only — drawing happens inside BeginDrawing() below
@@ -720,41 +599,6 @@ int main()
             {
                 eventCooldown = 15.0f; 
                 eventWarningTimer = 0;
-            }
-
-            // >>> Trigger transition video when EASY → MEDIUM
-            if (diff == MEDIUM && lastDiff == EASY && !bg1Triggered) {
-                bg1Triggered = true;
-                items.clear();
-                popEffects.clear();
-                currentEvent = NONE;
-                secondEvent = NONE;
-                shakeTime = 0; shakePower = 0; hitFlash = 0;
-                quakeActive = false;
-                pits.clear(); pitWidths.clear();
-                pitCenters.clear(); pitOpens.clear();
-                pitCreated = false;
-                glitchActive = true;   
-                glitchTimer = 0.0f;    
-                state = BG1_TRANSITION;
-                continue;
-            }
-
-             else if (diff == HARD && lastDiff == MEDIUM && !bg2Triggered) {
-                bg2Triggered = true;
-                items.clear();
-                popEffects.clear();
-                currentEvent = NONE;
-                secondEvent = NONE;
-                shakeTime = 0; shakePower = 0; hitFlash = 0;
-                quakeActive = false;
-                pits.clear(); pitWidths.clear();
-                pitCenters.clear(); pitOpens.clear();
-                pitCreated = false;
-                glitchActive = true;   
-                glitchTimer = 0.0f;    
-                state = BG2_TRANSITION;
-                continue;
             }
 
             // movements 
