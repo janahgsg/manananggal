@@ -595,9 +595,9 @@ int main()
 
             // Update difficulty and handle grace periods
             Difficulty prevDiff = diff;
-            if (score >= 100) 
+            if (score >= 400) 
                 diff = HARD;
-            else if (score >= 50)
+            else if (score >= 100)
                 diff = MEDIUM;
             else
                 diff = EASY;
