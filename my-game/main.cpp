@@ -119,6 +119,13 @@ float pframeDelay = 0.15f;
 vector<Texture2D> videoFrames;
 int currentFrame = 0;
 float frameTimer = 0;
+
+// Background frames
+vector<Texture2D> bgFrames;
+int currentBgFrame = 0;
+float bgFrameTimer = 0.0f;
+float bgFrameDelay = 0.05f;
+
 Sound trollSound;
 Music bgMusic;
 
@@ -147,7 +154,6 @@ void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f
     v.push_back({text, col, dur, dur});
 }
 
-// ADD THIS above int main(), after PushNotif:
 string GetEventName(EventType e) {
     if (e == SPEED_BOOST)    return "SPEED BOOST";
     if (e == SLOW_BOOST)     return "SLOW CURSE";
@@ -192,6 +198,10 @@ int main()
     for (int i = 1; i <= 110; i++) 
     videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
 
+    // Load background frames
+    for (int i = 1; i <= 100; i++)
+        bgFrames.push_back(LoadTexture(TextFormat("assets/videos/bg/ezgif-frame-%03d.png", i)));
+
     
     // MEME POP-UP
     struct MemePop {
@@ -211,7 +221,7 @@ int main()
     float totalTimePlayed = 0.0f;
     int eventsSurvived = 0;
     int totalItemsCollected = 0;
-    float chaosLevel = 0.0f; // 0.0 to 1.0 based on difficulty and score progress
+    float chaosLevel = 0.0f; 
 
     // load images
     // bg
@@ -275,52 +285,51 @@ int main()
     Texture2D player1Tex = LoadTexture("assets/character/human/invisible.png");
 
     Texture2D RwalkFrames[6]; 
-     RwalkFrames[0] = LoadTexture("assets/character/human/right/1.png");
-     RwalkFrames[1] = LoadTexture("assets/character/human/right/2.png");
-     RwalkFrames[2] = LoadTexture("assets/character/human/right/3.png");
+    RwalkFrames[0] = LoadTexture("assets/character/human/right/1.png");
+    RwalkFrames[1] = LoadTexture("assets/character/human/right/2.png");
+    RwalkFrames[2] = LoadTexture("assets/character/human/right/3.png");
     RwalkFrames[3] = LoadTexture("assets/character/human/right/4.png");
     RwalkFrames[4] = LoadTexture("assets/character/human/right/5.png");
     RwalkFrames[5] = LoadTexture("assets/character/human/right/6.png");
 
     Texture2D LwalkFrames[6]; 
-     LwalkFrames[0] = LoadTexture("assets/character/human/left/1.png");
-     LwalkFrames[1] = LoadTexture("assets/character/human/left/2.png");
-     LwalkFrames[2] = LoadTexture("assets/character/human/left/3.png");
+    LwalkFrames[0] = LoadTexture("assets/character/human/left/1.png");
+    LwalkFrames[1] = LoadTexture("assets/character/human/left/2.png");
+    LwalkFrames[2] = LoadTexture("assets/character/human/left/3.png");
     LwalkFrames[3] = LoadTexture("assets/character/human/left/4.png");
     LwalkFrames[4] = LoadTexture("assets/character/human/left/5.png");
     LwalkFrames[5] = LoadTexture("assets/character/human/left/6.png");
 
     Texture2D JumpFrames[6]; 
-     JumpFrames[0] = LoadTexture("assets/character/human/jump/1.png");
-     JumpFrames[1] = LoadTexture("assets/character/human/jump/2.png");
-     JumpFrames[2] = LoadTexture("assets/character/human/jump/3.png");
-     JumpFrames[3] = LoadTexture("assets/character/human/jump/4.png");
-     JumpFrames[4] = LoadTexture("assets/character/human/jump/5.png");
-
+    JumpFrames[0] = LoadTexture("assets/character/human/jump/1.png");
+    JumpFrames[1] = LoadTexture("assets/character/human/jump/2.png");
+    JumpFrames[2] = LoadTexture("assets/character/human/jump/3.png");
+    JumpFrames[3] = LoadTexture("assets/character/human/jump/4.png");
+    JumpFrames[4] = LoadTexture("assets/character/human/jump/5.png");
 
     Texture2D FlyFrames[6];   // front
-        FlyFrames[0] = LoadTexture("assets/character/manananggal/front/1.png");
-        FlyFrames[1] = LoadTexture("assets/character/manananggal/front/2.png");
-        FlyFrames[2] = LoadTexture("assets/character/manananggal/front/3.png");
-        FlyFrames[3] = LoadTexture("assets/character/manananggal/front/4.png");
-        FlyFrames[4] = LoadTexture("assets/character/manananggal/front/5.png");
-        FlyFrames[5] = LoadTexture("assets/character/manananggal/front/6.png");
+    FlyFrames[0] = LoadTexture("assets/character/manananggal/front/1.png");
+    FlyFrames[1] = LoadTexture("assets/character/manananggal/front/2.png");
+    FlyFrames[2] = LoadTexture("assets/character/manananggal/front/3.png");
+    FlyFrames[3] = LoadTexture("assets/character/manananggal/front/4.png");
+    FlyFrames[4] = LoadTexture("assets/character/manananggal/front/5.png");
+    FlyFrames[5] = LoadTexture("assets/character/manananggal/front/6.png");
 
     Texture2D RflyFrames[6];  // right
-        RflyFrames[0] = LoadTexture("assets/character/manananggal/right/1.png");
-        RflyFrames[1] = LoadTexture("assets/character/manananggal/right/2.png");
-        RflyFrames[2] = LoadTexture("assets/character/manananggal/right/3.png");
-        RflyFrames[3] = LoadTexture("assets/character/manananggal/right/4.png");
-        RflyFrames[4] = LoadTexture("assets/character/manananggal/right/5.png");
-        RflyFrames[5] = LoadTexture("assets/character/manananggal/right/6.png");
+    RflyFrames[0] = LoadTexture("assets/character/manananggal/right/1.png");
+    RflyFrames[1] = LoadTexture("assets/character/manananggal/right/2.png");
+    RflyFrames[2] = LoadTexture("assets/character/manananggal/right/3.png");
+    RflyFrames[3] = LoadTexture("assets/character/manananggal/right/4.png");
+    RflyFrames[4] = LoadTexture("assets/character/manananggal/right/5.png");
+    RflyFrames[5] = LoadTexture("assets/character/manananggal/right/6.png");
 
     Texture2D LflyFrames[6];  // left
-        LflyFrames[0] = LoadTexture("assets/character/manananggal/left/1.png");
-        LflyFrames[1] = LoadTexture("assets/character/manananggal/left/2.png");
-        LflyFrames[2] = LoadTexture("assets/character/manananggal/left/3.png");
-        LflyFrames[3] = LoadTexture("assets/character/manananggal/left/4.png");
-        LflyFrames[4] = LoadTexture("assets/character/manananggal/left/5.png");
-        LflyFrames[5] = LoadTexture("assets/character/manananggal/left/6.png");
+    LflyFrames[0] = LoadTexture("assets/character/manananggal/left/1.png");
+    LflyFrames[1] = LoadTexture("assets/character/manananggal/left/2.png");
+    LflyFrames[2] = LoadTexture("assets/character/manananggal/left/3.png");
+    LflyFrames[3] = LoadTexture("assets/character/manananggal/left/4.png");
+    LflyFrames[4] = LoadTexture("assets/character/manananggal/left/5.png");
+    LflyFrames[5] = LoadTexture("assets/character/manananggal/left/6.png");
         
    
 
@@ -462,7 +471,7 @@ int main()
     InitBg2TransitionVideo();
 
     // EXTRA SAFETY & FEEDBACK
-    float hitTimer = 0.0f; // grace period after taking damage
+    float hitTimer = 0.0f; 
     float nearMissTimer = 0.0f;
     float milestoneCelebrationTimer = 0.0f;
     vector<Warning> activeWarnings;
@@ -564,6 +573,7 @@ int main()
             camera.rotation = 0; camera.zoom = 1.30f;
             camera.target = {player.x + player.width/2, player.y + player.height/2};
             invertedScreen = false; gameOverAnimTimer = 0.0f;
+            currentBgFrame = 0; bgFrameTimer = 0.0f;
             UnloadBg1TransitionVideo(); UnloadBg2TransitionVideo();
             InitBg1TransitionVideo();   InitBg2TransitionVideo();
             introMusic = LoadMusicStream("assets/sounds/intro.mp3");
@@ -593,6 +603,31 @@ int main()
                 diff = EASY;
 
             lastDiff = prevDiff; // lastDiff now correctly holds what diff WAS before this frame
+
+            // Background frame logic
+            if (diff == EASY) {
+                currentBgFrame = 0; // Frame 1
+            } else if (diff == MEDIUM) {
+                if (currentBgFrame < 49) { // Transition frames 2-49
+                    bgFrameTimer += GetFrameTime();
+                    if (bgFrameTimer >= bgFrameDelay) {
+                        bgFrameTimer = 0;
+                        currentBgFrame++;
+                    }
+                } else {
+                    currentBgFrame = 49; // Frame 50
+                }
+            } else if (diff == HARD) {
+                if (currentBgFrame < 99) { // Transition frames 51-99
+                    bgFrameTimer += GetFrameTime();
+                    if (bgFrameTimer >= bgFrameDelay) {
+                        bgFrameTimer = 0;
+                        currentBgFrame++;
+                    }
+                } else {
+                    currentBgFrame = 99; // Frame 100
+                }
+            }
 
             // If difficulty just increased, give the player a "Grace Period"
             if (diff > lastDiff) 
@@ -1774,10 +1809,6 @@ int main()
             
         }
 
-
-        
-
-
         if (state == TROLL_VIDEO)
         {
             // add time every frame
@@ -1809,7 +1840,7 @@ int main()
         if (state == PLAYING) {
             totalTimePlayed += GetFrameTime();
             
-            // CHAOS LEVEL CALCULATION (for research metrics)
+            // CHAOS LEVEL CALCULATION 
             float scoreTarget = 1000.0f;
             chaosLevel = Clamp((float)score / scoreTarget, 0.0f, 0.7f);
             if (diff == MEDIUM) chaosLevel += 0.15f;
@@ -1818,10 +1849,7 @@ int main()
 
             memeSpawnTimer += GetFrameTime();
             
-            // Trigger: Random (Rarer: 45 to 100 seconds) or Press 'F'
-            bool manualTrigger = IsKeyPressed(KEY_F);
-            
-            if (!currentMeme.active && (memeSpawnTimer > GetRandomValue(45, 100) || manualTrigger)) {
+            if (!currentMeme.active && (memeSpawnTimer > GetRandomValue(45, 100))) {
                 memeSpawnTimer = 0;
                 int index;
                 if (!memeTextures.empty()) {
@@ -1835,7 +1863,7 @@ int main()
                     currentMeme.speed = (float)GetRandomValue(2200, 3200); // Much faster sliding
                     
                     // Rare Sound Trigger (25% chance or manual)
-                    if (GetRandomValue(1, 100) <= 25 || manualTrigger) {
+                    if (GetRandomValue(1, 100) <= 25) {
                         currentMeme.soundIndex = GetRandomValue(0, memeSounds.size() - 1);
                         PlaySound(memeSounds[currentMeme.soundIndex]);
                     } else {
@@ -1883,20 +1911,19 @@ int main()
         {
             BeginMode2D(camera);
     
-            // DRAW BACKGROUND (Clean, single layer)
-            Texture2D currentBg;
-            if (diff == EASY)      currentBg = bgEasy;
-            else if (diff == MEDIUM) currentBg = bgMedium;
-            else if (diff == HARD)   currentBg = bgHard;
-
-            DrawTexturePro(
-                currentBg,
-                {0, 0, (float)currentBg.width, (float)currentBg.height},
-                {0, 0, (float)screenWidth, (float)screenHeight},
-                {0, 0},
-                0.0f,
-                ColorAlpha(WHITE, 0.8f) 
-            );
+            // DRAW BACKGROUND (Frame-based transition)
+            if (!bgFrames.empty())
+            {
+                Texture2D currentBg = bgFrames[currentBgFrame];
+                DrawTexturePro(
+                    currentBg,
+                    {0, 0, (float)currentBg.width, (float)currentBg.height},
+                    {0, 0, (float)screenWidth, (float)screenHeight},
+                    {0, 0},
+                    0.0f,
+                    WHITE
+                );
+            }
 
             // WARNING BEFORE PIT OPENS
             if (quakeTimer > 1.5f && quakeTimer < 3.5f)
@@ -2007,7 +2034,6 @@ int main()
                     visualScale = 1.0f + (0.15f * pulse);               // Grow up to 15% larger
                 }
 
-                // Smaller item size + apply illusion visual scale
                 Rectangle drawRect = it.rect;
 
                 float itemScale = 0.80f;
@@ -2160,7 +2186,7 @@ int main()
     DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
             // UI   
-            // CHAOS LEVEL UI (for research visibility)
+            // CHAOS LEVEL UI 
             DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
             DrawRectangle(screenWidth - 215, 25, (int)(190 * chaosLevel), 15, ColorLerp(GREEN, RED, chaosLevel));
             DrawText("CHAOS LEVEL", screenWidth - 215, 50, 20, WHITE);
@@ -2498,6 +2524,8 @@ int main()
 
             invertedScreen = false;
             gameOverAnimTimer = 0.0f;
+            currentBgFrame = 0;
+            bgFrameTimer = 0.0f;
             bg1Triggered = false;
             bg2Triggered = false;
             UnloadBg1TransitionVideo();
@@ -2567,6 +2595,8 @@ int main()
 
             invertedScreen = false;
             gameOverAnimTimer = 0.0f;
+            currentBgFrame = 0;
+            bgFrameTimer = 0.0f;
             bg1Triggered = false;
             bg2Triggered = false;
             UnloadBg1TransitionVideo();
@@ -2584,6 +2614,9 @@ int main()
     }
 
     for (auto &t : videoFrames)
+        UnloadTexture(t);
+
+    for (auto &t : bgFrames)
         UnloadTexture(t);
 
     UnloadBg1TransitionVideo();
