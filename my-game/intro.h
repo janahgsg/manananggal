@@ -1,20 +1,25 @@
 #pragma once
 #include "raylib.h"
 
-bool UpdateIntro(); // returns true if play button is clicked
-bool UpdateExit();  // returns true if exit button is clicked
-void DrawIntro(int highScore, Texture2D introTex);
+typedef struct {
+    Rectangle play;
+    Rectangle exit;
+    Rectangle info;
+    Rectangle close;
+    Rectangle next;
+    Rectangle prev;
+} IntroButtons;
 
-//info
-void InitInfoTexture();
-void UnloadInfoTexture();
-void UpdateInfo();
-
+void InitIntro();
+void SetupButtons();
+void UnloadIntro();
+int UpdateIntro();
+void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex);
 
 // ===== MUSIC CONTROL =====
-void InitIntroMusic();   // load and start playing intro music
-void UpdateIntroMusic(); // keep music stream updated each frame
-void StopIntroMusic();   // stop and unload intro music
+void InitIntroMusic();   
+void UpdateIntroMusic(); 
+void StopIntroMusic();   
 
 /// ==== VIDEO CONTROL ====
 void InitIntroVideo();

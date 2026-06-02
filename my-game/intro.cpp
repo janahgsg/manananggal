@@ -205,11 +205,6 @@ static float frameTimer = 0.0f;
 static float frameDelay = 0.1f;
 static bool videoFinished = false;
 
-// ===== NEW: Info overlay state =====
-static bool showInfo = false;
-static Texture2D infoTexture;
-static Texture2D infoTexture2;
-static int infoPage = 1;
 
 void InitIntroVideo()
 {
@@ -223,20 +218,6 @@ void InitIntroVideo()
     currentFrame = 0;
     frameTimer = 0.0f;
     videoFinished = false;
-}
-
-// ===== NEW: Load info image =====
-void InitInfoTexture()
-{
-    infoTexture = LoadTexture("assets/images/info.png");
-    infoTexture2 = LoadTexture("assets/images/info2.png");
-}
-
-// ===== NEW: Unload info image =====
-void UnloadInfoTexture()
-{
-    UnloadTexture(infoTexture);
-    UnloadTexture(infoTexture2);
 }
 
 void UpdateIntroVideo()
@@ -305,277 +286,247 @@ void StopIntroMusic()
     UnloadMusicStream(introMusic);
 }
 
-bool UpdateIntro()
+// =====================================================
+// GLOBALS
+// =====================================================
+static bool showInfo = false;
+static int infoPage = 1;
+static const int maxPages = 2;
+
+static Texture2D infoTextures[2];
+static Texture2D playButtonTex;
+static Texture2D exitButtonTex;
+static Texture2D infoButtonTex;
+static Texture2D closeButtonTex;
+static Texture2D nextButtonTex;
+static Texture2D prevButtonTex;
+static Font scoreFont;
+
+// This is the instance of your struct
+static IntroButtons introButtons;
+
+// =====================================================
+// BUTTON DRAW HELPER
+// =====================================================
+static void DrawButton(Texture2D tex, Rectangle rect, bool hovered)
 {
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
+    float scaleX = rect.width / (float)tex.width;
+    float scaleY = rect.height / (float)tex.height;
+    float scale  = (scaleX < scaleY) ? scaleX : scaleY;
 
-    float buttonWidth = 300;
-    float buttonHeight = 80;
+    float drawWidth  = tex.width * scale;
+    float drawHeight = tex.height * scale;
 
-    float scoreY = screenHeight / 2.0f - 200 + 120 + 40;
-    Rectangle playButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        scoreY + 50,
-        buttonWidth,
-        buttonHeight};
+    Rectangle dest = {
+        rect.x + (rect.width - drawWidth) / 2.0f,
+        rect.y + (rect.height - drawHeight) / 2.0f,
+        drawWidth,
+        drawHeight
+    };
 
-    Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse, playButton);
+   
+    bool isHovered = CheckCollisionPointRec(GetMousePosition(), dest);
 
-    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    DrawTexturePro(tex,
+                   {0,0,(float)tex.width,(float)tex.height},
+                   dest,
+                   {0,0},
+                   0.0f,
+                   isHovered ? WHITE : Fade(WHITE, 0.7f));
 }
 
-bool UpdateExit()
+
+// =====================================================
+// INIT / UNLOAD
+// =====================================================
+void InitIntro()
 {
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
+    playButtonTex  = LoadTexture("assets/buttons/play.png");
+    exitButtonTex  = LoadTexture("assets/buttons/exit.png");
+    infoButtonTex  = LoadTexture("assets/buttons/Binfo.png");
+    closeButtonTex = LoadTexture("assets/buttons/close.png");
+    nextButtonTex  = LoadTexture("assets/buttons/next.png");
+    prevButtonTex  = LoadTexture("assets/buttons/prev.png");
 
-    float buttonWidth = 300;
-    float buttonHeight = 80;
+    infoTextures[0] = LoadTexture("assets/images/info.png");
+    infoTextures[1] = LoadTexture("assets/images/info2.png");
 
-    Rectangle exitButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        screenHeight / 2.0f + buttonHeight + 30,
-        buttonWidth,
-        buttonHeight};
-
-    Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse, exitButton);
-
-    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
 }
 
-// ===== NEW: Update info button & overlay =====
-void UpdateInfo()
+
+
+
+void UnloadIntro()
 {
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
+    UnloadTexture(playButtonTex);
+    UnloadTexture(exitButtonTex);
+    UnloadTexture(infoButtonTex);
+    UnloadTexture(closeButtonTex);
+    UnloadTexture(nextButtonTex);
+    UnloadTexture(prevButtonTex);
 
-    float buttonWidth = 300;
-    float buttonHeight = 80;
+    for (int i = 0; i < maxPages; i++) UnloadTexture(infoTextures[i]);
 
-    Rectangle infoButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        screenHeight / 2.0f + buttonHeight * 2 + 50,
-        buttonWidth,
-        buttonHeight};
+    UnloadFont(scoreFont);
+}
 
+
+// =====================================================
+// UPDATE INTRO
+// =====================================================
+int UpdateIntro()
+{
     Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse, infoButton);
 
-    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    if (CheckCollisionPointRec(mouse, introButtons.play) &&
+        IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        return 1; // Play
+    }
+
+    if (CheckCollisionPointRec(mouse, introButtons.exit) &&
+        IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        return 2; // Exit
+    }
+
+    if (!showInfo &&
+        CheckCollisionPointRec(mouse, introButtons.info) &&
+        IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         showInfo = true;
-        infoPage = 1; // Reset to first page when opening
+        infoPage = 1; // reset to first page
+        return 3; // Info opened
     }
 
-    // Controls when info is showing
     if (showInfo)
     {
-        // Close button
-        Rectangle closeButton = {
-            screenWidth / 2.0f - 75,
-            screenHeight - 80.0f,
-            150,
-            50};
-        if (CheckCollisionPointRec(mouse, closeButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (CheckCollisionPointRec(mouse, introButtons.close) &&
+            IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             showInfo = false;
+            return 3; // Info closed
         }
 
-        // Next button (if on page 1)
-        if (infoPage == 1)
+        if (infoPage < maxPages &&
+            CheckCollisionPointRec(mouse, introButtons.next) &&
+            IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            Rectangle nextButton = {
-                screenWidth / 2.0f + 100,
-                screenHeight - 80.0f,
-                150,
-                50};
-            if (CheckCollisionPointRec(mouse, nextButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                infoPage = 2;
-            }
+            infoPage++;
         }
-        // Prev button (if on page 2)
-        else if (infoPage == 2)
+
+        if (infoPage > 1 &&
+            CheckCollisionPointRec(mouse, introButtons.prev) &&
+            IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            Rectangle prevButton = {
-                screenWidth / 2.0f - 250,
-                screenHeight - 80.0f,
-                150,
-                50};
-            if (CheckCollisionPointRec(mouse, prevButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                infoPage = 1;
-            }
+            infoPage--;
         }
     }
+
+    return 0;
 }
 
-void DrawIntro(int highScore, Texture2D introTex)
+
+// =====================================================
+// DRAW INTRO
+// =====================================================
+void SetupButtons(float scoreY, float scoreHeight)
 {
-    int screenWidth = GetScreenWidth();
+    int screenWidth  = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
-    // ===== BACKGROUND =====
-    DrawTexturePro(
-        introTex,
-        (Rectangle){0, 0, (float)introTex.width, (float)introTex.height},
-        (Rectangle){0, 0, (float)screenWidth, (float)screenHeight},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
+    
+    float btnWidth   = 600.0f;   
+    float btnHeight  = 150.0f;  
+    float gap        = 0.0f;   
+    float centerX    = screenWidth/2.0f - btnWidth/2.0f;
 
-    // ===== TITLE =====
-    const char *title = "Curse of the Wings";
-    int titleSize = 120;
+    
+    introButtons.play = { centerX, scoreY + scoreHeight + gap, btnWidth, btnHeight };
 
-    Font scaryFont = LoadFontEx("assets/font/PermanentMarker-Regular.ttf", 64, 0, 0);
-    Vector2 textSize = MeasureTextEx(scaryFont, title, (float)titleSize, 2);
+    introButtons.info = { centerX, introButtons.play.y + btnHeight + gap, btnWidth, btnHeight };
 
-    float titleX = screenWidth / 2.0f - textSize.x / 2;
-    float titleY = screenHeight / 2.0f - 200;
-    float fadeAlpha = fminf(GetTime() * 0.5f, 1.0f);
+    introButtons.exit = { centerX, introButtons.info.y + btnHeight + gap, btnWidth, btnHeight };
 
-    DrawTextEx(scaryFont, title, {titleX + 3, titleY + 3}, (float)titleSize, 0, BLACK);
-    DrawTextEx(scaryFont, title, {titleX, titleY}, (float)titleSize, 0, Fade(Color{139, 0, 0, 255}, fadeAlpha));
 
-    // ===== HIGH SCORE =====
-    const char *scoreText = TextFormat("High Score: %d", highScore);
+    float smallW = 170.0f;
+    float smallH = 75.0f;
+
+    introButtons.close = { screenWidth/2.0f - smallW/2.0f, screenHeight - smallH - 40.0f, smallW, smallH };
+    introButtons.next  = { screenWidth/2.0f + 200.0f, screenHeight - smallH - 40.0f, smallW, smallH };
+    introButtons.prev  = { screenWidth/2.0f - 200.0f - smallW, screenHeight - smallH - 40.0f, smallW, smallH };
+}
+
+
+
+void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
+{
+    int screenWidth  = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    InitIntro();
+
+    // Background
+    DrawTexturePro(introTex,
+                   {0,0,(float)introTex.width,(float)introTex.height},
+                   {0,0,(float)screenWidth,(float)screenHeight},
+                   {0,0}, 0.0f, WHITE);
+
+
+    // Title
+    float titleW = screenWidth * 0.50f;
+    float titleH = screenHeight * 0.20f;
+    float startY = screenHeight * 0.15f;
+    Rectangle titleRect = {screenWidth/2.0f - titleW/2.0f, startY, titleW, titleH};
+
+    
+    DrawTexturePro(titleTex, {0,0,(float)titleTex.width,(float)titleTex.height},
+                   {titleRect.x+4, titleRect.y+4, titleRect.width, titleRect.height},
+                   {0,0}, 0.0f, BLACK);
+
+
+    DrawTexturePro(titleTex, {0,0,(float)titleTex.width,(float)titleTex.height},
+                   titleRect, {0,0}, 0.0f, WHITE);
+
+
+
+    // High Score
+    const char* scoreText = TextFormat("High Score: %d", highScore);
     int scoreFontSize = 40;
 
-    Font scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
     Vector2 scoreSize = MeasureTextEx(scoreFont, scoreText, (float)scoreFontSize, 0);
 
-    float scoreX = screenWidth / 2.0f - scoreSize.x / 2;
-    float scoreY = titleY + textSize.y + 40;
-
+    float scoreX = screenWidth/2.0f - scoreSize.x/2.0f;
+    float scoreY = titleRect.y + titleRect.height + 20.0f;
     DrawTextEx(scoreFont, scoreText, {scoreX, scoreY}, (float)scoreFontSize, 0, WHITE);
 
-    // ===== PLAY BUTTON =====
-    float buttonWidth = 300;
-    float buttonHeight = 80;
+    SetupButtons(scoreY, (float)scoreFontSize);
 
-    Rectangle playButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        scoreY + 50,
-        buttonWidth,
-        buttonHeight};
 
-    bool playHovered = CheckCollisionPointRec(GetMousePosition(), playButton);
-    if (playHovered)
-    {
-        DrawRectangleRounded({playButton.x - 5, playButton.y - 5, playButton.width + 10, playButton.height + 10}, 0.3f, 10, Fade(MAROON, 0.5f));
-    }
-    Color playButtonColor = playHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
-    DrawRectangleRounded(playButton, 0.3f, 10, playButtonColor);
+    // Draw buttons
+    DrawButton(playButtonTex, introButtons.play, CheckCollisionPointRec(GetMousePosition(), introButtons.play));
+    DrawButton(infoButtonTex, introButtons.info, CheckCollisionPointRec(GetMousePosition(), introButtons.info));
+    DrawButton(exitButtonTex, introButtons.exit, CheckCollisionPointRec(GetMousePosition(), introButtons.exit));
 
-    Font gamefont = LoadFontEx("assets/font/Chewy-Regular.ttf", 64, 0, 0);
-    const char *playText = "PLAY";
-    int playFontSize = 50;
-    Vector2 playTextSize = MeasureTextEx(gamefont, playText, (float)playFontSize, 0);
-    DrawTextEx(gamefont, playText, {playButton.x + playButton.width / 2 - playTextSize.x / 2, playButton.y + playButton.height / 2 - playTextSize.y / 2}, (float)playFontSize, 0, WHITE);
 
-    // ===== EXIT BUTTON =====
-    Rectangle exitButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        screenHeight / 2.0f + buttonHeight + 30,
-        buttonWidth,
-        buttonHeight};
-
-    bool exitHovered = CheckCollisionPointRec(GetMousePosition(), exitButton);
-    if (exitHovered)
-    {
-        DrawRectangleRounded({exitButton.x - 5, exitButton.y - 5, exitButton.width + 10, exitButton.height + 10}, 0.3f, 10, Fade(MAROON, 0.5f));
-    }
-    Color exitButtonColor = exitHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
-    DrawRectangleRounded(exitButton, 0.3f, 10, exitButtonColor);
-
-    const char *exitText = "EXIT";
-    int exitFontSize = 50;
-    Vector2 exitTextSize = MeasureTextEx(gamefont, exitText, (float)exitFontSize, 0);
-    DrawTextEx(gamefont, exitText, {exitButton.x + exitButton.width / 2 - exitTextSize.x / 2, exitButton.y + exitButton.height / 2 - exitTextSize.y / 2}, (float)exitFontSize, 0, WHITE);
-
-    // ===== NEW: INFO BUTTON =====
-    Rectangle infoButton = {
-        screenWidth / 2.0f - buttonWidth / 2,
-        screenHeight / 2.0f + buttonHeight * 2 + 50,
-        buttonWidth,
-        buttonHeight};
-
-    bool infoHovered = CheckCollisionPointRec(GetMousePosition(), infoButton);
-    if (infoHovered)
-    {
-        DrawRectangleRounded({infoButton.x - 5, infoButton.y - 5, infoButton.width + 10, infoButton.height + 10}, 0.3f, 10, Fade(MAROON, 0.5f));
-    }
-    Color infoButtonColor = infoHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255};
-    DrawRectangleRounded(infoButton, 0.3f, 10, infoButtonColor);
-
-    const char *infoText = "INFO";
-    int infoFontSize = 50;
-    Vector2 infoTextSize = MeasureTextEx(gamefont, infoText, (float)infoFontSize, 0);
-    DrawTextEx(gamefont, infoText, {infoButton.x + infoButton.width / 2 - infoTextSize.x / 2, infoButton.y + infoButton.height / 2 - infoTextSize.y / 2}, (float)infoFontSize, 0, WHITE);
-
-    // ===== NEW: INFO OVERLAY =====
+    // Info overlay
     if (showInfo)
     {
-        // Dark background overlay
-        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.8f));
+        DrawRectangle(0,0,screenWidth,screenHeight, Fade(BLACK,0.85f));
 
-        // Select current texture
-        Texture2D currentTex = (infoPage == 1) ? infoTexture : infoTexture2;
+        float overlayW = screenWidth * 0.8f;
+        float overlayH = screenHeight * 0.75f;
+        Rectangle infoRect = { screenWidth/2.0f - overlayW/2.0f, screenHeight/2.0f - overlayH/2.0f, overlayW, overlayH };
 
-        // Show the info image centered
-        float imgScale = fminf((float)screenWidth / currentTex.width, (float)(screenHeight - 120) / currentTex.height);
-        float imgW = currentTex.width * imgScale;
-        float imgH = currentTex.height * imgScale;
+        DrawTexturePro(infoTextures[infoPage-1],
+                       {0,0,(float)infoTextures[infoPage-1].width,(float)infoTextures[infoPage-1].height},
+                       infoRect, {0,0}, 0.0f, WHITE);
 
-        DrawTexturePro(
-            currentTex,
-            {0, 0, (float)currentTex.width, (float)currentTex.height},
-            {screenWidth / 2.0f - imgW / 2, 20, imgW, imgH},
-            {0, 0},
-            0.0f,
-            WHITE);
-
-        // Close button
-        Rectangle closeButton = {
-            screenWidth / 2.0f - 75,
-            screenHeight - 80.0f,
-            150,
-            50};
-        bool closeHovered = CheckCollisionPointRec(GetMousePosition(), closeButton);
-        DrawRectangleRounded(closeButton, 0.3f, 10, closeHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255});
-
-        Vector2 closeTextSize = MeasureTextEx(gamefont, "CLOSE", 35, 0);
-        DrawTextEx(gamefont, "CLOSE", {closeButton.x + closeButton.width / 2 - closeTextSize.x / 2, closeButton.y + closeButton.height / 2 - closeTextSize.y / 2}, 35, 0, WHITE);
-
-        // Next button (Page 1)
-        if (infoPage == 1)
-        {
-            Rectangle nextButton = {
-                screenWidth / 2.0f + 100,
-                screenHeight - 80.0f,
-                150,
-                50};
-            bool nextHovered = CheckCollisionPointRec(GetMousePosition(), nextButton);
-            DrawRectangleRounded(nextButton, 0.3f, 10, nextHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255});
-            Vector2 nextTextSize = MeasureTextEx(gamefont, "NEXT", 35, 0);
-            DrawTextEx(gamefont, "NEXT", {nextButton.x + nextButton.width / 2 - nextTextSize.x / 2, nextButton.y + nextButton.height / 2 - nextTextSize.y / 2}, 35, 0, WHITE);
-        }
-        // Prev button (Page 2)
-        else if (infoPage == 2)
-        {
-            Rectangle prevButton = {
-                screenWidth / 2.0f - 250,
-                screenHeight - 80.0f,
-                150,
-                50};
-            bool prevHovered = CheckCollisionPointRec(GetMousePosition(), prevButton);
-            DrawRectangleRounded(prevButton, 0.3f, 10, prevHovered ? Color{139, 0, 0, 255} : Color{90, 0, 0, 255});
-            Vector2 prevTextSize = MeasureTextEx(gamefont, "PREV", 35, 0);
-            DrawTextEx(gamefont, "PREV", {prevButton.x + prevButton.width / 2 - prevTextSize.x / 2, prevButton.y + prevButton.height / 2 - prevTextSize.y / 2}, 35, 0, WHITE);
-        }
+        DrawButton(closeButtonTex, introButtons.close, CheckCollisionPointRec(GetMousePosition(), introButtons.close));
+        if (infoPage < maxPages)
+            DrawButton(nextButtonTex, introButtons.next, CheckCollisionPointRec(GetMousePosition(), introButtons.next));
+        if (infoPage > 1)
+            DrawButton(prevButtonTex, introButtons.prev, CheckCollisionPointRec(GetMousePosition(), introButtons.prev));
     }
 }
