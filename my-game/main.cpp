@@ -898,37 +898,43 @@ int main()
                     player.x = screenWidth - player.width;
             }
 
-            float wantedX = player.x + player.width / 2;
+            // --- CAMERA AND FLIP LOGIC ---
+            Vector2 shakeOffset = {0, 0};
+            if (shakeTime > 0)
+            {
+                float intensity = shakePower * (shakeTime / 0.25f);
+                shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+                shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+            }
 
-            // smooth follow X
-            camera.target.x += (wantedX - camera.target.x) * 0.12f;
-
-            // smooth follow Y (if not falling in pit, it follows player center)
             if (!fallingInPit)
             {
+                // Instant flip: 180 degrees (upside down) if event is active, otherwise 0
+                camera.rotation = invertedScreen ? 180.0f : 0.0f;
+                camera.zoom = 1.30f; // Keep zoom simple and fixed
+
+                // Camera follows player vertical position
                 camera.target.y = player.y + player.height / 2;
             }
 
-            // Clamp camera to world boundaries
+            // Center camera offset (This makes the 180-degree flip perfectly symmetrical)
+            camera.offset = {
+                screenWidth / 2.0f + shakeOffset.x,
+                screenHeight / 2.0f + shakeOffset.y 
+            };
+
+            // Smoothly follow player horizontal position
+            float wantedX = player.x + player.width / 2;
+            camera.target.x += (wantedX - camera.target.x) * 0.12f;
+
+            // Simple clamping: keep the camera target within bounds so we don't see black edges
             float minX = (screenWidth / 2.0f) / camera.zoom;
             float maxX = screenWidth - (screenWidth / 2.0f) / camera.zoom;
+            float minY = (screenHeight / 2.0f) / camera.zoom;
+            float maxY = screenHeight - (screenHeight / 2.0f) / camera.zoom;
+
             camera.target.x = Clamp(camera.target.x, minX, maxX);
-
-            //inverted screen
-            if (!fallingInPit)
-            {
-                float targetRotation = 0.0f;
-
-                if (invertedScreen)
-                    targetRotation = 180.0f;
-
-                camera.rotation = Lerp(camera.rotation, targetRotation, 5.0f * GetFrameTime());
-                
-                // Increase zoom during transition to hide edges (black bars)
-                float rotationRad = camera.rotation * DEG2RAD;
-                float extraZoom = fabsf(sinf(rotationRad)) * 0.5f; 
-                camera.zoom = Lerp(camera.zoom, 1.30f + extraZoom, 6.0f * GetFrameTime());
-            }
+            camera.target.y = Clamp(camera.target.y, minY, maxY);
 
             // camera shake
             if (shakeTime > 0)
@@ -986,37 +992,6 @@ int main()
                 if (hitStopTimer <= 0) hitStopTimer = 0;
             }
 
-            Vector2 shakeOffset = {0, 0};
-            if (shakeTime > 0)
-            {
-                float intensity = shakePower * (shakeTime / 0.25f);
-                shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
-                shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
-            }
-
-            //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f : screenHeight * 0.75f;
-
-            camera.offset = {
-                screenWidth / 2.0f + shakeOffset.x,
-                baseY + shakeOffset.y
-            };
-
-            // FINAL CAMERA CLAMPING Y (to prevent seeing black outerscreen above/below)
-            float offsetY = camera.offset.y;
-            float minY, maxY;
-
-            if (camera.rotation == 180.0f) {
-                minY = (screenHeight - offsetY) / camera.zoom;
-                maxY = screenHeight - (offsetY / camera.zoom);
-            } else {
-                minY = offsetY / camera.zoom;
-                maxY = screenHeight - (screenHeight - offsetY) / camera.zoom;
-            }
-            
-            camera.target.y = Clamp(camera.target.y, minY, maxY);
-
-            
             // SPAWNING------------
 
             spawnTimer += GetFrameTime(); 
