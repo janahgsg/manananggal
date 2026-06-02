@@ -421,6 +421,7 @@ int main()
 
     float pitAlpha = 1;
     bool fallingInPit = false;
+    int fallingPitIndex = -1; // track which pit for boundary clamping
 
     float glitchTimer = 0.0f;
     bool glitchActive = false;
@@ -878,10 +879,21 @@ int main()
             player.x += velocityX * GetFrameTime();
 
             // left and right boundaries
-            if (player.x < 0)
-                player.x = 0;
-            if (player.x + player.width > screenWidth)
-                player.x = screenWidth - player.width;
+            if (fallingInPit && fallingPitIndex != -1)
+            {
+                // Clamp to pit walls
+                float pitL = pits[fallingPitIndex].x;
+                float pitR = pits[fallingPitIndex].x + pits[fallingPitIndex].width;
+                if (player.x < pitL) player.x = pitL;
+                if (player.x + player.width > pitR) player.x = pitR - player.width;
+            }
+            else
+            {
+                if (player.x < 0)
+                    player.x = 0;
+                if (player.x + player.width > screenWidth)
+                    player.x = screenWidth - player.width;
+            }
 
             float wantedX = player.x + player.width / 2;
 
@@ -908,7 +920,11 @@ int main()
                     targetRotation = 180.0f;
 
                 camera.rotation = Lerp(camera.rotation, targetRotation, 5.0f * GetFrameTime());
-                camera.zoom = Lerp(camera.zoom, 1.30f, 4.0f * GetFrameTime());
+                
+                // Increase zoom during transition to hide edges (black bars)
+                float rotationRad = camera.rotation * DEG2RAD;
+                float extraZoom = fabsf(sinf(rotationRad)) * 0.5f; 
+                camera.zoom = Lerp(camera.zoom, 1.30f + extraZoom, 6.0f * GetFrameTime());
             }
 
             // camera shake
@@ -976,7 +992,7 @@ int main()
             }
 
             //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f + -10 : screenHeight * 0.75f;
+            float baseY = invertedScreen ? screenHeight / 2.0f : screenHeight * 0.75f;
 
             camera.offset = {
                 screenWidth / 2.0f + shakeOffset.x,
@@ -986,6 +1002,7 @@ int main()
             // FINAL CAMERA CLAMPING Y (to prevent seeing black outerscreen above/below)
             float offsetY = camera.offset.y;
             float minY, maxY;
+
             if (camera.rotation == 180.0f) {
                 minY = (screenHeight - offsetY) / camera.zoom;
                 maxY = screenHeight - (offsetY / camera.zoom);
@@ -993,6 +1010,7 @@ int main()
                 minY = offsetY / camera.zoom;
                 maxY = screenHeight - (screenHeight - offsetY) / camera.zoom;
             }
+            
             camera.target.y = Clamp(camera.target.y, minY, maxY);
 
             
@@ -1456,6 +1474,7 @@ int main()
                             velocityY > 150)
                         {
                             fallingInPit = true;
+                            fallingPitIndex = i;
                         }
                     }
                 }
@@ -1489,6 +1508,7 @@ int main()
                     pitCreated = false;
                     quakeTimer = 0;
                     pitSoundPlayed = false;
+                    fallingPitIndex = -1;
             
                     pits.clear();
                     pitWidths.clear();
@@ -1498,6 +1518,8 @@ int main()
             }
 
             // UPDATE ITEMS & COLLISION -----------------
+            // ... (rest of the loop) ...
+            // [I need to find where to insert the clamping logic]
             for (auto &it : items)
             {
                 if (!it.active)
