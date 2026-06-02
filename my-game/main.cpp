@@ -243,8 +243,7 @@ int main()
     Texture2D bgHardTex   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/intro2.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
-     
-    InitInfoTexture();
+    Texture2D titleTex = LoadTexture("assets/images/title.png");
 
     // MEME POP-UP TEXTURES
     // ADD MORE MEMES HERE: Just add more textures to the memeTextures vector
@@ -499,27 +498,31 @@ int main()
 
         // MENU-----------------------------------------------
         if (state == MENU)
-        {
-            UpdateMusicStream(introMusic);
+{
+    UpdateMusicStream(introMusic);
 
-            if (UpdateIntro()) 
-            {
-                StopMusicStream(introMusic);
-                UnloadMusicStream(introMusic);
-                InitIntroVideo();
-                state = TRANSITION;
-            }
+    int action = UpdateIntro();
 
-            if (UpdateExit())
-            {
-                StopMusicStream(introMusic);
-                UnloadMusicStream(introMusic);
-                break;
-            }
+    if (action == 1) // Play
+    {
+        StopMusicStream(introMusic);
+        UnloadMusicStream(introMusic);
+        InitIntroVideo();
+        state = TRANSITION;
+    }
+    else if (action == 2) // Exit
+    {
+        StopMusicStream(introMusic);
+        UnloadMusicStream(introMusic);
+        break;
+    }
+    else if (action == 3) // Info opened/closed
+    {
+        // Nothing special here — overlay is handled inside DrawIntro()
+    }
 
-            UpdateInfo();
-            DrawIntro(highScore, introTex);
-        }
+    DrawIntro(highScore, introTex, titleTex);
+}
 
         else if (state == TRANSITION) {
             UpdateMusicStream(batmusic);
@@ -2670,7 +2673,6 @@ int main()
         UnloadTexture(t);
 
     UnloadTexture(introTex);
-    UnloadInfoTexture(); 
     UnloadTexture(gameOverBg);  
     UnloadTexture(hpTex);
 
