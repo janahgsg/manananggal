@@ -492,11 +492,8 @@ int main()
     float hitStopTimer = 0.0f;
     float landSquashTimer = 0.0f;
 
-    while (!WindowShouldClose())
-    {
+    while (!WindowShouldClose()) {
     
-    
-
         // MENU-----------------------------------------------
         if (state == MENU)
         {
@@ -542,8 +539,7 @@ int main()
             }
         }
 
-        else if (state == PAUSED)
-          {
+        else if (state == PAUSED) {
         float panelW = 340, panelH = 260;
         float panelX = screenWidth / 2.0f - panelW / 2.0f;
         float panelY = screenHeight / 2.0f - panelH / 2.0f;
@@ -696,6 +692,7 @@ int main()
              state = PAUSED;
             }
 
+            //BACKGROUND VIDEO
             if (diff == EASY) {
                 currentBgFrame = 0; 
             } else if (diff == MEDIUM) {
@@ -857,7 +854,7 @@ int main()
 
                 int dir = 1;
 
-                // swapped controls
+            // swapped controls
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
@@ -937,25 +934,7 @@ int main()
                 milestoneCelebrationTimer -= GetFrameTime();
                 if (milestoneCelebrationTimer < 0) milestoneCelebrationTimer = 0;
             }
-
-            // JUICE: Kinematics (Squash & Stretch)
-            if (landSquashTimer > 0) {
-                landSquashTimer -= GetFrameTime();
-                squashStretch.x = Lerp(squashStretch.x, 1.15f, 20.0f * GetFrameTime());
-                squashStretch.y = Lerp(squashStretch.y, 0.85f, 20.0f * GetFrameTime());
-                if (landSquashTimer <= 0) landSquashTimer = 0;
-            } else if (!isGrounded) {
-                // Stretching while in air
-                squashStretch.x = Lerp(squashStretch.x, 0.90f, 15.0f * GetFrameTime());
-                squashStretch.y = Lerp(squashStretch.y, 1.10f, 15.0f * GetFrameTime());
-            } else {
-                // return to normal squash/stretch
-                squashStretch.x = Lerp(squashStretch.x, 1.0f, 10.0f * GetFrameTime());
-                squashStretch.y = Lerp(squashStretch.y, 1.0f, 10.0f * GetFrameTime());
-            }
-
-            // (Removed playerRotation leaning logic)
-
+            
             // update pop effects
             for (int i = popEffects.size() - 1; i >= 0; i--)
             {
@@ -2051,14 +2030,13 @@ int main()
 
 
             //character 
-
             // Draw invisible base 
-           DrawTexturePro(
-           player1Tex,
-           {0,0,(float)player1Tex.width,(float)player1Tex.height},
-           {player.x, player.y, player.width, player.height},
-           {0,0}, 0.0f, WHITE
-           );
+            DrawTexturePro(
+            player1Tex,
+            {0,0,(float)player1Tex.width,(float)player1Tex.height},
+            {player.x, player.y, player.width, player.height},
+            {0,0}, 0.0f, WHITE
+            );
             
             Texture2D texToDraw; 
             
@@ -2078,7 +2056,7 @@ int main()
             if (currentAnim == JUMP && playerFrame > 4) playerFrame = 4;
             if (playerFrame >= 6) playerFrame = 0;
 
-             if (diff == EASY || diff == MEDIUM) {
+            if (diff == EASY || diff == MEDIUM) {
 
             switch (currentAnim) {
                 case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
@@ -2128,6 +2106,7 @@ int main()
 
                 if (it.type == HEART || it.type == BABY || it.type == SALT || it.type == BLOOD) itemScale = 0.95f;
                 if (it.type == TROLLFACE || it.type == GARLIC) itemScale = 0.75f;
+                if (it.type == CHILI) itemScale = 0.90f;
 
                 float finalScale = itemScale * visualScale;  // Apply pulsing visual scale
 
@@ -2138,36 +2117,21 @@ int main()
                     drawRect.height * finalScale
                 };
 
-                if (it.type == BOMB)
-                    DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == BABY)
-                    DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == MEDKIT)
-                    DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == BANDAGE)
-                    DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == GARLIC)
-                    DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)garlicTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == CHILI)
-                    DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == TROLLFACE)
-                    DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == HEART)
-                    DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == BLOOD)
-                    DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == POO)
-                    DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == DICE)
-                    DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == MUSHROOM)
-                    DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == POISON)
-                    DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == SALT)
-                    DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
-                if (it.type == ATAY)
-                    DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == BOMB) DrawTexturePro(bombTex, {0, 0, (float)bombTex.width, (float)bombTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == BABY) DrawTexturePro(babyTex, {0, 0, (float)babyTex.width, (float)babyTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == MEDKIT) DrawTexturePro(potionMedkitTex, {0, 0, (float)potionMedkitTex.width, (float)potionMedkitTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == BANDAGE) DrawTexturePro(potionBandageTex, {0, 0, (float)potionBandageTex.width, (float)potionBandageTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == GARLIC) DrawTexturePro(garlicTex, {0, 0, (float)garlicTex.width, (float)garlicTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == CHILI) DrawTexturePro(chiliTex, {0, 0, (float)chiliTex.width, (float)chiliTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == TROLLFACE) DrawTexturePro(trollFaceTex, {0, 0, (float)trollFaceTex.width, (float)trollFaceTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == HEART) DrawTexturePro(heartTex, {0, 0, (float)heartTex.width, (float)heartTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == BLOOD) DrawTexturePro(bloodTex, {0, 0, (float)bloodTex.width, (float)bloodTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == POO) DrawTexturePro(pooTex, {0, 0, (float)pooTex.width, (float)pooTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == DICE) DrawTexturePro(diceTex, {0, 0, (float)diceTex.width, (float)diceTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == MUSHROOM) DrawTexturePro(mushroomTex, {0, 0, (float)mushroomTex.width, (float)mushroomTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
+                if (it.type == ATAY) DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);
                 //if (it.type == PRIZE) //INSERT PRIZE IMAGE
                    
             }
@@ -2270,8 +2234,7 @@ int main()
             Fade(n.color, alpha));
     }
 }
-            if (hitFlash > 0)
-    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
+            if (hitFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
             // UI   
             // CHAOS LEVEL UI 
