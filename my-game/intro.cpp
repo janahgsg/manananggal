@@ -300,6 +300,7 @@ static Texture2D infoButtonTex;
 static Texture2D closeButtonTex;
 static Texture2D nextButtonTex;
 static Texture2D prevButtonTex;
+static Texture2D WallTex;
 static Font scoreFont;
 
 // This is the instance of your struct
@@ -343,10 +344,11 @@ void InitIntro()
 {
     playButtonTex  = LoadTexture("assets/buttons/play.png");
     exitButtonTex  = LoadTexture("assets/buttons/exit.png");
-    infoButtonTex  = LoadTexture("assets/buttons/Binfo.png");
+    infoButtonTex  = LoadTexture("assets/buttons/info.png");
     closeButtonTex = LoadTexture("assets/buttons/close.png");
     nextButtonTex  = LoadTexture("assets/buttons/next.png");
     prevButtonTex  = LoadTexture("assets/buttons/prev.png");
+    WallTex = LoadTexture("assets/buttons/wall1.png");
 
     infoTextures[0] = LoadTexture("assets/images/info.png");
     infoTextures[1] = LoadTexture("assets/images/info2.png");
@@ -429,35 +431,29 @@ int UpdateIntro()
 
 
 // =====================================================
-// DRAW INTRO
+// DRAW INTRO (Right-Side Menu Alignment Fixed)
 // =====================================================
-void SetupButtons(float scoreY, float scoreHeight)
+void SetupButtons(Rectangle wallRect, float startY)
 {
     int screenWidth  = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
-    
-    float btnWidth   = 600.0f;   
-    float btnHeight  = 150.0f;  
-    float gap        = 0.0f;   
-    float centerX    = screenWidth/2.0f - btnWidth/2.0f;
+    float btnWidth   = 340.0f;   
+    float btnHeight  = 85.0f;  
+    float gap        = 18.0f; 
 
-    
-    introButtons.play = { centerX, scoreY + scoreHeight + gap, btnWidth, btnHeight };
+    float buttonX = wallRect.x + (wallRect.width / 2.0f) - (btnWidth / 2.0f);
 
-    introButtons.info = { centerX, introButtons.play.y + btnHeight + gap, btnWidth, btnHeight };
-
-    introButtons.exit = { centerX, introButtons.info.y + btnHeight + gap, btnWidth, btnHeight };
-
+    introButtons.play = { buttonX, startY, btnWidth, btnHeight };
+    introButtons.info = { buttonX, introButtons.play.y + btnHeight + gap, btnWidth, btnHeight };
+    introButtons.exit = { buttonX, introButtons.info.y + btnHeight + gap, btnWidth, btnHeight };
 
     float smallW = 170.0f;
     float smallH = 75.0f;
-
     introButtons.close = { screenWidth/2.0f - smallW/2.0f, screenHeight - smallH - 40.0f, smallW, smallH };
     introButtons.next  = { screenWidth/2.0f + 200.0f, screenHeight - smallH - 40.0f, smallW, smallH };
     introButtons.prev  = { screenWidth/2.0f - 200.0f - smallW, screenHeight - smallH - 40.0f, smallW, smallH };
 }
-
 
 
 void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
@@ -467,50 +463,48 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
 
     InitIntro();
 
-    // Background
+    
     DrawTexturePro(introTex,
                    {0,0,(float)introTex.width,(float)introTex.height},
                    {0,0,(float)screenWidth,(float)screenHeight},
                    {0,0}, 0.0f, WHITE);
 
-
-    // Title
-    float titleW = screenWidth * 0.50f;
-    float titleH = screenHeight * 0.20f;
-    float startY = screenHeight * 0.15f;
-    Rectangle titleRect = {screenWidth/2.0f - titleW/2.0f, startY, titleW, titleH};
-
     
-    DrawTexturePro(titleTex, {0,0,(float)titleTex.width,(float)titleTex.height},
-                   {titleRect.x+4, titleRect.y+4, titleRect.width, titleRect.height},
-                   {0,0}, 0.0f, BLACK);
+    float wallWidth = screenWidth * 0.36f; 
+    float wallX = screenWidth - wallWidth; 
+    Rectangle wallRect = { wallX, 0.0f, wallWidth, (float)screenHeight };
+
+    DrawTexturePro(WallTex,
+                   {0, 0, (float)WallTex.width, (float)WallTex.height},
+                   wallRect,
+                   {0,0}, 0.0f, WHITE);
 
 
-    DrawTexturePro(titleTex, {0,0,(float)titleTex.width,(float)titleTex.height},
-                   titleRect, {0,0}, 0.0f, WHITE);
+    // =====================================================
 
-
-
-    // High Score
+    // 4. Optimal High Score Placement
     const char* scoreText = TextFormat("High Score: %d", highScore);
-    int scoreFontSize = 40;
+    int scoreFontSize = 45; 
 
     Vector2 scoreSize = MeasureTextEx(scoreFont, scoreText, (float)scoreFontSize, 0);
 
-    float scoreX = screenWidth/2.0f - scoreSize.x/2.0f;
-    float scoreY = titleRect.y + titleRect.height + 20.0f;
+    float scoreX = wallRect.x + (wallRect.width / 2.0f) - (scoreSize.x / 2.0f);
+    float scoreY = screenHeight * 0.41f; 
+    
+    
+    DrawTextEx(scoreFont, scoreText, {scoreX + 2, scoreY + 2}, (float)scoreFontSize, 0, BLACK);
     DrawTextEx(scoreFont, scoreText, {scoreX, scoreY}, (float)scoreFontSize, 0, WHITE);
 
-    SetupButtons(scoreY, (float)scoreFontSize);
 
+    
+    float buttonStartY = scoreY + scoreSize.y + 30.0f;
+    SetupButtons(wallRect, buttonStartY);
 
-    // Draw buttons
     DrawButton(playButtonTex, introButtons.play, CheckCollisionPointRec(GetMousePosition(), introButtons.play));
     DrawButton(infoButtonTex, introButtons.info, CheckCollisionPointRec(GetMousePosition(), introButtons.info));
     DrawButton(exitButtonTex, introButtons.exit, CheckCollisionPointRec(GetMousePosition(), introButtons.exit));
 
-
-    // Info overlay
+    
     if (showInfo)
     {
         DrawRectangle(0,0,screenWidth,screenHeight, Fade(BLACK,0.85f));

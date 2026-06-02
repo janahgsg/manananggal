@@ -11,7 +11,7 @@ typedef struct {
 } IntroButtons;
 
 void InitIntro();
-void SetupButtons();
+void SetupButtons(Rectangle wallRect, float scoreY, float scoreHeight);
 void UnloadIntro();
 int UpdateIntro();
 void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex);

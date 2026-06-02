@@ -238,9 +238,9 @@ int main()
     Texture2D bgEasyTex   = LoadTexture("assets/images/easyy(1).png");
     Texture2D bgMediumTex = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHardTex   = LoadTexture("assets/images/hardd.png");
-    Texture2D introTex = LoadTexture("assets/images/intro2.png");
+    Texture2D introTex = LoadTexture("assets/images/background.png");
     Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
-    Texture2D titleTex = LoadTexture("assets/images/title.png");
+    Texture2D titleTex = LoadTexture("assets/images/title1.png");
 
     // MEME POP-UP TEXTURES
     // ADD MORE MEMES HERE: Just add more textures to the memeTextures vector
