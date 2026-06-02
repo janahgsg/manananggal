@@ -359,6 +359,8 @@ int main()
     //INVERTED SCREEN
     bool invertedScreen = false;
 
+    bool isMuted = false;
+
     bool showPauseMenu = false;
 
     // SCORE & HEALTH
@@ -420,6 +422,7 @@ int main()
 
     float pitAlpha = 1;
     bool fallingInPit = false;
+    int fallingPitIndex = -1; // track which pit for boundary clamping
 
     float glitchTimer = 0.0f;
     bool glitchActive = false;
@@ -538,22 +541,33 @@ int main()
         }
 
         else if (state == PAUSED) {
-        float panelW = 340, panelH = 260;
+        float panelW = 340, panelH = 340; 
         float panelX = screenWidth / 2.0f - panelW / 2.0f;
         float panelY = screenHeight / 2.0f - panelH / 2.0f;
         float btnW = 220, btnH = 50;
         float btnX = panelX + panelW/2 - btnW/2;
+        
+        // Consistent spacing with drawing section (20px)
         float resumeY = panelY + 90;
-        float exitY = resumeY + btnH + 18;
+        float muteY   = resumeY + btnH + 20;
+        float exitY   = muteY + btnH + 20;
 
         Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+        Rectangle muteRect   = {btnX, muteY,   btnW, btnH};
         Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+        
         bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+        bool hoverMute   = CheckCollisionPointRec(GetMousePosition(), muteRect);
         bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
         if ((hoverResume && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
             IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
             state = PLAYING;
+        }
+
+        if (hoverMute && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            isMuted = !isMuted;
+            SetMasterVolume(isMuted ? 0.0f : 1.0f);
         }
 
         if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -881,38 +895,59 @@ int main()
             player.x += velocityX * GetFrameTime();
 
             // left and right boundaries
-            if (player.x < 0)
-                player.x = 0;
-            if (player.x + player.width > screenWidth)
-                player.x = screenWidth - player.width;
+            if (fallingInPit && fallingPitIndex != -1)
+            {
+                // Clamp to pit walls
+                float pitL = pits[fallingPitIndex].x;
+                float pitR = pits[fallingPitIndex].x + pits[fallingPitIndex].width;
+                if (player.x < pitL) player.x = pitL;
+                if (player.x + player.width > pitR) player.x = pitR - player.width;
+            }
+            else
+            {
+                if (player.x < 0)
+                    player.x = 0;
+                if (player.x + player.width > screenWidth)
+                    player.x = screenWidth - player.width;
+            }
 
-            float wantedX = player.x + player.width / 2;
+            // --- CAMERA AND FLIP LOGIC ---
+            Vector2 shakeOffset = {0, 0};
+            if (shakeTime > 0)
+            {
+                float intensity = shakePower * (shakeTime / 0.25f);
+                shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+                shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
+            }
 
-            // smooth follow X
-            camera.target.x += (wantedX - camera.target.x) * 0.12f;
-
-            // smooth follow Y (if not falling in pit, it follows player center)
             if (!fallingInPit)
             {
+                // Instant flip: 180 degrees (upside down) if event is active, otherwise 0
+                camera.rotation = invertedScreen ? 180.0f : 0.0f;
+                camera.zoom = 1.30f; // Keep zoom simple and fixed
+
+                // Camera follows player vertical position
                 camera.target.y = player.y + player.height / 2;
             }
 
-            // Clamp camera to world boundaries
+            // Center camera offset (This makes the 180-degree flip perfectly symmetrical)
+            camera.offset = {
+                screenWidth / 2.0f + shakeOffset.x,
+                screenHeight / 2.0f + shakeOffset.y 
+            };
+
+            // Smoothly follow player horizontal position
+            float wantedX = player.x + player.width / 2;
+            camera.target.x += (wantedX - camera.target.x) * 0.12f;
+
+            // Simple clamping: keep the camera target within bounds so we don't see black edges
             float minX = (screenWidth / 2.0f) / camera.zoom;
             float maxX = screenWidth - (screenWidth / 2.0f) / camera.zoom;
+            float minY = (screenHeight / 2.0f) / camera.zoom;
+            float maxY = screenHeight - (screenHeight / 2.0f) / camera.zoom;
+
             camera.target.x = Clamp(camera.target.x, minX, maxX);
-
-            //inverted screen
-            if (!fallingInPit)
-            {
-                float targetRotation = 0.0f;
-
-                if (invertedScreen)
-                    targetRotation = 180.0f;
-
-                camera.rotation = Lerp(camera.rotation, targetRotation, 5.0f * GetFrameTime());
-                camera.zoom = Lerp(camera.zoom, 1.30f, 4.0f * GetFrameTime());
-            }
+            camera.target.y = Clamp(camera.target.y, minY, maxY);
 
             // camera shake
             if (shakeTime > 0)
@@ -970,35 +1005,6 @@ int main()
                 if (hitStopTimer <= 0) hitStopTimer = 0;
             }
 
-            Vector2 shakeOffset = {0, 0};
-            if (shakeTime > 0)
-            {
-                float intensity = shakePower * (shakeTime / 0.25f);
-                shakeOffset.x = (GetRandomValue(-100, 100) / 100.0f) * intensity;
-                shakeOffset.y = (GetRandomValue(-100, 100) / 100.0f) * intensity;
-            }
-
-            //reverse screen
-            float baseY = invertedScreen ? screenHeight / 2.0f + -10 : screenHeight * 0.75f;
-
-            camera.offset = {
-                screenWidth / 2.0f + shakeOffset.x,
-                baseY + shakeOffset.y
-            };
-
-            // FINAL CAMERA CLAMPING Y (to prevent seeing black outerscreen above/below)
-            float offsetY = camera.offset.y;
-            float minY, maxY;
-            if (camera.rotation == 180.0f) {
-                minY = (screenHeight - offsetY) / camera.zoom;
-                maxY = screenHeight - (offsetY / camera.zoom);
-            } else {
-                minY = offsetY / camera.zoom;
-                maxY = screenHeight - (screenHeight - offsetY) / camera.zoom;
-            }
-            camera.target.y = Clamp(camera.target.y, minY, maxY);
-
-            
             // SPAWNING------------
 
             spawnTimer += GetFrameTime(); 
@@ -1459,6 +1465,7 @@ int main()
                             velocityY > 150)
                         {
                             fallingInPit = true;
+                            fallingPitIndex = i;
                         }
                     }
                 }
@@ -1492,6 +1499,7 @@ int main()
                     pitCreated = false;
                     quakeTimer = 0;
                     pitSoundPlayed = false;
+                    fallingPitIndex = -1;
             
                     pits.clear();
                     pitWidths.clear();
@@ -1501,6 +1509,8 @@ int main()
             }
 
             // UPDATE ITEMS & COLLISION -----------------
+            // ... (rest of the loop) ...
+            // [I need to find where to insert the clamping logic]
             for (auto &it : items)
             {
                 if (!it.active)
@@ -2335,17 +2345,23 @@ int main()
         // PAUSED SCREEN DRAWING
         if (state == PAUSED)
         {
-            float panelW = 340, panelH = 260;
+            float panelW = 340, panelH = 340; // Increased height for 3 buttons
             float panelX = screenWidth / 2.0f - panelW / 2.0f;
             float panelY = screenHeight / 2.0f - panelH / 2.0f;
             float btnW = 220, btnH = 50;
             float btnX = panelX + panelW/2 - btnW/2;
+            
+            // Calculate vertical positions with consistent spacing
             float resumeY = panelY + 90;
-            float exitY = resumeY + btnH + 18;
+            float muteY   = resumeY + btnH + 20;
+            float exitY   = muteY + btnH + 20;
 
             Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+            Rectangle muteRect   = {btnX, muteY,   btnW, btnH};
             Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+            
             bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+            bool hoverMute   = CheckCollisionPointRec(GetMousePosition(), muteRect);
             bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.75f));
@@ -2356,11 +2372,20 @@ int main()
             DrawTextEx(tinyFont, "PAUSED",
                 {panelX + panelW/2 - titleSize.x/2, panelY + 18}, 52, 0, WHITE);
 
+            // RESUME BUTTON
             DrawRectangleRounded(resumeRect, 0.3f, 6, hoverResume ? Color{60, 180, 60, 255} : Color{40, 120, 40, 220});
             Vector2 resumeSize = MeasureTextEx(tinyFont, "RESUME", 30, 0);
             DrawTextEx(tinyFont, "RESUME",
                 {btnX + btnW/2 - resumeSize.x/2, resumeY + btnH/2 - resumeSize.y/2}, 30, 0, WHITE);
 
+            // MUTE BUTTON
+            DrawRectangleRounded(muteRect, 0.3f, 6, hoverMute ? Color{80, 80, 200, 255} : Color{50, 50, 150, 220});
+            const char* muteText = isMuted ? "UNMUTE" : "MUTE";
+            Vector2 muteSize = MeasureTextEx(tinyFont, muteText, 30, 0);
+            DrawTextEx(tinyFont, muteText,
+                {btnX + btnW/2 - muteSize.x/2, muteY + btnH/2 - muteSize.y/2}, 30, 0, WHITE);
+
+            // EXIT BUTTON
             DrawRectangleRounded(exitRect, 0.3f, 6, hoverExit ? Color{200, 40, 40, 255} : Color{130, 20, 20, 220});
             Vector2 exitSize = MeasureTextEx(tinyFont, "EXIT TO MENU", 30, 0);
             DrawTextEx(tinyFont, "EXIT TO MENU",
