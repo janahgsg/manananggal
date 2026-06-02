@@ -359,6 +359,8 @@ int main()
     //INVERTED SCREEN
     bool invertedScreen = false;
 
+    bool isMuted = false;
+
     bool showPauseMenu = false;
 
     // SCORE & HEALTH
@@ -539,22 +541,33 @@ int main()
         }
 
         else if (state == PAUSED) {
-        float panelW = 340, panelH = 260;
+        float panelW = 340, panelH = 340; 
         float panelX = screenWidth / 2.0f - panelW / 2.0f;
         float panelY = screenHeight / 2.0f - panelH / 2.0f;
         float btnW = 220, btnH = 50;
         float btnX = panelX + panelW/2 - btnW/2;
+        
+        // Consistent spacing with drawing section (20px)
         float resumeY = panelY + 90;
-        float exitY = resumeY + btnH + 18;
+        float muteY   = resumeY + btnH + 20;
+        float exitY   = muteY + btnH + 20;
 
         Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+        Rectangle muteRect   = {btnX, muteY,   btnW, btnH};
         Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+        
         bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+        bool hoverMute   = CheckCollisionPointRec(GetMousePosition(), muteRect);
         bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
         if ((hoverResume && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
             IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
             state = PLAYING;
+        }
+
+        if (hoverMute && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            isMuted = !isMuted;
+            SetMasterVolume(isMuted ? 0.0f : 1.0f);
         }
 
         if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -2332,17 +2345,23 @@ int main()
         // PAUSED SCREEN DRAWING
         if (state == PAUSED)
         {
-            float panelW = 340, panelH = 260;
+            float panelW = 340, panelH = 340; // Increased height for 3 buttons
             float panelX = screenWidth / 2.0f - panelW / 2.0f;
             float panelY = screenHeight / 2.0f - panelH / 2.0f;
             float btnW = 220, btnH = 50;
             float btnX = panelX + panelW/2 - btnW/2;
+            
+            // Calculate vertical positions with consistent spacing
             float resumeY = panelY + 90;
-            float exitY = resumeY + btnH + 18;
+            float muteY   = resumeY + btnH + 20;
+            float exitY   = muteY + btnH + 20;
 
             Rectangle resumeRect = {btnX, resumeY, btnW, btnH};
+            Rectangle muteRect   = {btnX, muteY,   btnW, btnH};
             Rectangle exitRect   = {btnX, exitY,   btnW, btnH};
+            
             bool hoverResume = CheckCollisionPointRec(GetMousePosition(), resumeRect);
+            bool hoverMute   = CheckCollisionPointRec(GetMousePosition(), muteRect);
             bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.75f));
@@ -2353,11 +2372,20 @@ int main()
             DrawTextEx(tinyFont, "PAUSED",
                 {panelX + panelW/2 - titleSize.x/2, panelY + 18}, 52, 0, WHITE);
 
+            // RESUME BUTTON
             DrawRectangleRounded(resumeRect, 0.3f, 6, hoverResume ? Color{60, 180, 60, 255} : Color{40, 120, 40, 220});
             Vector2 resumeSize = MeasureTextEx(tinyFont, "RESUME", 30, 0);
             DrawTextEx(tinyFont, "RESUME",
                 {btnX + btnW/2 - resumeSize.x/2, resumeY + btnH/2 - resumeSize.y/2}, 30, 0, WHITE);
 
+            // MUTE BUTTON
+            DrawRectangleRounded(muteRect, 0.3f, 6, hoverMute ? Color{80, 80, 200, 255} : Color{50, 50, 150, 220});
+            const char* muteText = isMuted ? "UNMUTE" : "MUTE";
+            Vector2 muteSize = MeasureTextEx(tinyFont, muteText, 30, 0);
+            DrawTextEx(tinyFont, muteText,
+                {btnX + btnW/2 - muteSize.x/2, muteY + btnH/2 - muteSize.y/2}, 30, 0, WHITE);
+
+            // EXIT BUTTON
             DrawRectangleRounded(exitRect, 0.3f, 6, hoverExit ? Color{200, 40, 40, 255} : Color{130, 20, 20, 220});
             Vector2 exitSize = MeasureTextEx(tinyFont, "EXIT TO MENU", 30, 0);
             DrawTextEx(tinyFont, "EXIT TO MENU",
