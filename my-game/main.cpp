@@ -11,6 +11,7 @@ using namespace std;
 
 enum GameState
 {
+    LOGO,
     MENU,
     TRANSITION,
     PLAYING,
@@ -178,7 +179,7 @@ int main()
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
     Sound jumpSound = LoadSound("assets/sounds/jump.mp3");
     SetSoundVolume(walkSound, 2.0f);
-    SetSoundVolume(jumpSound, 0.4f);
+    SetSoundVolume(jumpSound, 0.2f);
 
     Music bgEasy   = LoadMusicStream("assets/sounds/bg_easy.mp3");
     Music bgMedium = LoadMusicStream("assets/sounds/bg_medium.mp3");
@@ -352,7 +353,10 @@ int main()
 
     // VARIABLES-----------------------------------------
 
-    GameState state = MENU;
+    GameState state = LOGO;
+    InitGroupLogo();
+     InitIntro();
+
     // player
     Rectangle player;
     player.width = 300;
@@ -500,8 +504,19 @@ int main()
 
     while (!WindowShouldClose()) {
     
+      // intro logo
+        if (state == LOGO)
+{
+    UpdateMusicStream(introMusic);
+    bool done = UpdateGroupLogo();
+    if (done) {
+        UnloadGroupLogo();
+        state = MENU;
+    }
+}
+
         // MENU-----------------------------------------------
-        if (state == MENU)
+        else if (state == MENU)
 {
     UpdateMusicStream(introMusic);
 
@@ -1950,6 +1965,13 @@ int main()
         // drawing
         BeginDrawing();
         ClearBackground(BLACK);
+
+       if (state == LOGO)
+        {
+            DrawGroupLogo();
+            EndDrawing();
+            continue;
+        }
 
        if (state == TROLL_VIDEO)
         {

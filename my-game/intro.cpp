@@ -205,7 +205,62 @@ static float frameTimer = 0.0f;
 static float frameDelay = 0.1f;
 static bool videoFinished = false;
 static Sound buttonClickSound;
+static Texture2D groupLogoTex;
+static float logoTimer = 0.0f;
+static float logoFadeIn = 1.5f;   // seconds to fade in
+static float logoHold = 2.0f;     // seconds to hold full opacity
+static float logoFadeOut = 1.5f;  // seconds to fade out
+static bool logoDone = false;
 
+void InitGroupLogo() {
+    groupLogoTex = LoadTexture("assets/images/group_logo.png"); 
+    logoTimer = -0.5f;  
+    logoDone = false;
+}
+
+bool UpdateGroupLogo() {
+    if (logoDone) return true;
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;  
+    logoTimer += dt;
+    if (logoTimer < 0) return false;  
+    float total = logoFadeIn + logoHold + logoFadeOut;
+    if (logoTimer >= total) {
+        logoDone = true;
+        return true;
+    }
+    return false;
+}
+
+void DrawGroupLogo() {
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
+
+    float alpha = 0.0f;
+    if (logoTimer >= 0) {
+        if (logoTimer < logoFadeIn) {
+            alpha = logoTimer / logoFadeIn;
+        } else if (logoTimer < logoFadeIn + logoHold) {
+            alpha = 1.0f;
+        } else {
+            float t = logoTimer - logoFadeIn - logoHold;
+            alpha = 1.0f - (t / logoFadeOut);
+        }
+    }
+
+    ClearBackground(BLACK);
+    DrawTexturePro(
+        groupLogoTex,
+        {0, 0, (float)groupLogoTex.width, (float)groupLogoTex.height},
+        {0, 0, (float)sw, (float)sh},
+        {0, 0}, 0.0f,
+        Fade(WHITE, alpha)
+    );
+}
+
+void UnloadGroupLogo() {
+    UnloadTexture(groupLogoTex);
+}
 
 void InitIntroVideo()
 {
@@ -469,9 +524,6 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
 {
     int screenWidth  = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-
-    InitIntro();
-
     
     DrawTexturePro(introTex,
                    {0,0,(float)introTex.width,(float)introTex.height},
