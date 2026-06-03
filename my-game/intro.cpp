@@ -204,6 +204,7 @@ static int currentFrame = 0;
 static float frameTimer = 0.0f;
 static float frameDelay = 0.1f;
 static bool videoFinished = false;
+static Sound buttonClickSound;
 
 
 void InitIntroVideo()
@@ -354,6 +355,7 @@ void InitIntro()
     infoTextures[1] = LoadTexture("assets/images/info2.png");
 
     scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
+    buttonClickSound = LoadSound("assets/sounds/button_click.mp3");
 }
 
 
@@ -371,6 +373,7 @@ void UnloadIntro()
     for (int i = 0; i < maxPages; i++) UnloadTexture(infoTextures[i]);
 
     UnloadFont(scoreFont);
+    UnloadSound(buttonClickSound);
 }
 
 
@@ -384,12 +387,14 @@ int UpdateIntro()
     if (CheckCollisionPointRec(mouse, introButtons.play) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         return 1; // Play
     }
 
     if (CheckCollisionPointRec(mouse, introButtons.exit) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         return 2; // Exit
     }
 
@@ -397,6 +402,7 @@ int UpdateIntro()
         CheckCollisionPointRec(mouse, introButtons.info) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         showInfo = true;
         infoPage = 1; // reset to first page
         return 3; // Info opened
@@ -407,6 +413,7 @@ int UpdateIntro()
         if (CheckCollisionPointRec(mouse, introButtons.close) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             showInfo = false;
             return 3; // Info closed
         }
@@ -415,6 +422,7 @@ int UpdateIntro()
             CheckCollisionPointRec(mouse, introButtons.next) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             infoPage++;
         }
 
@@ -422,6 +430,7 @@ int UpdateIntro()
             CheckCollisionPointRec(mouse, introButtons.prev) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             infoPage--;
         }
     }
