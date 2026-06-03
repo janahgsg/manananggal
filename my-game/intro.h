@@ -16,6 +16,11 @@ void UnloadIntro();
 int UpdateIntro();
 void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex);
 
+void InitGroupLogo();
+bool UpdateGroupLogo();
+void DrawGroupLogo();
+void UnloadGroupLogo();
+
 // ===== MUSIC CONTROL =====
 void InitIntroMusic();   
 void UpdateIntroMusic(); 

@@ -11,6 +11,7 @@ using namespace std;
 
 enum GameState
 {
+    LOGO,
     MENU,
     TRANSITION,
     PLAYING,
@@ -178,7 +179,7 @@ int main()
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
     Sound jumpSound = LoadSound("assets/sounds/jump.mp3");
     SetSoundVolume(walkSound, 2.0f);
-    SetSoundVolume(jumpSound, 0.4f);
+    SetSoundVolume(jumpSound, 0.2f);
 
     Music bgEasy   = LoadMusicStream("assets/sounds/bg_easy.mp3");
     Music bgMedium = LoadMusicStream("assets/sounds/bg_medium.mp3");
@@ -352,7 +353,10 @@ int main()
 
     // VARIABLES-----------------------------------------
 
-    GameState state = MENU;
+    GameState state = LOGO;
+    InitGroupLogo();
+     InitIntro();
+
     // player
     Rectangle player;
     player.width = 300;
@@ -398,6 +402,7 @@ int main()
     float gameOverFlash = 0.0f;
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
     Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
+    Sound uiClickSound = LoadSound("assets/sounds/button_click.mp3");
 
     //extra 
     float medkitCooldown = 0;
@@ -499,8 +504,19 @@ int main()
 
     while (!WindowShouldClose()) {
     
+      // intro logo
+        if (state == LOGO)
+{
+    UpdateMusicStream(introMusic);
+    bool done = UpdateGroupLogo();
+    if (done) {
+        UnloadGroupLogo();
+        state = MENU;
+    }
+}
+
         // MENU-----------------------------------------------
-        if (state == MENU)
+        else if (state == MENU)
 {
     UpdateMusicStream(introMusic);
 
@@ -570,15 +586,18 @@ int main()
 
         if ((hoverResume && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
             IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+            PlaySound(uiClickSound);
             state = PLAYING;
         }
 
         if (hoverMute && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            PlaySound(uiClickSound);
             isMuted = !isMuted;
             SetMasterVolume(isMuted ? 0.0f : 1.0f);
         }
 
         if (hoverExit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            PlaySound(uiClickSound);
             StopMusicStream(bgEasy);
             StopMusicStream(bgMedium);
             StopMusicStream(bgHard);
@@ -1826,13 +1845,14 @@ int main()
             else if (diff == EASY || diff == MEDIUM) {
 
                 // JUMP INPUT
-                if (IsKeyPressed(KEY_UP)) {
+               if (IsKeyPressed(KEY_UP)) {
                     if (isGrounded) {
                         velocityY = jumpForce;
                         isGrounded = false;
                         currentAnim = JUMP;
                         playerFrame = 0;
                         pframeTimer = 0.0f;
+                        StopSound(walkSound);
                         PlaySound(jumpSound);
                     }
                 }
@@ -1867,8 +1887,7 @@ int main()
                         playerFrame++;
                         if (playerFrame >= 6) playerFrame = 0;
                     }
-                    // Play walk sound continuously while key is held and on ground
-                    if (isGrounded && (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT))) {
+                    if (currentAnim == WALK_LEFT || currentAnim == WALK_RIGHT) {
                         if (!IsSoundPlaying(walkSound))
                             PlaySound(walkSound);
                     } else {
@@ -1946,6 +1965,13 @@ int main()
         // drawing
         BeginDrawing();
         ClearBackground(BLACK);
+
+       if (state == LOGO)
+        {
+            DrawGroupLogo();
+            EndDrawing();
+            continue;
+        }
 
        if (state == TROLL_VIDEO)
         {
@@ -2493,6 +2519,7 @@ int main()
 
         if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
         {
+            PlaySound(uiClickSound);
             StopMusicStream(gameOverMusic);
             currentBg = &bgEasy;
             SetMusicVolume(*currentBg, bgTargetVolume);
@@ -2570,6 +2597,7 @@ int main()
         }
         if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
         {
+            PlaySound(uiClickSound);
             StopMusicStream(gameOverMusic);
             state = MENU;
             diff = EASY;
@@ -2679,6 +2707,7 @@ int main()
     UnloadSound(jumpSound);
     UnloadSound(gameOverSound);
     UnloadSound(pitSound);
+    UnloadSound(uiClickSound);
     UnloadMusicStream(gameOverMusic);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);

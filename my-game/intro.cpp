@@ -204,7 +204,63 @@ static int currentFrame = 0;
 static float frameTimer = 0.0f;
 static float frameDelay = 0.1f;
 static bool videoFinished = false;
+static Sound buttonClickSound;
+static Texture2D groupLogoTex;
+static float logoTimer = 0.0f;
+static float logoFadeIn = 1.5f;   // seconds to fade in
+static float logoHold = 2.0f;     // seconds to hold full opacity
+static float logoFadeOut = 1.5f;  // seconds to fade out
+static bool logoDone = false;
 
+void InitGroupLogo() {
+    groupLogoTex = LoadTexture("assets/images/group_logo.png"); 
+    logoTimer = -0.5f;  
+    logoDone = false;
+}
+
+bool UpdateGroupLogo() {
+    if (logoDone) return true;
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;  
+    logoTimer += dt;
+    if (logoTimer < 0) return false;  
+    float total = logoFadeIn + logoHold + logoFadeOut;
+    if (logoTimer >= total) {
+        logoDone = true;
+        return true;
+    }
+    return false;
+}
+
+void DrawGroupLogo() {
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
+
+    float alpha = 0.0f;
+    if (logoTimer >= 0) {
+        if (logoTimer < logoFadeIn) {
+            alpha = logoTimer / logoFadeIn;
+        } else if (logoTimer < logoFadeIn + logoHold) {
+            alpha = 1.0f;
+        } else {
+            float t = logoTimer - logoFadeIn - logoHold;
+            alpha = 1.0f - (t / logoFadeOut);
+        }
+    }
+
+    ClearBackground(BLACK);
+    DrawTexturePro(
+        groupLogoTex,
+        {0, 0, (float)groupLogoTex.width, (float)groupLogoTex.height},
+        {0, 0, (float)sw, (float)sh},
+        {0, 0}, 0.0f,
+        Fade(WHITE, alpha)
+    );
+}
+
+void UnloadGroupLogo() {
+    UnloadTexture(groupLogoTex);
+}
 
 void InitIntroVideo()
 {
@@ -354,6 +410,7 @@ void InitIntro()
     infoTextures[1] = LoadTexture("assets/images/info2.png");
 
     scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
+    buttonClickSound = LoadSound("assets/sounds/button_click.mp3");
 }
 
 
@@ -371,6 +428,7 @@ void UnloadIntro()
     for (int i = 0; i < maxPages; i++) UnloadTexture(infoTextures[i]);
 
     UnloadFont(scoreFont);
+    UnloadSound(buttonClickSound);
 }
 
 
@@ -384,12 +442,14 @@ int UpdateIntro()
     if (CheckCollisionPointRec(mouse, introButtons.play) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         return 1; // Play
     }
 
     if (CheckCollisionPointRec(mouse, introButtons.exit) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         return 2; // Exit
     }
 
@@ -397,6 +457,7 @@ int UpdateIntro()
         CheckCollisionPointRec(mouse, introButtons.info) &&
         IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
+        PlaySound(buttonClickSound);
         showInfo = true;
         infoPage = 1; // reset to first page
         return 3; // Info opened
@@ -407,6 +468,7 @@ int UpdateIntro()
         if (CheckCollisionPointRec(mouse, introButtons.close) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             showInfo = false;
             return 3; // Info closed
         }
@@ -415,6 +477,7 @@ int UpdateIntro()
             CheckCollisionPointRec(mouse, introButtons.next) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             infoPage++;
         }
 
@@ -422,6 +485,7 @@ int UpdateIntro()
             CheckCollisionPointRec(mouse, introButtons.prev) &&
             IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
+            PlaySound(buttonClickSound);
             infoPage--;
         }
     }
@@ -460,9 +524,6 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
 {
     int screenWidth  = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-
-    InitIntro();
-
     
     DrawTexturePro(introTex,
                    {0,0,(float)introTex.width,(float)introTex.height},
