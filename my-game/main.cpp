@@ -391,13 +391,6 @@ int main()
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
     Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
 
-    //character movement sounds
-    Sound walkSound = LoadSound("assets/sounds/walk.mp3");
-    SetSoundVolume(walkSound, 0.3f);  
-    Sound jumpSound = LoadSound("assets/sounds/jump.mp3");
-    SetSoundVolume(jumpSound, 5.0f);  
-    SetSoundPitch(jumpSound, 0.5f); 
-
     //extra 
     float medkitCooldown = 0;
 
@@ -893,11 +886,6 @@ int main()
                 velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
             if (IsKeyDown(KEY_RIGHT))
                 velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
-            if (IsKeyDown(KEY_UP) && isGrounded)
-            {
-                    velocityY = jumpForce;
-                    isGrounded = false;
-                }
 
             player.x += velocityX * GetFrameTime();
 
@@ -1805,97 +1793,64 @@ int main()
             }
 
 
-            // PLAYER ANIMATIONS-----------------------------
-            
+          // PLAYER ANIMATIONS-----------------------------
             if (diff == HARD) {
-         
-         if (IsKeyDown(KEY_RIGHT)) {
-             currentMananAnim = FLY_RIGHT;
-         } else if (IsKeyDown(KEY_LEFT)) {
-             currentMananAnim = FLY_LEFT;
-         } else {
-             currentMananAnim = FLY_FRONT;
-         }
+                if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
+                else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
+                else                            currentMananAnim = FLY_FRONT;
 
-         // Frame timing
-
-         pframeTimer += GetFrameTime();
-         if (pframeTimer >= pframeDelay) {
-         pframeTimer = 0.0f;
-         playerFrame++;
-         if (playerFrame >= 6) playerFrame = 0;
-         }
-         }
-            
-          else if (diff == EASY || diff == MEDIUM) {
-            currentAnim = IDLE;
-
-            // Walking right
-           if (IsKeyDown(KEY_RIGHT)) {
-               currentAnim = WALK_RIGHT;
-             }
-
-            // Walking left
-            if (IsKeyDown(KEY_LEFT)) {
-               currentAnim = WALK_LEFT;
-             }
-
-            // Jump trigger (physics only)
-            if (IsKeyPressed(KEY_UP) && isGrounded) {
-                velocityY = jumpForce;
-                isGrounded = false;
-
-                // reset jump animation
-                currentAnim = JUMP;
-                playerFrame = 0;
-                pframeTimer = 0.0f;
-
-                if (diff == EASY || diff == MEDIUM)   
-                    PlaySound(jumpSound);            
+                pframeTimer += GetFrameTime();
+                if (pframeTimer >= pframeDelay) {
+                    pframeTimer = 0.0f;
+                    playerFrame++;
+                    if (playerFrame >= 6) playerFrame = 0;
+                }
             }
+            else if (diff == EASY || diff == MEDIUM) {
 
-             // If airborne, force jump animation
+                // JUMP INPUT
+                if (IsKeyPressed(KEY_UP)) {
+                    if (isGrounded) {
+                        velocityY = jumpForce;
+                        isGrounded = false;
+                        currentAnim = JUMP;
+                        playerFrame = 0;
+                        pframeTimer = 0.0f;
+                    }
+                }
+
+                // Determine anim state
                 if (!isGrounded) {
-                currentAnim = JUMP;
-             }
+                    currentAnim = JUMP;
+                } else if (IsKeyDown(KEY_LEFT)) {
+                    currentAnim = WALK_LEFT;
+                } else if (IsKeyDown(KEY_RIGHT)) {
+                    currentAnim = WALK_RIGHT;
+                } else {
+                    currentAnim = IDLE;
+                }
 
-             // Animation state handling
-            if (currentAnim == JUMP) {
-            // advance jump frames only once
-            pframeTimer += GetFrameTime();
-             if (pframeTimer >= 0.01f && playerFrame < 4) {
-            pframeTimer = 0.0f;
-            playerFrame++;
-        }
+                // Advance frames
+                if (currentAnim == JUMP) {
+                    pframeTimer += GetFrameTime();
+                    if (pframeTimer >= 0.01f && playerFrame < 4) {
+                        pframeTimer = 0.0f;
+                        playerFrame++;
+                    }
+                    if (playerFrame >= 4) playerFrame = 4;
 
-            // hold last frame until landing
-            if (playerFrame >= 4) playerFrame = 4;
-
-
-              // when grounded again, switch back to idle/walk
-         if (isGrounded) {
-             if (IsKeyDown(KEY_LEFT)) currentAnim = WALK_LEFT;
-             else if (IsKeyDown(KEY_RIGHT)) currentAnim = WALK_RIGHT;
-             else currentAnim = IDLE;
-                  playerFrame = 0; // reset for next cycle
+                    if (isGrounded) {
+                        playerFrame = 0;
+                    }
+                } else {
+                    pframeTimer += GetFrameTime();
+                    if (pframeTimer >= pframeDelay) {
+                        pframeTimer = 0.0f;
+                        playerFrame++;
+                        if (playerFrame >= 6) playerFrame = 0;
+                    }
+                }
             }
-           } else {
-    // normal walking/idle animation
-    pframeTimer += GetFrameTime();
-    if (pframeTimer >= pframeDelay) {
-        pframeTimer = 0.0f;
-        playerFrame++;
-        if (playerFrame >= 6) playerFrame = 0;
-
-        // ADD THIS BLOCK ↓
-        if ((currentAnim == WALK_LEFT || currentAnim == WALK_RIGHT) &&
-            isGrounded && playerFrame % 2 == 0)
-        {
-            PlaySound(walkSound);
-        }
-    }
-}
-        }
 
         // MEME POP-UP UPDATE
         if (state == PLAYING) {
@@ -2695,8 +2650,6 @@ int main()
     UnloadSound(trollSound);
     UnloadSound(gameOverSound);
     UnloadSound(pitSound);
-    UnloadSound(walkSound);
-    UnloadSound(jumpSound);
     UnloadMusicStream(gameOverMusic);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
