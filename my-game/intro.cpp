@@ -262,6 +262,63 @@ void UnloadGroupLogo() {
     UnloadTexture(groupLogoTex);
 }
 
+static Texture2D titleLogoTex;
+static float titleLogoTimer = -0.5f;
+static float titleLogoFadeIn = 1.5f;
+static float titleLogoHold = 2.0f;
+static float titleLogoFadeOut = 1.5f;
+static bool titleLogoDone = false;
+
+void InitTitleLogo() {
+    titleLogoTex = LoadTexture("assets/images/title_logo.png"); 
+    titleLogoTimer = -0.5f;
+    titleLogoDone = false;
+}
+
+bool UpdateTitleLogo() {
+    if (titleLogoDone) return true;
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    titleLogoTimer += dt;
+    if (titleLogoTimer < 0) return false;
+    float total = titleLogoFadeIn + titleLogoHold + titleLogoFadeOut;
+    if (titleLogoTimer >= total) {
+        titleLogoDone = true;
+        return true;
+    }
+    return false;
+}
+
+void DrawTitleLogo() {
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
+
+    float alpha = 0.0f;
+    if (titleLogoTimer >= 0) {
+        if (titleLogoTimer < titleLogoFadeIn) {
+            alpha = titleLogoTimer / titleLogoFadeIn;
+        } else if (titleLogoTimer < titleLogoFadeIn + titleLogoHold) {
+            alpha = 1.0f;
+        } else {
+            float t = titleLogoTimer - titleLogoFadeIn - titleLogoHold;
+            alpha = 1.0f - (t / titleLogoFadeOut);
+        }
+    }
+
+    ClearBackground(BLACK);
+    DrawTexturePro(
+        titleLogoTex,
+        {0, 0, (float)titleLogoTex.width, (float)titleLogoTex.height},
+        {0, 0, (float)sw, (float)sh},
+        {0, 0}, 0.0f,
+        Fade(WHITE, alpha)
+    );
+}
+
+void UnloadTitleLogo() {
+    UnloadTexture(titleLogoTex);
+}
+
 void InitIntroVideo()
 {
     for (int i = 1; i <= 9; i++)
