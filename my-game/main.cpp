@@ -414,7 +414,15 @@ int main()
     EventType secondEvent = NONE; // for HARD MODE extra event
 
     float eventTimer = 0.0f;
-    float eventCooldown = 30.0f; // increased initial cooldown for fairer start
+    
+    // --- ADJUST EVENT COOLDOWNS HERE ---
+    float cooldownEasy   = 20.0f; // How many seconds between events in EASY
+    float cooldownMedium = 15.0f; // How many seconds between events in MEDIUM
+    float cooldownHard   = 10.0f; // How many seconds between events in HARD
+    float initialCooldown = 30.0f; // Initial wait before the first event starts
+    // ------------------------------------
+
+    float eventCooldown = initialCooldown; 
     float eventWarningTimer = 0.0f; // used to show "Warning" before an event
     
     // FOG EFFECT
@@ -623,7 +631,7 @@ int main()
             player.y = screenHeight * 0.75f;
             move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
             gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
-            spawnTimer = 0; eventCooldown = 30.0f; eventTimer = 0;
+            spawnTimer = 0; eventCooldown = initialCooldown; eventTimer = 0;
             currentEvent = NONE; secondEvent = NONE;
             lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
             slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
@@ -683,11 +691,12 @@ int main()
 
             if (diff != prevDiff) {
                 if (diff > prevDiff) {
-                    eventCooldown = 15.0f;
+                    // Use difficulty-based cooldown
+                    eventCooldown = (diff == MEDIUM) ? cooldownMedium : cooldownHard;
                     eventWarningTimer = 0;
                     PushNotif(notifs, diff == MEDIUM ? "LEVEL: MEDIUM" : "LEVEL: HARD", diff == MEDIUM ? YELLOW : RED, 3.0f);
                 }
-                lastDiff = diff; // Fix: now they are equal, so the later check won't loop
+                lastDiff = diff; 
                 gravity = (diff == HARD) ? 700.0f : 1800.0f;
             }
 
@@ -1345,9 +1354,9 @@ int main()
 
                     // RESET COOLDOWN
                     if (diff == MEDIUM)
-                       eventCooldown = 15.0f;
+                       eventCooldown = cooldownMedium;
                     else if (diff == HARD)
-                       eventCooldown = 10.0f;
+                       eventCooldown = cooldownHard;
                 }
             }
 
@@ -1841,7 +1850,18 @@ int main()
             }
 
 
-         // PLAYER ANIMATIONS-----------------------------
+         // PLAYER INPUT & ANIMATIONS-----------------------------
+            // Common Jump Input
+            if (IsKeyPressed(KEY_UP) && isGrounded) {
+                velocityY = jumpForce;
+                isGrounded = false;
+                if (diff != HARD) currentAnim = JUMP;
+                playerFrame = 0;
+                pframeTimer = 0.0f;
+                StopSound(walkSound);
+                PlaySound(jumpSound);
+            }
+
             if (diff == HARD) {
                 if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
                 else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
@@ -1855,20 +1875,6 @@ int main()
                 }
             }
             else if (diff == EASY || diff == MEDIUM) {
-
-                // JUMP INPUT
-               if (IsKeyPressed(KEY_UP)) {
-                    if (isGrounded) {
-                        velocityY = jumpForce;
-                        isGrounded = false;
-                        currentAnim = JUMP;
-                        playerFrame = 0;
-                        pframeTimer = 0.0f;
-                        StopSound(walkSound);
-                        PlaySound(jumpSound);
-                    }
-                }
-
                 // Determine anim state
                 if (!isGrounded) {
                     currentAnim = JUMP;
@@ -2570,7 +2576,7 @@ int main()
             isGrounded = true;
     
             spawnTimer = 0;
-            eventCooldown = 30.0f; // Increased initial cooldown to prevent early events
+            eventCooldown = initialCooldown; // Increased initial cooldown to prevent early events
             eventTimer = 0;
             currentEvent = NONE;
             secondEvent = NONE;
@@ -2642,7 +2648,7 @@ int main()
             isGrounded = true;
 
             spawnTimer = 0;
-            eventCooldown = 30.0f; // Increased initial cooldown
+            eventCooldown = initialCooldown; // Increased initial cooldown
             eventTimer = 0;
             currentEvent = NONE;
             secondEvent = NONE;
