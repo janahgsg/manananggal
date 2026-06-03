@@ -172,6 +172,14 @@ int main()
    InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
+    Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
+    Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
+
+    Sound walkSound = LoadSound("assets/sounds/walk.mp3");
+    Sound jumpSound = LoadSound("assets/sounds/jump.mp3");
+    SetSoundVolume(walkSound, 2.0f);
+    SetSoundVolume(jumpSound, 0.4f);
+
     Music bgEasy   = LoadMusicStream("assets/sounds/bg_easy.mp3");
     Music bgMedium = LoadMusicStream("assets/sounds/bg_medium.mp3");
     Music bgHard   = LoadMusicStream("assets/sounds/bg_hard.mp3");
@@ -1582,6 +1590,15 @@ int main()
                     pe.timer = 0.45f;
                     pe.maxTime = 0.45f;
 
+                    // ── ITEM SOUND EFFECT ──
+                    bool isBadItem  = (it.type == POO    || it.type == BOMB   || it.type == SALT  ||
+                                    it.type == GARLIC || it.type == POISON || it.type == MUSHROOM);
+                    bool isGoodItem = (it.type == BABY   || it.type == HEART  || it.type == BLOOD ||
+                                    it.type == ATAY   || it.type == CHILI  || it.type == BANDAGE ||
+                                    it.type == MEDKIT || it.type == DICE);
+                    if (isBadItem)  PlaySound(badItemSound);
+                    if (isGoodItem) PlaySound(goodItemSound);
+
                     // BAD ITEMS
                     if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
                     {
@@ -1793,7 +1810,7 @@ int main()
             }
 
 
-          // PLAYER ANIMATIONS-----------------------------
+         // PLAYER ANIMATIONS-----------------------------
             if (diff == HARD) {
                 if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
                 else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
@@ -1816,6 +1833,7 @@ int main()
                         currentAnim = JUMP;
                         playerFrame = 0;
                         pframeTimer = 0.0f;
+                        PlaySound(jumpSound);
                     }
                 }
 
@@ -1842,12 +1860,19 @@ int main()
                     if (isGrounded) {
                         playerFrame = 0;
                     }
-                } else {
+               } else {
                     pframeTimer += GetFrameTime();
                     if (pframeTimer >= pframeDelay) {
                         pframeTimer = 0.0f;
                         playerFrame++;
                         if (playerFrame >= 6) playerFrame = 0;
+                    }
+                    // Play walk sound continuously while key is held and on ground
+                    if (isGrounded && (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT))) {
+                        if (!IsSoundPlaying(walkSound))
+                            PlaySound(walkSound);
+                    } else {
+                        StopSound(walkSound);
                     }
                 }
             }
@@ -2648,6 +2673,10 @@ int main()
 
     // unload
     UnloadSound(trollSound);
+    UnloadSound(goodItemSound);
+    UnloadSound(badItemSound);
+    UnloadSound(walkSound);
+    UnloadSound(jumpSound);
     UnloadSound(gameOverSound);
     UnloadSound(pitSound);
     UnloadMusicStream(gameOverMusic);
