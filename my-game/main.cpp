@@ -12,6 +12,7 @@ using namespace std;
 enum GameState
 {
     LOGO,
+    TITLE_LOGO,
     MENU,
     TRANSITION,
     PLAYING,
@@ -355,6 +356,7 @@ int main()
 
     GameState state = LOGO;
     InitGroupLogo();
+     InitTitleLogo();
      InitIntro();
 
     // player
@@ -506,18 +508,28 @@ int main()
     
       // intro logo
         if (state == LOGO)
-{
-    UpdateMusicStream(introMusic);
-    bool done = UpdateGroupLogo();
-    if (done) {
-        UnloadGroupLogo();
-        state = MENU;
+    {
+        UpdateMusicStream(introMusic);
+        bool done = UpdateGroupLogo();
+        if (done) {
+            UnloadGroupLogo();
+            state = TITLE_LOGO;
+        }
     }
-}
 
-        // MENU-----------------------------------------------
-        else if (state == MENU)
-{
+    else if (state == TITLE_LOGO)
+    {
+        UpdateMusicStream(introMusic);
+        bool done = UpdateTitleLogo();
+        if (done) {
+            UnloadTitleLogo();
+            state = MENU;
+        }
+    }
+
+            // MENU-----------------------------------------------
+            else if (state == MENU)
+    {
     UpdateMusicStream(introMusic);
 
     int action = UpdateIntro();
@@ -1969,6 +1981,13 @@ int main()
        if (state == LOGO)
         {
             DrawGroupLogo();
+            EndDrawing();
+            continue;
+        }
+
+        if (state == TITLE_LOGO)
+        {
+            DrawTitleLogo();
             EndDrawing();
             continue;
         }

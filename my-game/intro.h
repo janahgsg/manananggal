@@ -21,6 +21,11 @@ bool UpdateGroupLogo();
 void DrawGroupLogo();
 void UnloadGroupLogo();
 
+void InitTitleLogo();
+bool UpdateTitleLogo();
+void DrawTitleLogo();
+void UnloadTitleLogo();
+
 // ===== MUSIC CONTROL =====
 void InitIntroMusic();   
 void UpdateIntroMusic(); 
