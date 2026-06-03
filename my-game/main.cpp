@@ -391,6 +391,13 @@ int main()
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
     Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
 
+    //character movement sounds
+    Sound walkSound = LoadSound("assets/sounds/walk.mp3");
+    SetSoundVolume(walkSound, 0.3f);  
+    Sound jumpSound = LoadSound("assets/sounds/jump.mp3");
+    SetSoundVolume(jumpSound, 5.0f);  
+    SetSoundPitch(jumpSound, 0.5f); 
+
     //extra 
     float medkitCooldown = 0;
 
@@ -1835,13 +1842,16 @@ int main()
 
             // Jump trigger (physics only)
             if (IsKeyPressed(KEY_UP) && isGrounded) {
-            velocityY = jumpForce;
-            isGrounded = false;
+                velocityY = jumpForce;
+                isGrounded = false;
 
-             // reset jump animation
-             currentAnim = JUMP;
-             playerFrame = 0;
-             pframeTimer = 0.0f;
+                // reset jump animation
+                currentAnim = JUMP;
+                playerFrame = 0;
+                pframeTimer = 0.0f;
+
+                if (diff == EASY || diff == MEDIUM)   
+                    PlaySound(jumpSound);            
             }
 
              // If airborne, force jump animation
@@ -1853,10 +1863,11 @@ int main()
             if (currentAnim == JUMP) {
             // advance jump frames only once
             pframeTimer += GetFrameTime();
-             if (pframeTimer >= pframeDelay && playerFrame < 4) {
-               pframeTimer = 0.0f;
-               playerFrame++;
-            }
+             if (pframeTimer >= 0.01f && playerFrame < 4) {
+            pframeTimer = 0.0f;
+            playerFrame++;
+        }
+
             // hold last frame until landing
             if (playerFrame >= 4) playerFrame = 4;
 
@@ -1868,16 +1879,22 @@ int main()
              else currentAnim = IDLE;
                   playerFrame = 0; // reset for next cycle
             }
-           }
-         else {
-              // normal walking/idle animation
-              pframeTimer += GetFrameTime();
-              if (pframeTimer >= pframeDelay) {
-              pframeTimer = 0.0f;
-               playerFrame++;
-             if (playerFrame >= 6) playerFrame = 0;
-            }
-         }
+           } else {
+    // normal walking/idle animation
+    pframeTimer += GetFrameTime();
+    if (pframeTimer >= pframeDelay) {
+        pframeTimer = 0.0f;
+        playerFrame++;
+        if (playerFrame >= 6) playerFrame = 0;
+
+        // ADD THIS BLOCK ↓
+        if ((currentAnim == WALK_LEFT || currentAnim == WALK_RIGHT) &&
+            isGrounded && playerFrame % 2 == 0)
+        {
+            PlaySound(walkSound);
+        }
+    }
+}
         }
 
         // MEME POP-UP UPDATE
@@ -2678,6 +2695,8 @@ int main()
     UnloadSound(trollSound);
     UnloadSound(gameOverSound);
     UnloadSound(pitSound);
+    UnloadSound(walkSound);
+    UnloadSound(jumpSound);
     UnloadMusicStream(gameOverMusic);
     UnloadMusicStream(bgMusic);
     UnloadFont(nosifer);
