@@ -254,22 +254,38 @@ int main()
 
     // MEME POP-UP TEXTURES
     // ADD MORE MEMES HERE: Just add more textures to the memeTextures vector
+    // 1. Kapre
     memeTextures.push_back(LoadTexture("assets/images/kapre.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/Creepy Hello Kapre.mp3"));
+
+    // 2. Broomwitch
     memeTextures.push_back(LoadTexture("assets/images/broomwitch.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/Witch Broom.mp3"));
+
+    // 3. Witch
     memeTextures.push_back(LoadTexture("assets/images/witch.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/Witch Potion.mp3"));
+
+    // 4. Mermaid
     memeTextures.push_back(LoadTexture("assets/images/mermaid.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/mermaid.mp3"));
+
+    // 5. Minion
     memeTextures.push_back(LoadTexture("assets/images/minion.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/Minion.mp3"));
+
+    // 6. Tiyanak 
     memeTextures.push_back(LoadTexture("assets/images/tiyanak.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/tiyanak.mp3")); 
+
+    // 7. Tikbalang
     memeTextures.push_back(LoadTexture("assets/images/tikbalang.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/tiktik.mp3"));
+
+    // 8. Dwende
     memeTextures.push_back(LoadTexture("assets/images/dwende.png"));
+    memeSounds.push_back(LoadSound("assets/sounds/dwende.mp3"));
 
-
-    // MEME SOUNDS
-    memeSounds.push_back(LoadSound("assets/sounds/getOut.mp3"));
-    memeSounds.push_back(LoadSound("assets/sounds/plankton.mp3"));
-    memeSounds.push_back(LoadSound("assets/sounds/auugh.mp3"));
-    memeSounds.push_back(LoadSound("assets/sounds/cookedDog.mp3"));
-    memeSounds.push_back(LoadSound("assets/sounds/goodbye.mp3"));
 
     // items
     Texture2D bombTex = LoadTexture("assets/images/bomb.png");
@@ -557,7 +573,7 @@ int main()
     }
     else if (action == 3) // Info opened/closed
     {
-        // Nothing special here — overlay is handled inside DrawIntro()
+        
     }
 
     DrawIntro(highScore, introTex, titleTex);
@@ -1931,22 +1947,24 @@ int main()
                 memeSpawnTimer = 0;
                 int index;
                 if (!memeTextures.empty()) {
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
+                do {
+                index = GetRandomValue(0, memeTextures.size() - 1);
+                } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
 
                     currentMeme.tex = memeTextures[index];
                     currentMeme.lastIndex = index;
                     currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200); // Much faster sliding
-                    
-                    // Rare Sound Trigger (25% chance or manual)
-                    if (GetRandomValue(1, 100) <= 25) {
-                        currentMeme.soundIndex = GetRandomValue(0, memeSounds.size() - 1);
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
+                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
+
+            // Play the matching sound
+            if (index < memeSounds.size()) {
+                 currentMeme.soundIndex = index;
+                 PlaySound(memeSounds[currentMeme.soundIndex]);
+            } else {
+    
+                 currentMeme.soundIndex = -1;
+            }
+
 
                     bool fromLeft = GetRandomValue(0, 1) == 0;
                     if (fromLeft) {
@@ -2544,7 +2562,6 @@ int main()
 
         if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
         {
-            PlaySound(uiClickSound);
             StopMusicStream(gameOverMusic);
             currentBg = &bgEasy;
             SetMusicVolume(*currentBg, bgTargetVolume);
@@ -2622,7 +2639,6 @@ int main()
         }
         if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
         {
-            PlaySound(uiClickSound);
             StopMusicStream(gameOverMusic);
             state = MENU;
             diff = EASY;
