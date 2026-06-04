@@ -7,6 +7,8 @@
 #include <cmath>
 #include "raymath.h"
 #include <string>
+#include <fstream>
+#include <iostream>
 using namespace std;
 
 enum GameState
@@ -381,6 +383,14 @@ int main()
     int score = 0;
     int highScore = 0;
     int hp = 3;
+    //saved highScore
+    ifstream file("score.txt");
+
+    if (file.is_open())
+    {
+        file >> highScore;
+        file.close();
+    }
 
     // ITEMS
     vector<Item> items;
@@ -2495,8 +2505,18 @@ int main()
 
     if (gameOverAnimTimer >= 2.5f)
     {
-        if (score > highScore) highScore = score;
-       
+        
+
+        if (score > highScore){
+            highScore = score;
+            ofstream file("score.txt");
+
+            if (file.is_open())
+            {
+                file << highScore;
+                file.close();
+            }
+        }  
 
         // ── TOP-RIGHT: Score + High Score (no box) ──
         float scoreX = (float)(screenWidth - 220);
