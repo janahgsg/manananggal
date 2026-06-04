@@ -251,7 +251,7 @@ int main()
     Texture2D bgMediumTex = LoadTexture("assets/images/mediumm.png");
     Texture2D bgHardTex   = LoadTexture("assets/images/hardd.png");
     Texture2D introTex = LoadTexture("assets/images/background.png");
-    Texture2D gameOverBg = LoadTexture("assets/images/gameoverbg.png");
+    Texture2D gameOverBg = LoadTexture("assets/images/gameover.png");
     Texture2D titleTex = LoadTexture("assets/images/title1.png");
 
     // MEME POP-UP TEXTURES
