@@ -405,6 +405,7 @@ int main()
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
     Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
     Sound uiClickSound = LoadSound("assets/sounds/button_click.mp3");
+    Sound hoverSound = LoadSound("assets/sounds/hoverSound.mp3");
 
     //extra 
     float medkitCooldown = 0;
@@ -2412,6 +2413,18 @@ int main()
             bool hoverMute   = CheckCollisionPointRec(GetMousePosition(), muteRect);
             bool hoverExit   = CheckCollisionPointRec(GetMousePosition(), exitRect);
 
+            static bool prevHoverResume = false;
+            static bool prevHoverMute   = false;
+            static bool prevHoverExit   = false;
+
+            if (hoverResume && !prevHoverResume) PlaySound(hoverSound);
+            if (hoverMute && !prevHoverMute) PlaySound(hoverSound);
+            if (hoverExit && !prevHoverExit) PlaySound(hoverSound);
+
+            prevHoverResume = hoverResume;
+            prevHoverMute   = hoverMute;
+            prevHoverExit   = hoverExit;
+
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.75f));
             DrawRectangleRounded({panelX, panelY, panelW, panelH}, 0.15f, 8, {20, 20, 20, 230});
             DrawRectangleRoundedLines({panelX, panelY, panelW, panelH}, 0.15f, 8, Color{180, 180, 180, 200});
@@ -2466,18 +2479,18 @@ int main()
         float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
         int fontSize = (int)(160 * scale);
 
-        Vector2 gameSize = MeasureTextEx(nosifer, "GAME", (float)fontSize, 4);
-        Vector2 overSize = MeasureTextEx(nosifer, "OVER", (float)fontSize, 4);
+        Vector2 gameSize = MeasureTextEx(tinyFont, "GAME", (float)fontSize, 4);
+        Vector2 overSize = MeasureTextEx(tinyFont, "OVER", (float)fontSize, 4);
 
         float gameX = screenWidth / 2.0f - gameSize.x / 2.0f;
         float overX = screenWidth / 2.0f - overSize.x / 2.0f;
         float gameY = screenHeight / 2.0f - gameSize.y - 10;
         float overY = screenHeight / 2.0f;
 
-        DrawTextEx(nosifer, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
-        DrawTextEx(nosifer, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
-        DrawTextEx(nosifer, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
-        DrawTextEx(nosifer, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
+        DrawTextEx(tinyFont, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
+        DrawTextEx(tinyFont, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
+        DrawTextEx(tinyFont, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
+        DrawTextEx(tinyFont, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
     }
 
     if (gameOverAnimTimer >= 2.5f)
@@ -2488,55 +2501,63 @@ int main()
         // ── TOP-RIGHT: Score + High Score (no box) ──
         float scoreX = (float)(screenWidth - 220);
 
-        DrawTextEx(gamefont, "SCORE", {scoreX, 20}, 28, 1, {200, 200, 200, 255});
-        DrawTextEx(nosifer, TextFormat("%d", score), {scoreX, 52}, 48, 1, {200, 20, 20, 255});
+        DrawTextEx(tinyFont, "SCORE", {scoreX, 20}, 28, 1, {200, 200, 200, 255});
+        DrawTextEx(tinyFont, TextFormat("%d", score), {scoreX, 52}, 48, 1, {200, 20, 20, 255});
 
-        DrawTextEx(gamefont, "HIGH SCORE", {scoreX, 110}, 24, 1, {170, 170, 204, 255});
-        DrawTextEx(nosifer, TextFormat("%d", highScore), {scoreX, 138}, 44, 1, {120, 200, 255, 255});
+        DrawTextEx(tinyFont, "HIGH SCORE", {scoreX, 110}, 24, 1, {170, 170, 204, 255});
+        DrawTextEx(tinyFont, TextFormat("%d", highScore), {scoreX, 138}, 44, 1, {120, 200, 255, 255});
 
         if (score >= highScore)
-             DrawTextEx(gamefont, "* NEW BEST!", {scoreX, 190}, 22, 1, {200, 20, 20, 255});
+             DrawTextEx(tinyFont, "* NEW BEST!", {scoreX, 190}, 22, 1, {200, 20, 20, 255});
 
         // ── GAME OVER TITLE
-        Vector2 goSize = MeasureTextEx(nosifer, "GAME OVER", 140, 4);
+        Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 140, 4);
         float goX = screenWidth / 2.0f - goSize.x / 2.0f;
         float goY = screenHeight / 2.0f - goSize.y - 80;
 
         // Shadow
-        DrawTextEx(nosifer, "GAME OVER", {goX + 5, goY + 5}, 140, 4, {40, 40, 40, 255});
+        DrawTextEx(tinyFont, "GAME OVER", {goX + 5, goY + 5}, 140, 4, {40, 40, 40, 255});
 
         // Draw "GAME" in white
-        Vector2 gameWordSize = MeasureTextEx(nosifer, "GAME ", 140, 4);
-        DrawTextEx(nosifer, "GAME ", {goX, goY}, 140, 4, WHITE);
+        Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 140, 4);
+        DrawTextEx(tinyFont, "GAME ", {goX, goY}, 140, 4, WHITE);
 
         // Draw "OVER" in red right after "GAME "
-        DrawTextEx(nosifer, "OVER", {goX + gameWordSize.x, goY}, 140, 4, {200, 20, 20, 255});   
+        DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 140, 4, {200, 20, 20, 255});   
 
         // ── TRY AGAIN? + YES / NO ──
         float menuY = goY + goSize.y + 100;
 
-        Vector2 trySize = MeasureTextEx(gamefont, "TRY AGAIN?", 60, 1);
-        DrawTextEx(gamefont, "TRY AGAIN?",
+        Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 60, 1);
+        DrawTextEx(tinyFont, "TRY AGAIN?",
          {screenWidth / 2.0f - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
 
         menuY += 80;
 
         // YES
+        static bool prevHoverPlay = false;
         bool hoverPlay = CheckCollisionPointRec(GetMousePosition(),
             {screenWidth / 2.0f - 80, menuY, 160, 50});
-        Color yesCol = hoverPlay ? Color{200, 20, 20, 255} : WHITE;
-        Vector2 yesSize = MeasureTextEx(gamefont, "YES", 60, 1);
-        DrawTextEx(gamefont, hoverPlay ? "> YES" : "YES",
+        if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
+        prevHoverPlay = hoverPlay;
+
+        Color yesCol = hoverPlay ? GREEN : WHITE;
+        Vector2 yesSize = MeasureTextEx(tinyFont, "YES", 60, 1);
+        DrawTextEx(tinyFont, hoverPlay ? "> YES" : "YES",
           {screenWidth / 2.0f - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
 
         menuY += 75;
 
         // NO
+        static bool prevHoverMenu = false;
         bool hoverMenu = CheckCollisionPointRec(GetMousePosition(),
             {screenWidth / 2.0f - 80, menuY, 160, 50});
-        Color noCol = hoverMenu ? Color{200, 20, 20, 255} : WHITE;
-        Vector2 noSize = MeasureTextEx(gamefont, "NO", 60, 1);
-        DrawTextEx(gamefont, hoverMenu ? "> NO" : "NO",
+        if (hoverMenu && !prevHoverMenu) PlaySound(hoverSound);
+        prevHoverMenu = hoverMenu;
+
+        Color noCol = hoverMenu ? RED : WHITE;
+        Vector2 noSize = MeasureTextEx(tinyFont, "NO", 60, 1);
+        DrawTextEx(tinyFont, hoverMenu ? "> NO" : "NO",
             {screenWidth / 2.0f - noSize.x / 2.0f, menuY}, 60, 1, noCol);
 
         // ── INPUT ──

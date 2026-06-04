@@ -205,6 +205,7 @@ static float frameTimer = 0.0f;
 static float frameDelay = 0.1f;
 static bool videoFinished = false;
 static Sound buttonClickSound;
+static Sound hoverSound;
 static Texture2D groupLogoTex;
 static float logoTimer = 0.0f;
 static float logoFadeIn = 1.5f;   // seconds to fade in
@@ -422,7 +423,7 @@ static IntroButtons introButtons;
 // =====================================================
 // BUTTON DRAW HELPER
 // =====================================================
-static void DrawButton(Texture2D tex, Rectangle rect, bool hovered)
+static void DrawButton(Texture2D tex, Rectangle rect, bool *prevHovered)
 {
     float scaleX = rect.width / (float)tex.width;
     float scaleY = rect.height / (float)tex.height;
@@ -440,6 +441,9 @@ static void DrawButton(Texture2D tex, Rectangle rect, bool hovered)
 
    
     bool isHovered = CheckCollisionPointRec(GetMousePosition(), dest);
+    
+    if (isHovered && prevHovered && !(*prevHovered)) PlaySound(hoverSound);
+    if (prevHovered) *prevHovered = isHovered;
 
     DrawTexturePro(tex,
                    {0,0,(float)tex.width,(float)tex.height},
@@ -468,6 +472,7 @@ void InitIntro()
 
     scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
     buttonClickSound = LoadSound("assets/sounds/button_click.mp3");
+    hoverSound = LoadSound("assets/sounds/hoverSound.mp3");
 }
 
 
@@ -486,6 +491,7 @@ void UnloadIntro()
 
     UnloadFont(scoreFont);
     UnloadSound(buttonClickSound);
+    UnloadSound(hoverSound);
 }
 
 
@@ -618,9 +624,12 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
     float buttonStartY = scoreY + scoreSize.y + 30.0f;
     SetupButtons(wallRect, buttonStartY);
 
-    DrawButton(playButtonTex, introButtons.play, CheckCollisionPointRec(GetMousePosition(), introButtons.play));
-    DrawButton(infoButtonTex, introButtons.info, CheckCollisionPointRec(GetMousePosition(), introButtons.info));
-    DrawButton(exitButtonTex, introButtons.exit, CheckCollisionPointRec(GetMousePosition(), introButtons.exit));
+    static bool hPlay = false, hInfo = false, hExit = false;
+    static bool hClose = false, hNext = false, hPrev = false;
+
+    DrawButton(playButtonTex, introButtons.play, &hPlay);
+    DrawButton(infoButtonTex, introButtons.info, &hInfo);
+    DrawButton(exitButtonTex, introButtons.exit, &hExit);
 
     
     if (showInfo)
@@ -635,10 +644,13 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
                        {0,0,(float)infoTextures[infoPage-1].width,(float)infoTextures[infoPage-1].height},
                        infoRect, {0,0}, 0.0f, WHITE);
 
-        DrawButton(closeButtonTex, introButtons.close, CheckCollisionPointRec(GetMousePosition(), introButtons.close));
+        DrawButton(closeButtonTex, introButtons.close, &hClose);
         if (infoPage < maxPages)
-            DrawButton(nextButtonTex, introButtons.next, CheckCollisionPointRec(GetMousePosition(), introButtons.next));
+            DrawButton(nextButtonTex, introButtons.next, &hNext);
+        else hNext = false;
+
         if (infoPage > 1)
-            DrawButton(prevButtonTex, introButtons.prev, CheckCollisionPointRec(GetMousePosition(), introButtons.prev));
+            DrawButton(prevButtonTex, introButtons.prev, &hPrev);
+        else hPrev = false;
     }
 }
