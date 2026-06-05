@@ -2588,9 +2588,8 @@ int main()
     float cy = screenHeight / 2.0f;
 
     // ── Calculate total block height first ──
-    float titleH    = 220.0f;
+    float titleH    = 260.0f;
     float divider1H = 20.0f;
-    float newBestH  = (score >= highScore) ? 50.0f : 0.0f;
     float scoresH   = 100.0f;
     float divider2H = 20.0f;
     float tryAgainH = 60.0f;
@@ -2598,7 +2597,7 @@ int main()
     float noH       = 68.0f;
     float gapH      = 20.0f;
 
-    float totalH = titleH + divider1H + newBestH + scoresH + divider2H + tryAgainH + yesH + noH + gapH;
+    float totalH = titleH + divider1H + scoresH + divider2H + tryAgainH + yesH + noH + gapH;
 
     // ── Start Y so entire block is vertically centered ──
     float startY = cy - totalH / 2.0f;
@@ -2619,25 +2618,10 @@ int main()
     DrawRectangle(cx - 300, cursorY, 600, 2, {100, 100, 100, 180});
     cursorY += divider1H;
 
-    // ── NEW BEST ──
-    if (score >= highScore) {
-        DrawRectangleRounded({cx - 140, cursorY - 6, 280, 38}, 0.5f, 8, {80, 60, 0, 180});
-        DrawRectangleRoundedLines({cx - 140, cursorY - 6, 280, 38}, 0.5f, 8, {255, 215, 0, 200});
-        Vector2 nbSize = MeasureTextEx(tinyFont, "★  NEW BEST!  ★", 30, 1);
-        DrawTextEx(tinyFont, "★  NEW BEST!  ★",
-            {cx - nbSize.x / 2.0f, cursorY}, 30, 1, {255, 215, 0, 255});
-        cursorY += newBestH;
-    }
-
     // ── SCORE + HIGH SCORE ──
     float scoresY = cursorY;
     float col1X   = cx - 180.0f;
     float col2X   = cx + 180.0f;
-
-    DrawRectangleRounded({col1X - 80, scoresY - 8, 160, 90}, 0.2f, 6, {0, 0, 0, 140});
-    DrawRectangleRoundedLines({col1X - 80, scoresY - 8, 160, 90}, 0.2f, 6, {150, 150, 150, 120});
-    DrawRectangleRounded({col2X - 90, scoresY - 8, 180, 90}, 0.2f, 6, {0, 0, 0, 140});
-    DrawRectangleRoundedLines({col2X - 90, scoresY - 8, 180, 90}, 0.2f, 6, {150, 150, 150, 120});
 
     Vector2 sLabel = MeasureTextEx(tinyFont, "SCORE", 24, 1);
     DrawTextEx(tinyFont, "SCORE",
