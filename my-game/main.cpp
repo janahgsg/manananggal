@@ -152,7 +152,7 @@ struct Notif {
 vector<Notif> notifs;
 
 void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
-    if (v.size() >= 3) v.erase(v.begin()); // Remove oldest to make room
+    if (v.size() >= 5) v.erase(v.begin()); // Increased room for events
     v.push_back({text, col, dur, dur});
 }
 
@@ -1210,7 +1210,7 @@ int main()
                     eventTimer = 11.0f; 
                     eventCooldown = 20.0f; // longer cooldown for easy
 
-                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, eventTimer);
                 }
                 else if (diff == MEDIUM)
                 {
@@ -1231,7 +1231,7 @@ int main()
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
 
-                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
                 }
 
                 else if (diff == HARD)
@@ -1250,28 +1250,31 @@ int main()
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
+                    
+                    eventTimer = 25.0f;
+                    eventCooldown = 10.0f;
 
                     // Event-specific notif colors (HARD)
                     if (currentEvent == LUCKY_PARTY)
-                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == MISFORTUNE)
-                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, 3.5f);
+                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, eventTimer);
                     else if (currentEvent == INVERTED_SCREEN)
-                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, eventTimer);
                     else if (currentEvent == SWAP_CONTROLS)
-                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, eventTimer);
                     else if (currentEvent == SPEED_BOOST)
-                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == SLOW_BOOST)
-                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, 3.5f);
+                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, eventTimer);
                     else if (currentEvent == LOW_GRAVITY)
-                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, eventTimer);
                     else if (currentEvent == FOG_BLIND)
-                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
                     else if (currentEvent == EARTHQUAKE)
-                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, eventTimer);
                     else
-                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
                     if (rand() % 100 < 40)
                     {
@@ -1285,10 +1288,10 @@ int main()
                         {
                             secondEvent = (EventType)hardEvents[rand() % 8];
                         }
+                        
+                        // Notify about the second event too!
+                        PushNotif(notifs, GetEventName(secondEvent) + " TOO!", {255, 85, 85, 255}, eventTimer);
                     }
-
-                    eventTimer = 25.0f;
-                    eventCooldown = 10.0f;
                 }
             }
 
@@ -2256,10 +2259,14 @@ int main()
             {
                 float startY = 100.0f;
                 float fontSize = 48.0f;
+                float fadeDur = 0.5f;
 
                 for (int i = 0; i < (int)notifs.size(); i++) {
                     auto& n = notifs[i];
-                    float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+                    float alpha = 1.0f;
+                    
+                    if (n.timer > n.maxTime - fadeDur) alpha = (n.maxTime - n.timer) / fadeDur;
+                    else if (n.timer < fadeDur) alpha = n.timer / fadeDur;
 
                     Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
                     float tx = screenWidth / 2.0f - tSize.x / 2.0f;
