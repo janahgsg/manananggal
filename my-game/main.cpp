@@ -568,7 +568,7 @@ int main()
         StopMusicStream(introMusic);
         UnloadMusicStream(introMusic);
         InitIntroVideo();
-        state = TRANSITION;
+        state = STORYLINE;
     }
     else if (action == 2) // Exit
     {
