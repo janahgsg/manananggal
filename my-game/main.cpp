@@ -2565,6 +2565,7 @@ int main()
             // dark overlay
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.45f));
 
+<<<<<<< Updated upstream
             // FLASH EFFECT (first 2.5s)
             if (gameOverAnimTimer < 2.5f)
             {
@@ -2626,15 +2627,112 @@ int main()
 
                 // Draw "OVER" in red right after "GAME "
                 DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 140, 4, {200, 20, 20, 255});   
+=======
+    // FLASH EFFECT (first 2.5s)
+    if (gameOverAnimTimer < 2.5f)
+    {
+        if (gameOverFlash > 0)
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+
+        float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
+        int fontSize = (int)(160 * scale);
+
+        Vector2 gameSize = MeasureTextEx(tinyFont, "GAME", (float)fontSize, 4);
+        Vector2 overSize = MeasureTextEx(tinyFont, "OVER", (float)fontSize, 4);
+
+        float gameX = screenWidth / 2.0f - gameSize.x / 2.0f;
+        float overX = screenWidth / 2.0f - overSize.x / 2.0f;
+        float gameY = screenHeight / 2.0f - gameSize.y - 10;
+        float overY = screenHeight / 2.0f;
+
+        DrawTextEx(tinyFont, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
+        DrawTextEx(tinyFont, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
+        DrawTextEx(tinyFont, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
+        DrawTextEx(tinyFont, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
+    }
+
+        if (gameOverAnimTimer >= 2.5f)
+    {
+        // ── Save high score ──
+        if (score > highScore) {
+            highScore = score;
+            ofstream file("score.txt");
+            if (file.is_open()) {
+                file << highScore;
+                file.close();
+            }
+        }
+
+        // ── GAME OVER TITLE ──
+        Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 320, 4);
+        float goX = screenWidth / 2.0f - goSize.x / 2.0f;
+        float goY = screenHeight * 0.10f; 
+
+        DrawTextEx(tinyFont, "GAME OVER", {goX + 9, goY + 9}, 320, 4, {40, 40, 40, 255});
+        Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 320, 4);
+        DrawTextEx(tinyFont, "GAME ", {goX, goY}, 320, 4, WHITE);
+        DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 320, 4, {200, 20, 20, 255});
+
+        float titleBottom = goY + goSize.y;           
+        float tryAgainY   = titleBottom + 220.0f;     
+
+        if (score >= highScore) {
+            Vector2 nbSize = MeasureTextEx(tinyFont, "  NEW BEST!  ", 32, 1);
+            DrawTextEx(tinyFont, "  NEW BEST!  ",
+                {screenWidth / 2.0f - nbSize.x / 2.0f, titleBottom + 20}, 32, 1, {255, 215, 0, 255});
+        }
+
+        // Row 2: SCORE + HIGH SCORE side by side
+        float scoresY = titleBottom + (score >= highScore ? 75.0f : 30.0f);
+        float cx       = screenWidth / 2.0f;
+        float col1X    = cx - 200.0f;   // SCORE anchor
+        float col2X    = cx + 200.0f;   // HIGH SCORE anchor
+
+        // — SCORE label + value —
+        Vector2 sLabel = MeasureTextEx(tinyFont, "SCORE", 26, 1);
+        DrawTextEx(tinyFont, "SCORE",
+            {col1X - sLabel.x / 2.0f, scoresY}, 26, 1, {200, 200, 200, 255});
+        Vector2 sVal = MeasureTextEx(tinyFont, TextFormat("%d", score), 56, 1);
+        DrawTextEx(tinyFont, TextFormat("%d", score),
+            {col1X - sVal.x / 2.0f, scoresY + 32}, 56, 1, {200, 20, 20, 255});
+
+        // — HIGH SCORE label + value —
+        Vector2 hsLabel = MeasureTextEx(tinyFont, "HIGH SCORE", 26, 1);
+        DrawTextEx(tinyFont, "HIGH SCORE",
+            {col2X - hsLabel.x / 2.0f, scoresY}, 26, 1, {170, 170, 204, 255});
+        Vector2 hsVal = MeasureTextEx(tinyFont, TextFormat("%d", highScore), 56, 1);
+        DrawTextEx(tinyFont, TextFormat("%d", highScore),
+            {col2X - hsVal.x / 2.0f, scoresY + 32}, 56, 1, {120, 200, 255, 255});
+
+        // ── TRY AGAIN? ──
+        float menuY = tryAgainY;
+        Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 60, 1);
+        DrawTextEx(tinyFont, "TRY AGAIN?",
+            {cx - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
+>>>>>>> Stashed changes
 
                 // ── TRY AGAIN? + YES / NO ──
                 float menuY = goY + goSize.y + 100;
 
+<<<<<<< Updated upstream
                 Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 60, 1);
                 DrawTextEx(tinyFont, "TRY AGAIN?",
                  {screenWidth / 2.0f - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
 
                 menuY += 80;
+=======
+        // YES
+        static bool prevHoverPlay = false;
+        bool hoverPlay = CheckCollisionPointRec(GetMousePosition(),
+            {cx - 80, menuY, 160, 50});
+        if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
+        prevHoverPlay = hoverPlay;
+
+        Color yesCol = hoverPlay ? GREEN : WHITE;
+        Vector2 yesSize = MeasureTextEx(tinyFont, "YES", 60, 1);
+        DrawTextEx(tinyFont, hoverPlay ? "> YES" : "YES",
+            {cx - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
+>>>>>>> Stashed changes
 
                 // YES
                 static bool prevHoverPlay = false;
@@ -2643,12 +2741,26 @@ int main()
                 if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
                 prevHoverPlay = hoverPlay;
 
+<<<<<<< Updated upstream
                 Color yesCol = hoverPlay ? GREEN : WHITE;
                 Vector2 yesSize = MeasureTextEx(tinyFont, "YES", 60, 1);
                 DrawTextEx(tinyFont, hoverPlay ? "> YES" : "YES",
                   {screenWidth / 2.0f - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
 
                 menuY += 75;
+=======
+        // NO
+        static bool prevHoverMenu = false;
+        bool hoverMenu = CheckCollisionPointRec(GetMousePosition(),
+            {cx - 80, menuY, 160, 50});
+        if (hoverMenu && !prevHoverMenu) PlaySound(hoverSound);
+        prevHoverMenu = hoverMenu;
+
+        Color noCol = hoverMenu ? RED : WHITE;
+        Vector2 noSize = MeasureTextEx(tinyFont, "NO", 60, 1);
+        DrawTextEx(tinyFont, hoverMenu ? "> NO" : "NO",
+            {cx - noSize.x / 2.0f, menuY}, 60, 1, noCol);
+>>>>>>> Stashed changes
 
                 // NO
                 static bool prevHoverMenu = false;
