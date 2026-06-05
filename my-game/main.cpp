@@ -176,7 +176,7 @@ int main()
     InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
-    Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
+    Sound goodItemSound = LoadSound("assets/sounds/good_item2.mp3");
     Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
 
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
@@ -1317,21 +1317,21 @@ int main()
                     if (currentEvent == LUCKY_PARTY)
                         PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
                     else if (currentEvent == MISFORTUNE)
-                        PushNotif(notifs, "MISFORTUNE", {221, 68, 68, 255}, 3.5f);
+                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, 3.5f);
                     else if (currentEvent == INVERTED_SCREEN)
                         PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
                     else if (currentEvent == SWAP_CONTROLS)
                         PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
                     else if (currentEvent == SPEED_BOOST)
-                        PushNotif(notifs, "SPEED BOOST!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, 3.5f);
                     else if (currentEvent == SLOW_BOOST)
-                        PushNotif(notifs, "SLOW CURSE...", {136, 204, 255, 255}, 3.5f);
+                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, 3.5f);
                     else if (currentEvent == LOW_GRAVITY)
                         PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
                     else if (currentEvent == FOG_BLIND)
                         PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
                     else if (currentEvent == EARTHQUAKE)
-                        PushNotif(notifs, "EARTHQUAKE!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, 3.5f);
                     else
                         PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
 
