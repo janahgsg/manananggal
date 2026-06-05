@@ -1,4 +1,4 @@
-#include "intro.h"
+#include "intro.h" 
 #include "raylib.h"
 #include <vector>
 #include <cstdlib>
@@ -565,15 +565,8 @@ int main()
 
     if (action == 1) // Play
     {
-        StopMusicStream(introMusic);
-        UnloadMusicStream(introMusic);
-
-         if (currentBg) {
-        SetMusicVolume(*currentBg, bgTargetVolume);
-        PlayMusicStream(*currentBg);
-    }
-
-    state = PLAYING;  // skip transition directly
+        InitStoryline();
+        state = STORYLINE;
 }
     else if (action == 2) // Exit
     {
@@ -590,9 +583,22 @@ int main()
 }
 
          else if (state == STORYLINE) {
-            //WORKING
-
+            UpdateMusicStream(introMusic);
+             bool done = UpdateStoryline();
+             
+             if (done) {
+                 UnloadStoryline();
+                 StopMusicStream(introMusic);
+                 UnloadMusicStream(introMusic);
+                
+                 if (currentBg) {
+                SetMusicVolume(*currentBg, bgTargetVolume);
+                PlayMusicStream(*currentBg);
+            }
             state = PLAYING;
+        }
+
+            
          }
 
 
@@ -1327,8 +1333,7 @@ int main()
                 ApplyEvent(secondEvent);
 
                 // event ended
-                if (eventTimer <= 0)
-                {
+                if (eventTimer <= 0) {
 
                     currentEvent = NONE;
                     secondEvent = NONE;
@@ -1993,6 +1998,13 @@ int main()
             continue;
         }
 
+        if (state == STORYLINE)
+        {
+            DrawStoryline();
+            EndDrawing();
+            continue;
+        }
+
        if (state == TROLL_VIDEO)
         {
             ClearBackground(BLACK);
@@ -2324,44 +2336,6 @@ int main()
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
                 CheckCollisionPointRec(GetMousePosition(), pauseBtn)) {
                 state = PAUSED;
-            }
-
-            // --- MEME TESTING BUTTON (below pause button) ---
-            Rectangle memeBtn = {10, 150, 44, 44};
-            bool hoverMeme = CheckCollisionPointRec(GetMousePosition(), memeBtn);
-            DrawRectangleRounded(memeBtn, 0.2f, 6,
-                hoverMeme ? Color{255, 0, 0, 220} : Color{150, 0, 0, 180});
-            DrawTextEx(tinyFont, "F", {memeBtn.x + 15, memeBtn.y + 8}, 32, 0, WHITE);
-
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMeme) {
-                if (!currentMeme.active && !memeTextures.empty()) {
-                    int index;
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
-
-                    currentMeme.tex = memeTextures[index];
-                    currentMeme.lastIndex = index;
-                    currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
-
-                    if (index < memeSounds.size()) {
-                        currentMeme.soundIndex = index;
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
-
-                    bool fromLeft = GetRandomValue(0, 1) == 0;
-                    if (fromLeft) {
-                        currentMeme.pos.x = -(float)screenWidth * 1.5f;
-                    } else {
-                        currentMeme.pos.x = (float)screenWidth * 1.5f;
-                        currentMeme.speed = -currentMeme.speed;
-                    }
-                    currentMeme.pos.y = 0;
-                    PushNotif(notifs, "TESTING MEME!", RED, 1.5f);
-                }
             }
 
             // === DIFFICULTY BADGE ===
