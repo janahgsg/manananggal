@@ -2518,8 +2518,7 @@ int main()
         DrawTextEx(tinyFont, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
         DrawTextEx(tinyFont, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
     }
-
-        if (gameOverAnimTimer >= 2.5f)
+       if (gameOverAnimTimer >= 2.5f)
 {
     // ── Save high score ──
     if (score > highScore) {
@@ -2531,77 +2530,110 @@ int main()
         }
     }
 
+    float cx = screenWidth / 2.0f;
+    float cy = screenHeight / 2.0f;
+
+    // ── Calculate total block height first ──
+    float titleH    = 220.0f;
+    float divider1H = 20.0f;
+    float newBestH  = (score >= highScore) ? 50.0f : 0.0f;
+    float scoresH   = 100.0f;
+    float divider2H = 20.0f;
+    float tryAgainH = 60.0f;
+    float yesH      = 68.0f;
+    float noH       = 68.0f;
+    float gapH      = 20.0f;
+
+    float totalH = titleH + divider1H + newBestH + scoresH + divider2H + tryAgainH + yesH + noH + gapH;
+
+    // ── Start Y so entire block is vertically centered ──
+    float startY = cy - totalH / 2.0f;
+
     // ── GAME OVER TITLE ──
-    Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 320, 4);
-    float goX = screenWidth / 2.0f - goSize.x / 2.0f;
-    float goY = screenHeight * 0.10f;
+    Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 280, 4);
+    float goX = cx - goSize.x / 2.0f;
+    float goY = startY;
 
-    DrawTextEx(tinyFont, "GAME OVER", {goX + 9, goY + 9}, 320, 4, {40, 40, 40, 255});
-    Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 320, 4);
-    DrawTextEx(tinyFont, "GAME ", {goX, goY}, 320, 4, WHITE);
-    DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 320, 4, {200, 20, 20, 255});
+    DrawTextEx(tinyFont, "GAME OVER", {goX + 8, goY + 8}, 280, 4, {40, 40, 40, 255});
+    Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 280, 4);
+    DrawTextEx(tinyFont, "GAME ", {goX, goY}, 280, 4, WHITE);
+    DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 280, 4, {200, 20, 20, 255});
 
-    float titleBottom = goY + goSize.y;
-    float tryAgainY   = titleBottom + 220.0f;
-    float cx          = screenWidth / 2.0f;
+    float cursorY = startY + titleH;
+
+    // ── DIVIDER 1 ──
+    DrawRectangle(cx - 300, cursorY, 600, 2, {100, 100, 100, 180});
+    cursorY += divider1H;
 
     // ── NEW BEST ──
     if (score >= highScore) {
-        Vector2 nbSize = MeasureTextEx(tinyFont, "★  NEW BEST!  ★", 32, 1);
+        DrawRectangleRounded({cx - 140, cursorY - 6, 280, 38}, 0.5f, 8, {80, 60, 0, 180});
+        DrawRectangleRoundedLines({cx - 140, cursorY - 6, 280, 38}, 0.5f, 8, {255, 215, 0, 200});
+        Vector2 nbSize = MeasureTextEx(tinyFont, "★  NEW BEST!  ★", 30, 1);
         DrawTextEx(tinyFont, "★  NEW BEST!  ★",
-            {cx - nbSize.x / 2.0f, titleBottom + 20}, 32, 1, {255, 215, 0, 255});
+            {cx - nbSize.x / 2.0f, cursorY}, 30, 1, {255, 215, 0, 255});
+        cursorY += newBestH;
     }
 
     // ── SCORE + HIGH SCORE ──
-    float scoresY = titleBottom + (score >= highScore ? 75.0f : 30.0f);
-    float col1X   = cx - 200.0f;
-    float col2X   = cx + 200.0f;
+    float scoresY = cursorY;
+    float col1X   = cx - 180.0f;
+    float col2X   = cx + 180.0f;
 
-    Vector2 sLabel = MeasureTextEx(tinyFont, "SCORE", 26, 1);
+    DrawRectangleRounded({col1X - 80, scoresY - 8, 160, 90}, 0.2f, 6, {0, 0, 0, 140});
+    DrawRectangleRoundedLines({col1X - 80, scoresY - 8, 160, 90}, 0.2f, 6, {150, 150, 150, 120});
+    DrawRectangleRounded({col2X - 90, scoresY - 8, 180, 90}, 0.2f, 6, {0, 0, 0, 140});
+    DrawRectangleRoundedLines({col2X - 90, scoresY - 8, 180, 90}, 0.2f, 6, {150, 150, 150, 120});
+
+    Vector2 sLabel = MeasureTextEx(tinyFont, "SCORE", 24, 1);
     DrawTextEx(tinyFont, "SCORE",
-        {col1X - sLabel.x / 2.0f, scoresY}, 26, 1, {200, 200, 200, 255});
-    Vector2 sVal = MeasureTextEx(tinyFont, TextFormat("%d", score), 56, 1);
+        {col1X - sLabel.x / 2.0f, scoresY}, 24, 1, {200, 200, 200, 255});
+    Vector2 sVal = MeasureTextEx(tinyFont, TextFormat("%d", score), 52, 1);
     DrawTextEx(tinyFont, TextFormat("%d", score),
-        {col1X - sVal.x / 2.0f, scoresY + 32}, 56, 1, {200, 20, 20, 255});
+        {col1X - sVal.x / 2.0f, scoresY + 30}, 52, 1, {220, 40, 40, 255});
 
-    Vector2 hsLabel = MeasureTextEx(tinyFont, "HIGH SCORE", 26, 1);
+    Vector2 hsLabel = MeasureTextEx(tinyFont, "HIGH SCORE", 24, 1);
     DrawTextEx(tinyFont, "HIGH SCORE",
-        {col2X - hsLabel.x / 2.0f, scoresY}, 26, 1, {170, 170, 204, 255});
-    Vector2 hsVal = MeasureTextEx(tinyFont, TextFormat("%d", highScore), 56, 1);
+        {col2X - hsLabel.x / 2.0f, scoresY}, 24, 1, {170, 170, 204, 255});
+    Vector2 hsVal = MeasureTextEx(tinyFont, TextFormat("%d", highScore), 52, 1);
     DrawTextEx(tinyFont, TextFormat("%d", highScore),
-        {col2X - hsVal.x / 2.0f, scoresY + 32}, 56, 1, {120, 200, 255, 255});
+        {col2X - hsVal.x / 2.0f, scoresY + 30}, 52, 1, {100, 180, 255, 255});
+
+    cursorY += scoresH;
+
+    // ── DIVIDER 2 ──
+    DrawRectangle(cx - 300, cursorY, 600, 2, {100, 100, 100, 180});
+    cursorY += divider2H;
 
     // ── TRY AGAIN? ──
-    float menuY = tryAgainY;
-    Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 60, 1);
+    float menuY = cursorY;
+    Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 55, 1);
     DrawTextEx(tinyFont, "TRY AGAIN?",
-        {cx - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
+        {cx - trySize.x / 2.0f, menuY}, 55, 1, {220, 220, 220, 255});
 
-    menuY += 80;
+    menuY += 65;
 
     // ── YES ──
     static bool prevHoverPlay = false;
-    bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), {cx - 80, menuY, 160, 50});
+    bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), {cx - 90, menuY - 5, 180, 55});
     if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
     prevHoverPlay = hoverPlay;
+    if (hoverPlay) DrawRectangleRounded({cx - 90, menuY - 5, 180, 55}, 0.3f, 6, {0, 120, 0, 180});
+    Vector2 yesSize = MeasureTextEx(tinyFont, hoverPlay ? "> YES <" : "YES", 55, 1);
+    DrawTextEx(tinyFont, hoverPlay ? "> YES <" : "YES",
+        {cx - yesSize.x / 2.0f, menuY}, 55, 1, hoverPlay ? GREEN : WHITE);
 
-    Color yesCol = hoverPlay ? GREEN : WHITE;
-    Vector2 yesSize = MeasureTextEx(tinyFont, "YES", 60, 1);
-    DrawTextEx(tinyFont, hoverPlay ? "> YES" : "YES",
-        {cx - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
-
-    menuY += 75;
+    menuY += 65;
 
     // ── NO ──
     static bool prevHoverMenu = false;
-    bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), {cx - 80, menuY, 160, 50});
+    bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), {cx - 90, menuY - 5, 180, 55});
     if (hoverMenu && !prevHoverMenu) PlaySound(hoverSound);
     prevHoverMenu = hoverMenu;
-
-    Color noCol = hoverMenu ? RED : WHITE;
-    Vector2 noSize = MeasureTextEx(tinyFont, "NO", 60, 1);
-    DrawTextEx(tinyFont, hoverMenu ? "> NO" : "NO",
-        {cx - noSize.x / 2.0f, menuY}, 60, 1, noCol);
+    if (hoverMenu) DrawRectangleRounded({cx - 90, menuY - 5, 180, 55}, 0.3f, 6, {120, 0, 0, 180});
+    Vector2 noSize = MeasureTextEx(tinyFont, hoverMenu ? "> NO <" : "NO", 55, 1);
+    DrawTextEx(tinyFont, hoverMenu ? "> NO <" : "NO",
+        {cx - noSize.x / 2.0f, menuY}, 55, 1, hoverMenu ? RED : WHITE);
 
     // ── INPUT ──
     if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
