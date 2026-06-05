@@ -52,6 +52,9 @@ void UpdateBg2TransitionVideo();
 void DrawBg2TransitionVideo();
 bool IsBg2TransitionFinished();
 float GetBg2TransitionAlpha();
-bool IsBg2TransitionFinished();
 void UnloadBg2TransitionVideo();
-
+// STORYLINE FUNCTIONS
+void InitStoryline();
+bool UpdateStoryline(); // returns true when finished
+void DrawStoryline();
+void UnloadStoryline();

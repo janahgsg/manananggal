@@ -565,15 +565,8 @@ int main()
 
     if (action == 1) // Play
     {
-        StopMusicStream(introMusic);
-        UnloadMusicStream(introMusic);
-
-         if (currentBg) {
-        SetMusicVolume(*currentBg, bgTargetVolume);
-        PlayMusicStream(*currentBg);
-    }
-
-    state = PLAYING;  // skip transition directly
+        InitStoryline();
+        state = STORYLINE;
 }
     else if (action == 2) // Exit
     {
@@ -590,9 +583,22 @@ int main()
 }
 
          else if (state == STORYLINE) {
-            //WORKING
-
+            UpdateMusicStream(introMusic);
+             bool done = UpdateStoryline();
+             
+             if (done) {
+                 UnloadStoryline();
+                 StopMusicStream(introMusic);
+                 UnloadMusicStream(introMusic);
+                
+                 if (currentBg) {
+                SetMusicVolume(*currentBg, bgTargetVolume);
+                PlayMusicStream(*currentBg);
+            }
             state = PLAYING;
+        }
+
+            
          }
 
 
@@ -1988,6 +1994,13 @@ int main()
         if (state == TITLE_LOGO)
         {
             DrawTitleLogo();
+            EndDrawing();
+            continue;
+        }
+
+        if (state == STORYLINE)
+        {
+            DrawStoryline();
             EndDrawing();
             continue;
         }
