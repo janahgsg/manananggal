@@ -16,6 +16,7 @@ enum GameState
     LOGO,
     TITLE_LOGO,
     MENU,
+    STORYLINE,
     TRANSITION,
     PLAYING,
     TROLL_VIDEO,
@@ -583,26 +584,32 @@ int main()
     DrawIntro(highScore, introTex, titleTex);
 }
 
-        else if (state == TRANSITION) {
-            UpdateMusicStream(batmusic);
-             UpdateIntroVideo();
-             BeginDrawing();
-             ClearBackground(BLACK);
-             DrawIntroVideo();
-             EndDrawing();
+         else if (state == STORYLINE) {
+            //WORKING
+
+            state = PLAYING;
+         }
+
+        //else if (state == TRANSITION) {
+          //  UpdateMusicStream(batmusic);
+            // UpdateIntroVideo();
+             //BeginDrawing();
+             //ClearBackground(BLACK);
+             //DrawIntroVideo();
+             //EndDrawing();
 
 
-            if (IsVideoFinished()) 
-            {
-                UnloadIntroVideo();
+            //if (IsVideoFinished()) 
+            //{
+              //  UnloadIntroVideo();
                 // Start the background music for the current difficulty
-                if (currentBg) {
-                    SetMusicVolume(*currentBg, bgTargetVolume);
-                    PlayMusicStream(*currentBg);
-                }
-                state = PLAYING;
-            }
-        }
+                //if (currentBg) {
+                  //  SetMusicVolume(*currentBg, bgTargetVolume);
+                    //PlayMusicStream(*currentBg);
+                //}
+                //state = PLAYING;
+            //}
+        //}
 
         else if (state == PAUSED) {
         float panelW = 340, panelH = 340; 
