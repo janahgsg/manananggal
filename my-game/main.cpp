@@ -152,7 +152,7 @@ struct Notif {
 vector<Notif> notifs;
 
 void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
-    if (v.size() >= 3) v.erase(v.begin()); // Remove oldest to make room
+    if (v.size() >= 5) v.erase(v.begin()); // Increased room for events
     v.push_back({text, col, dur, dur});
 }
 
@@ -818,60 +818,6 @@ int main()
             // RESET lastMilestone if game restarts
             if (score == 0) lastMilestone = 0;
 
-
-            //TESTING EVENTS-------------------------------------
-            if (IsKeyPressed(KEY_A))
-            {
-                currentEvent = EARTHQUAKE;
-                secondEvent = NONE;
-
-                quakeActive = true;
-                quakeTimer = 0.0f;
-                eventTimer = 25.0f;
-            }
-
-            if (IsKeyPressed(KEY_E))
-            {
-                currentEvent = INVERTED_SCREEN;
-                secondEvent = NONE;
-
-                invertedScreen = true;
-
-                eventTimer = 25.0f;
-            }
-
-            // TESTING MEME POP-UP
-            if (IsKeyPressed(KEY_F)) {
-                if (!currentMeme.active && !memeTextures.empty()) {
-                    int index;
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
-
-                    currentMeme.tex = memeTextures[index];
-                    currentMeme.lastIndex = index;
-                    currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
-
-                    if (index < memeSounds.size()) {
-                        currentMeme.soundIndex = index;
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
-
-                    bool fromLeft = GetRandomValue(0, 1) == 0;
-                    if (fromLeft) {
-                        currentMeme.pos.x = -(float)screenWidth * 1.5f;
-                    } else {
-                        currentMeme.pos.x = (float)screenWidth * 1.5f;
-                        currentMeme.speed = -currentMeme.speed;
-                    }
-                    currentMeme.pos.y = 0;
-                    PushNotif(notifs, "TESTING MEME!", RED, 1.5f);
-                }
-            }
-
             bool overPit = false;
 
             for (auto &p : pits)
@@ -974,9 +920,9 @@ int main()
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
-            if (IsKeyDown(KEY_LEFT))
+            if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
                 velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
-            if (IsKeyDown(KEY_RIGHT))
+            if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
                 velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
 
             player.x += velocityX * GetFrameTime();
@@ -1264,7 +1210,7 @@ int main()
                     eventTimer = 11.0f; 
                     eventCooldown = 20.0f; // longer cooldown for easy
 
-                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, eventTimer);
                 }
                 else if (diff == MEDIUM)
                 {
@@ -1285,7 +1231,7 @@ int main()
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
 
-                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
                 }
 
                 else if (diff == HARD)
@@ -1304,28 +1250,31 @@ int main()
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
+                    
+                    eventTimer = 25.0f;
+                    eventCooldown = 10.0f;
 
                     // Event-specific notif colors (HARD)
                     if (currentEvent == LUCKY_PARTY)
-                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == MISFORTUNE)
-                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, 3.5f);
+                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, eventTimer);
                     else if (currentEvent == INVERTED_SCREEN)
-                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, eventTimer);
                     else if (currentEvent == SWAP_CONTROLS)
-                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, eventTimer);
                     else if (currentEvent == SPEED_BOOST)
-                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == SLOW_BOOST)
-                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, 3.5f);
+                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, eventTimer);
                     else if (currentEvent == LOW_GRAVITY)
-                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, eventTimer);
                     else if (currentEvent == FOG_BLIND)
-                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
                     else if (currentEvent == EARTHQUAKE)
-                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, eventTimer);
                     else
-                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
                     if (rand() % 100 < 40)
                     {
@@ -1339,10 +1288,10 @@ int main()
                         {
                             secondEvent = (EventType)hardEvents[rand() % 8];
                         }
+                        
+                        // Notify about the second event too!
+                        PushNotif(notifs, GetEventName(secondEvent) + " TOO!", {255, 85, 85, 255}, eventTimer);
                     }
-
-                    eventTimer = 25.0f;
-                    eventCooldown = 10.0f;
                 }
             }
 
@@ -1896,7 +1845,7 @@ int main()
 
          // PLAYER INPUT & ANIMATIONS-----------------------------
             // Common Jump Input
-            if (IsKeyPressed(KEY_UP) && isGrounded) {
+            if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && isGrounded) {
                 velocityY = jumpForce;
                 isGrounded = false;
                 if (diff != HARD) currentAnim = JUMP;
@@ -1907,8 +1856,8 @@ int main()
             }
 
             if (diff == HARD) {
-                if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
-                else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
+                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))       currentMananAnim = FLY_RIGHT;
+                else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))   currentMananAnim = FLY_LEFT;
                 else                            currentMananAnim = FLY_FRONT;
 
                 pframeTimer += GetFrameTime();
@@ -1922,9 +1871,9 @@ int main()
                 // Determine anim state
                 if (!isGrounded) {
                     currentAnim = JUMP;
-                } else if (IsKeyDown(KEY_LEFT)) {
+                } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
                     currentAnim = WALK_LEFT;
-                } else if (IsKeyDown(KEY_RIGHT)) {
+                } else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
                     currentAnim = WALK_RIGHT;
                 } else {
                     currentAnim = IDLE;
@@ -2308,16 +2257,20 @@ int main()
 
             // NOTIF DRAW
             {
-                float startY = 90.0f;
-                float fontSize = 30.0f;
+                float startY = 100.0f;
+                float fontSize = 48.0f;
+                float fadeDur = 0.5f;
 
                 for (int i = 0; i < (int)notifs.size(); i++) {
                     auto& n = notifs[i];
-                    float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+                    float alpha = 1.0f;
+                    
+                    if (n.timer > n.maxTime - fadeDur) alpha = (n.maxTime - n.timer) / fadeDur;
+                    else if (n.timer < fadeDur) alpha = n.timer / fadeDur;
 
                     Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
                     float tx = screenWidth / 2.0f - tSize.x / 2.0f;
-                    float ty = startY + i * 38.0f;
+                    float ty = startY + i * 55.0f;
 
                     // black pixel outline (8 directions)
                     Color outline = Fade(BLACK, alpha);
