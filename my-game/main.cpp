@@ -176,7 +176,7 @@ int main()
    InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
-    Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
+    Sound goodItemSound = LoadSound("assets/sounds/good_item2.mp3");
     Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
 
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
