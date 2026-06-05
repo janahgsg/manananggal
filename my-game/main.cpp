@@ -152,7 +152,7 @@ struct Notif {
 vector<Notif> notifs;
 
 void PushNotif(vector<Notif>& v, const string& text, Color col, float dur = 2.0f) {
-    if (v.size() >= 3) v.erase(v.begin()); // Remove oldest to make room
+    if (v.size() >= 5) v.erase(v.begin()); // Increased room for events
     v.push_back({text, col, dur, dur});
 }
 
@@ -567,9 +567,14 @@ int main()
     {
         StopMusicStream(introMusic);
         UnloadMusicStream(introMusic);
-        InitIntroVideo();
-        state = STORYLINE;
+
+         if (currentBg) {
+        SetMusicVolume(*currentBg, bgTargetVolume);
+        PlayMusicStream(*currentBg);
     }
+
+    state = PLAYING;  // skip transition directly
+}
     else if (action == 2) // Exit
     {
         StopMusicStream(introMusic);
@@ -590,26 +595,6 @@ int main()
             state = PLAYING;
          }
 
-        //else if (state == TRANSITION) {
-          //  UpdateMusicStream(batmusic);
-            // UpdateIntroVideo();
-             //BeginDrawing();
-             //ClearBackground(BLACK);
-             //DrawIntroVideo();
-             //EndDrawing();
-
-
-            //if (IsVideoFinished()) 
-            //{
-              //  UnloadIntroVideo();
-                // Start the background music for the current difficulty
-                //if (currentBg) {
-                  //  SetMusicVolume(*currentBg, bgTargetVolume);
-                    //PlayMusicStream(*currentBg);
-                //}
-                //state = PLAYING;
-            //}
-        //}
 
         else if (state == PAUSED) {
         float panelW = 340, panelH = 340; 
@@ -833,60 +818,6 @@ int main()
             // RESET lastMilestone if game restarts
             if (score == 0) lastMilestone = 0;
 
-
-            //TESTING EVENTS-------------------------------------
-            if (IsKeyPressed(KEY_A))
-            {
-                currentEvent = EARTHQUAKE;
-                secondEvent = NONE;
-
-                quakeActive = true;
-                quakeTimer = 0.0f;
-                eventTimer = 25.0f;
-            }
-
-            if (IsKeyPressed(KEY_E))
-            {
-                currentEvent = INVERTED_SCREEN;
-                secondEvent = NONE;
-
-                invertedScreen = true;
-
-                eventTimer = 25.0f;
-            }
-
-            // TESTING MEME POP-UP
-            if (IsKeyPressed(KEY_F)) {
-                if (!currentMeme.active && !memeTextures.empty()) {
-                    int index;
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
-
-                    currentMeme.tex = memeTextures[index];
-                    currentMeme.lastIndex = index;
-                    currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
-
-                    if (index < memeSounds.size()) {
-                        currentMeme.soundIndex = index;
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
-
-                    bool fromLeft = GetRandomValue(0, 1) == 0;
-                    if (fromLeft) {
-                        currentMeme.pos.x = -(float)screenWidth * 1.5f;
-                    } else {
-                        currentMeme.pos.x = (float)screenWidth * 1.5f;
-                        currentMeme.speed = -currentMeme.speed;
-                    }
-                    currentMeme.pos.y = 0;
-                    PushNotif(notifs, "TESTING MEME!", RED, 1.5f);
-                }
-            }
-
             bool overPit = false;
 
             for (auto &p : pits)
@@ -989,9 +920,9 @@ int main()
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
-            if (IsKeyDown(KEY_LEFT))
+            if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
                 velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
-            if (IsKeyDown(KEY_RIGHT))
+            if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
                 velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
 
             player.x += velocityX * GetFrameTime();
@@ -1279,7 +1210,7 @@ int main()
                     eventTimer = 11.0f; 
                     eventCooldown = 20.0f; // longer cooldown for easy
 
-                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {136, 255, 136, 255}, eventTimer);
                 }
                 else if (diff == MEDIUM)
                 {
@@ -1300,7 +1231,7 @@ int main()
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
 
-                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, 3.0f);
+                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
                 }
 
                 else if (diff == HARD)
@@ -1319,28 +1250,31 @@ int main()
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
                     lastEvent = currentEvent;
+                    
+                    eventTimer = 25.0f;
+                    eventCooldown = 10.0f;
 
                     // Event-specific notif colors (HARD)
                     if (currentEvent == LUCKY_PARTY)
-                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "JACKPOT!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == MISFORTUNE)
-                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, 3.5f);
+                        PushNotif(notifs, "MALAS!", {221, 68, 68, 255}, eventTimer);
                     else if (currentEvent == INVERTED_SCREEN)
-                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, 3.5f);
+                        PushNotif(notifs, "UPSIDE DOWN!", {170, 136, 255, 255}, eventTimer);
                     else if (currentEvent == SWAP_CONTROLS)
-                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "CONTROLS SWAPPED!", {255, 136, 34, 255}, eventTimer);
                     else if (currentEvent == SPEED_BOOST)
-                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, 3.5f);
+                        PushNotif(notifs, "BILIS!!", {255, 221, 51, 255}, eventTimer);
                     else if (currentEvent == SLOW_BOOST)
-                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, 3.5f);
+                        PushNotif(notifs, "SUMPANG PAMPABAGAL....", {136, 204, 255, 255}, eventTimer);
                     else if (currentEvent == LOW_GRAVITY)
-                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, 3.5f);
+                        PushNotif(notifs, "LOW GRAVITY!", {170, 255, 221, 255}, eventTimer);
                     else if (currentEvent == FOG_BLIND)
-                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, 3.5f);
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
                     else if (currentEvent == EARTHQUAKE)
-                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, 3.5f);
+                        PushNotif(notifs, "LINDOL!", {255, 136, 34, 255}, eventTimer);
                     else
-                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, 3.0f);
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
                     if (rand() % 100 < 40)
                     {
@@ -1354,10 +1288,10 @@ int main()
                         {
                             secondEvent = (EventType)hardEvents[rand() % 8];
                         }
+                        
+                        // Notify about the second event too!
+                        PushNotif(notifs, GetEventName(secondEvent) + " TOO!", {255, 85, 85, 255}, eventTimer);
                     }
-
-                    eventTimer = 25.0f;
-                    eventCooldown = 10.0f;
                 }
             }
 
@@ -1911,7 +1845,7 @@ int main()
 
          // PLAYER INPUT & ANIMATIONS-----------------------------
             // Common Jump Input
-            if (IsKeyPressed(KEY_UP) && isGrounded) {
+            if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && isGrounded) {
                 velocityY = jumpForce;
                 isGrounded = false;
                 if (diff != HARD) currentAnim = JUMP;
@@ -1922,8 +1856,8 @@ int main()
             }
 
             if (diff == HARD) {
-                if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
-                else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
+                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))       currentMananAnim = FLY_RIGHT;
+                else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))   currentMananAnim = FLY_LEFT;
                 else                            currentMananAnim = FLY_FRONT;
 
                 pframeTimer += GetFrameTime();
@@ -1937,9 +1871,9 @@ int main()
                 // Determine anim state
                 if (!isGrounded) {
                     currentAnim = JUMP;
-                } else if (IsKeyDown(KEY_LEFT)) {
+                } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
                     currentAnim = WALK_LEFT;
-                } else if (IsKeyDown(KEY_RIGHT)) {
+                } else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
                     currentAnim = WALK_RIGHT;
                 } else {
                     currentAnim = IDLE;
@@ -2323,16 +2257,20 @@ int main()
 
             // NOTIF DRAW
             {
-                float startY = 90.0f;
-                float fontSize = 30.0f;
+                float startY = 100.0f;
+                float fontSize = 48.0f;
+                float fadeDur = 0.5f;
 
                 for (int i = 0; i < (int)notifs.size(); i++) {
                     auto& n = notifs[i];
-                    float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+                    float alpha = 1.0f;
+                    
+                    if (n.timer > n.maxTime - fadeDur) alpha = (n.maxTime - n.timer) / fadeDur;
+                    else if (n.timer < fadeDur) alpha = n.timer / fadeDur;
 
                     Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
                     float tx = screenWidth / 2.0f - tSize.x / 2.0f;
-                    float ty = startY + i * 38.0f;
+                    float ty = startY + i * 55.0f;
 
                     // black pixel outline (8 directions)
                     Color outline = Fade(BLACK, alpha);
@@ -2565,258 +2503,196 @@ int main()
             // dark overlay
             DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.45f));
 
-            // FLASH EFFECT (first 2.5s)
-            if (gameOverAnimTimer < 2.5f)
-            {
-                if (gameOverFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
+    // FLASH EFFECT (first 2.5s)
+    if (gameOverAnimTimer < 2.5f)
+    {
+        if (gameOverFlash > 0)
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, gameOverFlash));
 
-                float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
-                int fontSize = (int)(160 * scale);
+        float scale = Clamp(gameOverAnimTimer / 0.6f, 0.0f, 1.0f);
+        int fontSize = (int)(160 * scale);
 
-                Vector2 gameSize = MeasureTextEx(tinyFont, "GAME", (float)fontSize, 4);
-                Vector2 overSize = MeasureTextEx(tinyFont, "OVER", (float)fontSize, 4);
+        Vector2 gameSize = MeasureTextEx(tinyFont, "GAME", (float)fontSize, 4);
+        Vector2 overSize = MeasureTextEx(tinyFont, "OVER", (float)fontSize, 4);
 
-                float gameX = screenWidth / 2.0f - gameSize.x / 2.0f;
-                float overX = screenWidth / 2.0f - overSize.x / 2.0f;
-                float gameY = screenHeight / 2.0f - gameSize.y - 10;
-                float overY = screenHeight / 2.0f;
+        float gameX = screenWidth / 2.0f - gameSize.x / 2.0f;
+        float overX = screenWidth / 2.0f - overSize.x / 2.0f;
+        float gameY = screenHeight / 2.0f - gameSize.y - 10;
+        float overY = screenHeight / 2.0f;
 
-                DrawTextEx(tinyFont, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
-                DrawTextEx(tinyFont, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
-                DrawTextEx(tinyFont, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
-                DrawTextEx(tinyFont, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
-            }
+        DrawTextEx(tinyFont, "GAME", {gameX + 5, gameY + 5}, (float)fontSize, 4, {40, 40, 40, 255});
+        DrawTextEx(tinyFont, "GAME", {gameX, gameY}, (float)fontSize, 4, WHITE);
+        DrawTextEx(tinyFont, "OVER", {overX + 5, overY + 5}, (float)fontSize, 4, {60, 0, 0, 255});
+        DrawTextEx(tinyFont, "OVER", {overX, overY}, (float)fontSize, 4, {200, 20, 20, 255});
+    }
+       if (gameOverAnimTimer >= 2.5f)
+{
+    // ── Save high score ──
+    if (score > highScore) {
+        highScore = score;
+        ofstream file("score.txt");
+        if (file.is_open()) {
+            file << highScore;
+            file.close();
+        }
+    }
 
-            if (gameOverAnimTimer >= 2.5f)
-            {
-                if (score > highScore){
-                    highScore = score;
-                    ofstream file("score.txt");
+    float cx = screenWidth / 2.0f;
+    float cy = screenHeight / 2.0f;
 
-                    if (file.is_open())
-                    {
-                        file << highScore;
-                        file.close();
-                    }
-                }  
+    // ── Calculate total block height first ──
+    float titleH    = 260.0f;
+    float divider1H = 20.0f;
+    float scoresH   = 100.0f;
+    float divider2H = 20.0f;
+    float tryAgainH = 60.0f;
+    float yesH      = 68.0f;
+    float noH       = 68.0f;
+    float gapH      = 20.0f;
 
-                // ── TOP-RIGHT: Score + High Score (no box) ──
-                float scoreX = (float)(screenWidth - 220);
+    float totalH = titleH + divider1H + scoresH + divider2H + tryAgainH + yesH + noH + gapH;
 
-                DrawTextEx(tinyFont, "SCORE", {scoreX, 20}, 28, 1, {200, 200, 200, 255});
-                DrawTextEx(tinyFont, TextFormat("%d", score), {scoreX, 52}, 48, 1, {200, 20, 20, 255});
+    // ── Start Y so entire block is vertically centered ──
+    float startY = cy - totalH / 2.0f;
 
-                DrawTextEx(tinyFont, "HIGH SCORE", {scoreX, 110}, 24, 1, {170, 170, 204, 255});
-                DrawTextEx(tinyFont, TextFormat("%d", highScore), {scoreX, 138}, 44, 1, {120, 200, 255, 255});
+    // ── GAME OVER TITLE ──
+    Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 280, 4);
+    float goX = cx - goSize.x / 2.0f;
+    float goY = startY;
 
-                if (score >= highScore)
-                     DrawTextEx(tinyFont, "* NEW BEST!", {scoreX, 190}, 22, 1, {200, 20, 20, 255});
+    DrawTextEx(tinyFont, "GAME OVER", {goX + 8, goY + 8}, 280, 4, {40, 40, 40, 255});
+    Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 280, 4);
+    DrawTextEx(tinyFont, "GAME ", {goX, goY}, 280, 4, WHITE);
+    DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 280, 4, {200, 20, 20, 255});
 
-                // ── GAME OVER TITLE
-                Vector2 goSize = MeasureTextEx(tinyFont, "GAME OVER", 140, 4);
-                float goX = screenWidth / 2.0f - goSize.x / 2.0f;
-                float goY = screenHeight / 2.0f - goSize.y - 80;
+    float cursorY = startY + titleH;
 
-                // Shadow
-                DrawTextEx(tinyFont, "GAME OVER", {goX + 5, goY + 5}, 140, 4, {40, 40, 40, 255});
+    // ── DIVIDER 1 ──
+    DrawRectangle(cx - 300, cursorY, 600, 2, {100, 100, 100, 180});
+    cursorY += divider1H;
 
-                // Draw "GAME" in white
-                Vector2 gameWordSize = MeasureTextEx(tinyFont, "GAME ", 140, 4);
-                DrawTextEx(tinyFont, "GAME ", {goX, goY}, 140, 4, WHITE);
+    // ── SCORE + HIGH SCORE ──
+    float scoresY = cursorY;
+    float col1X   = cx - 180.0f;
+    float col2X   = cx + 180.0f;
 
-                // Draw "OVER" in red right after "GAME "
-                DrawTextEx(tinyFont, "OVER", {goX + gameWordSize.x, goY}, 140, 4, {200, 20, 20, 255});   
+    Vector2 sLabel = MeasureTextEx(tinyFont, "SCORE", 24, 1);
+    DrawTextEx(tinyFont, "SCORE",
+        {col1X - sLabel.x / 2.0f, scoresY}, 24, 1, {200, 200, 200, 255});
+    Vector2 sVal = MeasureTextEx(tinyFont, TextFormat("%d", score), 52, 1);
+    DrawTextEx(tinyFont, TextFormat("%d", score),
+        {col1X - sVal.x / 2.0f, scoresY + 30}, 52, 1, {220, 40, 40, 255});
 
-                // ── TRY AGAIN? + YES / NO ──
-                float menuY = goY + goSize.y + 100;
+    Vector2 hsLabel = MeasureTextEx(tinyFont, "HIGH SCORE", 24, 1);
+    DrawTextEx(tinyFont, "HIGH SCORE",
+        {col2X - hsLabel.x / 2.0f, scoresY}, 24, 1, {170, 170, 204, 255});
+    Vector2 hsVal = MeasureTextEx(tinyFont, TextFormat("%d", highScore), 52, 1);
+    DrawTextEx(tinyFont, TextFormat("%d", highScore),
+        {col2X - hsVal.x / 2.0f, scoresY + 30}, 52, 1, {100, 180, 255, 255});
 
-                Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 60, 1);
-                DrawTextEx(tinyFont, "TRY AGAIN?",
-                 {screenWidth / 2.0f - trySize.x / 2.0f, menuY}, 60, 1, WHITE);
+    cursorY += scoresH;
 
-                menuY += 80;
+    // ── DIVIDER 2 ──
+    DrawRectangle(cx - 300, cursorY, 600, 2, {100, 100, 100, 180});
+    cursorY += divider2H;
 
-                // YES
-                static bool prevHoverPlay = false;
-                bool hoverPlay = CheckCollisionPointRec(GetMousePosition(),
-                    {screenWidth / 2.0f - 80, menuY, 160, 50});
-                if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
-                prevHoverPlay = hoverPlay;
+    // ── TRY AGAIN? ──
+    float menuY = cursorY;
+    Vector2 trySize = MeasureTextEx(tinyFont, "TRY AGAIN?", 55, 1);
+    DrawTextEx(tinyFont, "TRY AGAIN?",
+        {cx - trySize.x / 2.0f, menuY}, 55, 1, {220, 220, 220, 255});
 
-                Color yesCol = hoverPlay ? GREEN : WHITE;
-                Vector2 yesSize = MeasureTextEx(tinyFont, "YES", 60, 1);
-                DrawTextEx(tinyFont, hoverPlay ? "> YES" : "YES",
-                  {screenWidth / 2.0f - yesSize.x / 2.0f, menuY}, 60, 1, yesCol);
+    menuY += 65;
 
-                menuY += 75;
+    // ── YES ──
+    static bool prevHoverPlay = false;
+    bool hoverPlay = CheckCollisionPointRec(GetMousePosition(), {cx - 90, menuY - 5, 180, 55});
+    if (hoverPlay && !prevHoverPlay) PlaySound(hoverSound);
+    prevHoverPlay = hoverPlay;
+    if (hoverPlay) DrawRectangleRounded({cx - 90, menuY - 5, 180, 55}, 0.3f, 6, {0, 120, 0, 180});
+    Vector2 yesSize = MeasureTextEx(tinyFont, hoverPlay ? "> YES <" : "YES", 55, 1);
+    DrawTextEx(tinyFont, hoverPlay ? "> YES <" : "YES",
+        {cx - yesSize.x / 2.0f, menuY}, 55, 1, hoverPlay ? GREEN : WHITE);
 
-                // NO
-                static bool prevHoverMenu = false;
-                bool hoverMenu = CheckCollisionPointRec(GetMousePosition(),
-                    {screenWidth / 2.0f - 80, menuY, 160, 50});
-                if (hoverMenu && !prevHoverMenu) PlaySound(hoverSound);
-                prevHoverMenu = hoverMenu;
+    menuY += 65;
 
-                Color noCol = hoverMenu ? RED : WHITE;
-                Vector2 noSize = MeasureTextEx(tinyFont, "NO", 60, 1);
-                DrawTextEx(tinyFont, hoverMenu ? "> NO" : "NO", {screenWidth / 2.0f - noSize.x / 2.0f, menuY}, 60, 1, noCol);
+    // ── NO ──
+    static bool prevHoverMenu = false;
+    bool hoverMenu = CheckCollisionPointRec(GetMousePosition(), {cx - 90, menuY - 5, 180, 55});
+    if (hoverMenu && !prevHoverMenu) PlaySound(hoverSound);
+    prevHoverMenu = hoverMenu;
+    if (hoverMenu) DrawRectangleRounded({cx - 90, menuY - 5, 180, 55}, 0.3f, 6, {120, 0, 0, 180});
+    Vector2 noSize = MeasureTextEx(tinyFont, hoverMenu ? "> NO <" : "NO", 55, 1);
+    DrawTextEx(tinyFont, hoverMenu ? "> NO <" : "NO",
+        {cx - noSize.x / 2.0f, menuY}, 55, 1, hoverMenu ? RED : WHITE);
 
-                // ── INPUT ──
-                float btn2Y = goY + goSize.y + 30 + 46 + 38;
+    // ── INPUT ──
+    if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
+    {
+        StopMusicStream(gameOverMusic);
+        currentBg = &bgEasy;
+        SetMusicVolume(*currentBg, bgTargetVolume);
+        SeekMusicStream(*currentBg, 0.0f);
+        PlayMusicStream(*currentBg);
 
-                if (IsKeyPressed(KEY_ENTER) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverPlay))
-                {
-                    StopMusicStream(gameOverMusic);
-                    currentBg = &bgEasy;
-                    SetMusicVolume(*currentBg, bgTargetVolume);
-                    SeekMusicStream(*currentBg, 0.0f);
-                    PlayMusicStream(*currentBg);
-            
-                    // Reset all gameplay variables
-                    state = PLAYING;
-                    diff = EASY;
-                    lastDiff = EASY;
-                    hp = 3; 
-                    score = 0; 
-                    combo = 0;
-                    comboBroken = false;
-                    comboBrokenTimer = 0;
-                    comboTime = 0;
-                    items.clear();
-                    popEffects.clear();
-                    notifs.clear();
+        state = PLAYING; diff = EASY; lastDiff = EASY;
+        hp = 3; score = 0; combo = 0;
+        comboBroken = false; comboBrokenTimer = 0; comboTime = 0;
+        items.clear(); popEffects.clear(); notifs.clear();
+        player.x = (screenWidth - player.width) / 2;
+        player.y = screenHeight * 0.75f;
+        move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
+        gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
+        spawnTimer = 0; eventCooldown = initialCooldown; eventTimer = 0;
+        currentEvent = NONE; secondEvent = NONE;
+        lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
+        slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
+        shakeTime = 0; shakePower = 0; hitFlash = 0;
+        fogActive = false; fogAlpha = 0;
+        fallingInPit = false; pitCreated = false; pitSoundPlayed = false;
+        quakeActive = false; quakeTimer = 0;
+        pits.clear(); pitWidths.clear(); pitCenters.clear(); pitOpens.clear();
+        camera.rotation = 0; camera.zoom = 1.30f;
+        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+        invertedScreen = false; gameOverAnimTimer = 0.0f;
+        currentBgFrame = 0; bgFrameTimer = 0.0f;
+        bg1Triggered = false; bg2Triggered = false;
+        UnloadBg1TransitionVideo(); UnloadBg2TransitionVideo();
+        InitBg1TransitionVideo();   InitBg2TransitionVideo();
+    }
 
-                    player.x = (screenWidth - player.width) / 2;
-                    player.y = screenHeight * 0.75f;
-                    move = 1.0f;
-                    chiliBoost = 1.0f;
-                    eventBoost = 1.0f;
-                    gravity = 1800.0f; // Explicitly reset to Easy baseline
-                    velocityY = 0;
-                    velocityX = 0;
-                    isGrounded = true;
-    
-                    spawnTimer = 0;
-                    eventCooldown = initialCooldown; // Increased initial cooldown to prevent early events
-                    eventTimer = 0;
-                    currentEvent = NONE;
-                    secondEvent = NONE;
-                    lastEvent = NONE;
-                    secondLastEvent = NONE;
-                    eventWarningTimer = 0;
-            
-                    slowTimer = 0;
-                    speedBoostTimer = 0;
-                    medkitCooldown = 0;
-
-                    shakeTime = 0;
-                    shakePower = 0;
-                    hitFlash = 0;
-
-                    fogActive = false;
-                    fogAlpha = 0;
-                    
-                    fallingInPit = false;
-                    pitCreated = false;
-                    pitSoundPlayed = false;
-                    quakeActive = false;
-                    quakeTimer = 0;
-                    pits.clear();
-                    pitWidths.clear();
-                    pitCenters.clear();
-                    pitOpens.clear();
-
-                    camera.rotation = 0;
-                    camera.zoom = 1.30f;
-                    camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
-
-                    invertedScreen = false;
-                    gameOverAnimTimer = 0.0f;
-                    currentBgFrame = 0;
-                    bgFrameTimer = 0.0f;
-                    bg1Triggered = false;
-                    bg2Triggered = false;
-                    UnloadBg1TransitionVideo();
-                    UnloadBg2TransitionVideo();
-                    InitBg1TransitionVideo();
-                    InitBg2TransitionVideo();
-                }
-                if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
-                {
-                    StopMusicStream(gameOverMusic);
-                    state = MENU;
-                    diff = EASY;
-                    lastDiff = EASY;
-                    hp = 3; 
-                    score = 0; 
-                    combo = 0;
-                    comboBroken = false;
-                    comboBrokenTimer = 0;
-                    comboTime = 0;
-                    items.clear();
-                    popEffects.clear();
-                    notifs.clear();
-
-                    player.x = (screenWidth - player.width) / 2;
-                    player.y = screenHeight * 0.75f;
-                    move = 1.0f;
-                    chiliBoost = 1.0f;
-                    eventBoost = 1.0f;
-                    gravity = 1800.0f; // Explicitly reset to Easy baseline
-                    velocityY = 0;
-                    velocityX = 0;
-                    isGrounded = true;
-
-                    spawnTimer = 0;
-                    eventCooldown = initialCooldown; // Increased initial cooldown
-                    eventTimer = 0;
-                    currentEvent = NONE;
-                    secondEvent = NONE;
-                    lastEvent = NONE;
-                    secondLastEvent = NONE;
-                    eventWarningTimer = 0;
-
-                    slowTimer = 0;
-                    speedBoostTimer = 0;
-                    medkitCooldown = 0;
-
-                    shakeTime = 0;
-                    shakePower = 0;
-                    hitFlash = 0;
-
-                    fogActive = false;
-                    fogAlpha = 0;
-            
-                    fallingInPit = false;
-                    pitCreated = false;
-                    pitSoundPlayed = false;
-                    quakeActive = false;
-                    quakeTimer = 0;
-                    pits.clear();
-                    pitWidths.clear();
-                    pitCenters.clear();
-                    pitOpens.clear();
-
-                    camera.rotation = 0;
-                    camera.zoom = 1.30f;
-                    camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
-
-                    invertedScreen = false;
-                    gameOverAnimTimer = 0.0f;
-                    currentBgFrame = 0;
-                    bgFrameTimer = 0.0f;
-                    bg1Triggered = false;
-                    bg2Triggered = false;
-                    UnloadBg1TransitionVideo();
-                    UnloadBg2TransitionVideo();
-                    InitBg1TransitionVideo();
-                    InitBg2TransitionVideo();
-
-                    introMusic = LoadMusicStream("assets/sounds/intro.mp3");
-                    SetMusicVolume(introMusic, 0.5f);
-                    PlayMusicStream(introMusic);
-                }
-            }
+    if (IsKeyPressed(KEY_ESCAPE) || (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMenu))
+    {
+        StopMusicStream(gameOverMusic);
+        state = MENU; diff = EASY; lastDiff = EASY;
+        hp = 3; score = 0; combo = 0;
+        comboBroken = false; comboBrokenTimer = 0; comboTime = 0;
+        items.clear(); popEffects.clear(); notifs.clear();
+        player.x = (screenWidth - player.width) / 2;
+        player.y = screenHeight * 0.75f;
+        move = 1.0f; chiliBoost = 1.0f; eventBoost = 1.0f;
+        gravity = 1800.0f; velocityY = 0; velocityX = 0; isGrounded = true;
+        spawnTimer = 0; eventCooldown = initialCooldown; eventTimer = 0;
+        currentEvent = NONE; secondEvent = NONE;
+        lastEvent = NONE; secondLastEvent = NONE; eventWarningTimer = 0;
+        slowTimer = 0; speedBoostTimer = 0; medkitCooldown = 0;
+        shakeTime = 0; shakePower = 0; hitFlash = 0;
+        fogActive = false; fogAlpha = 0;
+        fallingInPit = false; pitCreated = false; pitSoundPlayed = false;
+        quakeActive = false; quakeTimer = 0;
+        pits.clear(); pitWidths.clear(); pitCenters.clear(); pitOpens.clear();
+        camera.rotation = 0; camera.zoom = 1.30f;
+        camera.target = { player.x + player.width / 2, player.y + player.height / 2 };
+        invertedScreen = false; gameOverAnimTimer = 0.0f;
+        currentBgFrame = 0; bgFrameTimer = 0.0f;
+        bg1Triggered = false; bg2Triggered = false;
+        UnloadBg1TransitionVideo(); UnloadBg2TransitionVideo();
+        InitBg1TransitionVideo();   InitBg2TransitionVideo();
+        introMusic = LoadMusicStream("assets/sounds/intro.mp3");
+        SetMusicVolume(introMusic, 0.5f);
+        PlayMusicStream(introMusic);
+    }
+}
         }
         EndDrawing();
     }
