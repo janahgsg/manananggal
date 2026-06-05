@@ -818,60 +818,6 @@ int main()
             // RESET lastMilestone if game restarts
             if (score == 0) lastMilestone = 0;
 
-
-            //TESTING EVENTS-------------------------------------
-            if (IsKeyPressed(KEY_A))
-            {
-                currentEvent = EARTHQUAKE;
-                secondEvent = NONE;
-
-                quakeActive = true;
-                quakeTimer = 0.0f;
-                eventTimer = 25.0f;
-            }
-
-            if (IsKeyPressed(KEY_E))
-            {
-                currentEvent = INVERTED_SCREEN;
-                secondEvent = NONE;
-
-                invertedScreen = true;
-
-                eventTimer = 25.0f;
-            }
-
-            // TESTING MEME POP-UP
-            if (IsKeyPressed(KEY_F)) {
-                if (!currentMeme.active && !memeTextures.empty()) {
-                    int index;
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
-
-                    currentMeme.tex = memeTextures[index];
-                    currentMeme.lastIndex = index;
-                    currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
-
-                    if (index < memeSounds.size()) {
-                        currentMeme.soundIndex = index;
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
-
-                    bool fromLeft = GetRandomValue(0, 1) == 0;
-                    if (fromLeft) {
-                        currentMeme.pos.x = -(float)screenWidth * 1.5f;
-                    } else {
-                        currentMeme.pos.x = (float)screenWidth * 1.5f;
-                        currentMeme.speed = -currentMeme.speed;
-                    }
-                    currentMeme.pos.y = 0;
-                    PushNotif(notifs, "TESTING MEME!", RED, 1.5f);
-                }
-            }
-
             bool overPit = false;
 
             for (auto &p : pits)
@@ -974,9 +920,9 @@ int main()
             if (currentEvent == SWAP_CONTROLS || secondEvent == SWAP_CONTROLS)
                  dir = -1;
                 
-            if (IsKeyDown(KEY_LEFT))
+            if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
                 velocityX -= accel * GetFrameTime() * chiliBoost * eventBoost * dir;
-            if (IsKeyDown(KEY_RIGHT))
+            if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
                 velocityX += accel * GetFrameTime() * chiliBoost * eventBoost * dir;
 
             player.x += velocityX * GetFrameTime();
@@ -1896,7 +1842,7 @@ int main()
 
          // PLAYER INPUT & ANIMATIONS-----------------------------
             // Common Jump Input
-            if (IsKeyPressed(KEY_UP) && isGrounded) {
+            if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && isGrounded) {
                 velocityY = jumpForce;
                 isGrounded = false;
                 if (diff != HARD) currentAnim = JUMP;
@@ -1907,8 +1853,8 @@ int main()
             }
 
             if (diff == HARD) {
-                if (IsKeyDown(KEY_RIGHT))       currentMananAnim = FLY_RIGHT;
-                else if (IsKeyDown(KEY_LEFT))   currentMananAnim = FLY_LEFT;
+                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))       currentMananAnim = FLY_RIGHT;
+                else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))   currentMananAnim = FLY_LEFT;
                 else                            currentMananAnim = FLY_FRONT;
 
                 pframeTimer += GetFrameTime();
@@ -1922,9 +1868,9 @@ int main()
                 // Determine anim state
                 if (!isGrounded) {
                     currentAnim = JUMP;
-                } else if (IsKeyDown(KEY_LEFT)) {
+                } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
                     currentAnim = WALK_LEFT;
-                } else if (IsKeyDown(KEY_RIGHT)) {
+                } else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
                     currentAnim = WALK_RIGHT;
                 } else {
                     currentAnim = IDLE;
@@ -2308,8 +2254,8 @@ int main()
 
             // NOTIF DRAW
             {
-                float startY = 90.0f;
-                float fontSize = 30.0f;
+                float startY = 100.0f;
+                float fontSize = 48.0f;
 
                 for (int i = 0; i < (int)notifs.size(); i++) {
                     auto& n = notifs[i];
@@ -2317,7 +2263,7 @@ int main()
 
                     Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
                     float tx = screenWidth / 2.0f - tSize.x / 2.0f;
-                    float ty = startY + i * 38.0f;
+                    float ty = startY + i * 55.0f;
 
                     // black pixel outline (8 directions)
                     Color outline = Fade(BLACK, alpha);
