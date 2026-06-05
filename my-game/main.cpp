@@ -2315,34 +2315,34 @@ int main()
             }
 
             // NOTIF DRAW
-{
-    float startY = 90.0f;
-    float fontSize = 30.0f;
+            {
+                float startY = 90.0f;
+                float fontSize = 30.0f;
 
-    for (int i = 0; i < (int)notifs.size(); i++) {
-        auto& n = notifs[i];
-        float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
+                for (int i = 0; i < (int)notifs.size(); i++) {
+                    auto& n = notifs[i];
+                    float alpha = n.timer < 0.3f ? n.timer / 0.3f : 1.0f;
 
-        Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
-        float tx = screenWidth / 2.0f - tSize.x / 2.0f;
-        float ty = startY + i * 38.0f;
+                    Vector2 tSize = MeasureTextEx(tinyFont, n.text.c_str(), fontSize, 0);
+                    float tx = screenWidth / 2.0f - tSize.x / 2.0f;
+                    float ty = startY + i * 38.0f;
 
-        // black pixel outline (8 directions)
-        Color outline = Fade(BLACK, alpha);
-        for (int ox = -2; ox <= 2; ox += 2) {
-            for (int oy = -2; oy <= 2; oy += 2) {
-                if (ox == 0 && oy == 0) continue;
-                DrawTextEx(tinyFont, n.text.c_str(), {tx + ox, ty + oy}, fontSize, 0, outline);
+                    // black pixel outline (8 directions)
+                    Color outline = Fade(BLACK, alpha);
+                    for (int ox = -2; ox <= 2; ox += 2) {
+                        for (int oy = -2; oy <= 2; oy += 2) {
+                            if (ox == 0 && oy == 0) continue;
+                            DrawTextEx(tinyFont, n.text.c_str(), {tx + ox, ty + oy}, fontSize, 0, outline);
+                        }
+                    }
+                    // drop shadow
+                    DrawTextEx(tinyFont, n.text.c_str(), {tx + 2, ty + 3}, fontSize, 0,
+                        Fade({40, 0, 0, 255}, alpha * 0.8f));
+                    // main colored text
+                    DrawTextEx(tinyFont, n.text.c_str(), {tx, ty}, fontSize, 0,
+                        Fade(n.color, alpha));
+                }
             }
-        }
-        // drop shadow
-        DrawTextEx(tinyFont, n.text.c_str(), {tx + 2, ty + 3}, fontSize, 0,
-            Fade({40, 0, 0, 255}, alpha * 0.8f));
-        // main colored text
-        DrawTextEx(tinyFont, n.text.c_str(), {tx, ty}, fontSize, 0,
-            Fade(n.color, alpha));
-    }
-}
             if (hitFlash > 0) DrawRectangle(0, 0, screenWidth, screenHeight, Fade(RED, hitFlash));
 
             // UI   
