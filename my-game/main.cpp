@@ -87,7 +87,9 @@ enum EventType
     MISFORTUNE,
     INVERTED_SCREEN,
     FOG_BLIND,
-    EARTHQUAKE
+    EARTHQUAKE,
+    SLIPPERY_ICE,
+    BAD_MAGNET
 };
 
 
@@ -165,6 +167,8 @@ string GetEventName(EventType e) {
     if (e == EARTHQUAKE)     return "EARTHQUAKE";
     if (e == LUCKY_PARTY)    return "JACKPOT";
     if (e == MISFORTUNE)     return "MISFORTUNE";
+    if (e == SLIPPERY_ICE)   return "SLIPPERY GROUND!";
+    if (e == BAD_MAGNET)     return "BAD MAGNET!";
     return "";
 }
 
@@ -804,7 +808,7 @@ int main()
 
             // movements 
             float accel = 2200.0f * move * baseMove;  // how fast player gains speed
-            float friction = 0.92f; // slows naturally
+            float friction = (currentEvent == SLIPPERY_ICE || secondEvent == SLIPPERY_ICE) ? 0.992f : 0.92f; // slows naturally
             float maxSpeed = 520.0f * move * baseMove * chiliBoost * eventBoost;
             // Gravity
             velocityY += gravity * GetFrameTime();
@@ -1192,6 +1196,20 @@ int main()
                     eventCooldown = 15.0f;
                     PushNotif(notifs, "DEBUG: CURSED FOG!", {200, 200, 200, 255}, eventTimer);
                 }
+                if (IsKeyPressed(KEY_S))
+                {
+                    currentEvent = SLIPPERY_ICE;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: SLIPPERY GROUND!", {150, 200, 255, 255}, eventTimer);
+                }
+                if (IsKeyPressed(KEY_B))
+                {
+                    currentEvent = BAD_MAGNET;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: BAD MAGNET!", {255, 100, 100, 255}, eventTimer);
+                }
 
                 eventCooldown -= GetFrameTime();
                 
@@ -1214,8 +1232,8 @@ int main()
                 if (diff == EASY)
                 {
                     // EASY MODE: Only Slowness and Swapped Controls
-                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS, SPEED_BOOST};
-                    EventType chosen = (EventType)easyEvents[rand() % 3];
+                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS, SPEED_BOOST, MISFORTUNE};
+                    EventType chosen = (EventType)easyEvents[rand() % 4];
 
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
@@ -1228,13 +1246,13 @@ int main()
                 }
                 else if (diff == MEDIUM)
                 {
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND, LOW_GRAVITY};
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND, LOW_GRAVITY, SLIPPERY_ICE};
                     
                     // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)mediumEvents[rand() % 9];
+                        chosen = (EventType)mediumEvents[rand() % 10];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
                     
@@ -1253,13 +1271,13 @@ int main()
 
                 else if (diff == HARD)
                 {
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, SLIPPERY_ICE, BAD_MAGNET};
 
                     // FAIRNESS: Same repeat-prevention for primary event
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)hardEvents[rand() % 8];
+                        chosen = (EventType)hardEvents[rand() % 10];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
 
@@ -1618,6 +1636,23 @@ int main()
                         ));
                         it.rect.x += dir.x * 500.0f * GetFrameTime();
                         it.rect.y += dir.y * 500.0f * GetFrameTime();
+                    }
+                }
+
+                // EVENT: BAD MAGNET (Pull bad items towards player)
+                bool isBad = (it.type == BOMB || it.type == POISON || it.type == POO || it.type == GARLIC || it.type == SALT || it.type == MUSHROOM);
+                if (isBad && (currentEvent == BAD_MAGNET || secondEvent == BAD_MAGNET)) {
+                    float dist = Vector2Distance(
+                        {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2},
+                        {player.x + player.width/2, player.y + player.height/2}
+                    );
+                    if (dist < 400.0f) {
+                        Vector2 dir = Vector2Normalize(Vector2Subtract(
+                            {player.x + player.width/2, player.y + player.height/2},
+                            {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
+                        ));
+                        it.rect.x += dir.x * 650.0f * GetFrameTime();
+                        it.rect.y += dir.y * 650.0f * GetFrameTime();
                     }
                 }
 
