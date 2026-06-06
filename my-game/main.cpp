@@ -1214,8 +1214,8 @@ int main()
                 if (diff == EASY)
                 {
                     // EASY MODE: Only Slowness and Swapped Controls
-                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS};
-                    EventType chosen = (EventType)easyEvents[rand() % 2];
+                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS, SPEED_BOOST};
+                    EventType chosen = (EventType)easyEvents[rand() % 3];
 
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
@@ -1228,13 +1228,13 @@ int main()
                 }
                 else if (diff == MEDIUM)
                 {
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND};
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND, LOW_GRAVITY};
                     
                     // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)mediumEvents[rand() % 8];
+                        chosen = (EventType)mediumEvents[rand() % 9];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
                     
@@ -1253,7 +1253,6 @@ int main()
 
                 else if (diff == HARD)
                 {
-                    // For Hard mode, LOW_GRAVITY is now a constant baseline, so removed from random events
                     int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
 
                     // FAIRNESS: Same repeat-prevention for primary event
