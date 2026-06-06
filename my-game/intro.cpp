@@ -516,9 +516,8 @@ void StopIntroMusic()
 // =====================================================
 static bool showInfo = false;
 static int infoPage = 1;
-static const int maxPages = 2;
-
-static Texture2D infoTextures[2];
+static const int maxPages = 3;
+static Texture2D infoTextures[3];
 static Texture2D playButtonTex;
 static Texture2D exitButtonTex;
 static Texture2D infoButtonTex;
@@ -580,6 +579,7 @@ void InitIntro()
 
     infoTextures[0] = LoadTexture("assets/images/info.png");
     infoTextures[1] = LoadTexture("assets/images/info2.png");
+    infoTextures[2] = LoadTexture("assets/images/info3.png");
 
     scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
     buttonClickSound = LoadSound("assets/sounds/button_click.mp3");
