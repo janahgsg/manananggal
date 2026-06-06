@@ -434,7 +434,7 @@ void UnloadIntroVideo()
      
          return false;
      }
-     
+
      void DrawStoryline()
      {
          if (storylineFinished || storylineFrames.empty()) return;

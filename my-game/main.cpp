@@ -17,7 +17,6 @@ enum GameState
     TITLE_LOGO,
     MENU,
     STORYLINE,
-    TRANSITION,
     PLAYING,
     TROLL_VIDEO,
     PAUSED,
