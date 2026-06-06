@@ -446,6 +446,7 @@ int main()
     float gameOverAnimTimer = 0.0f;
     float gameOverFlash = 0.0f;
     Sound gameOverSound = LoadSound("assets/sounds/game_over.wav"); // not final?
+    Sound transformSound = LoadSound("assets/sounds/transform.mp3"); 
     Sound pitSound = LoadSound("assets/sounds/pit_open.mp3");
     Sound uiClickSound = LoadSound("assets/sounds/button_click.mp3");
     Sound hoverSound = LoadSound("assets/sounds/hoverSound.mp3");
@@ -802,6 +803,7 @@ int main()
                          transFrame = 0;
                          transTimer = 0.0f;
                          PushNotif(notifs, "SOMETHING IS HAPPENING...", PURPLE, 3.0f);
+                         PlaySound(transformSound); 
                          
                          // Start Hard Music early!
                          if (currentBg != &bgHard) {
@@ -2872,6 +2874,7 @@ int main()
     UnloadSound(trollSound);
     UnloadSound(trollSound2);
     UnloadSound(trollSound3);
+    UnloadSound(transformSound);
     UnloadSound(goodItemSound);
     UnloadSound(badItemSound);
     UnloadSound(walkSound);
