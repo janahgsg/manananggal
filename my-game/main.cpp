@@ -112,6 +112,13 @@ enum MananAnim {
 PlayerAnim currentAnim = IDLE;
 MananAnim currentMananAnim = FLY_FRONT;
 
+// Human to Manananggal transition frames
+vector<Texture2D> transFrames;
+bool isTransforming = false;
+int transFrame = 0;
+float transTimer = 0.0f;
+float transFrameDelay = 0.12f; 
+
 
 int playerFrame = 0;
 float pframeTimer = 0.0f;
@@ -232,6 +239,9 @@ int main()
 
     // Load background frames
     for (int i = 1; i <= 100; i++) bgFrames.push_back(LoadTexture(TextFormat("assets/videos/bg/ezgif-frame-%03d.png", i)));
+
+    // Load transformation frames
+    for (int i = 1; i <= 12; i++) transFrames.push_back(LoadTexture(TextFormat("assets/videos/manananggalTrans/%d.png", i)));
 
     
     // MEME POP-UP
@@ -403,7 +413,7 @@ int main()
     bool showPauseMenu = false;
 
     // SCORE & HEALTH
-    int score = 0;
+    int score = 350;
     int highScore = 0;
     int hp = 3;
     //saved highScore
@@ -717,14 +727,57 @@ int main()
         // GAMEPLAY-----------------------------------------
         else if (state == PLAYING)
         {
-            Difficulty prevDiff = diff;
+            if (isTransforming)
+            {
+                transTimer += GetFrameTime();
+                if (transTimer >= transFrameDelay)
+                {
+                    transTimer = 0;
+                    transFrame++;
+                    if (transFrame >= (int)transFrames.size())
+                    {
+                        isTransforming = false;
+                        diff = HARD;
+                    }
+                }
+                // --- STEADY CINEMATIC ZOOM ---
+                camera.zoom = Lerp(camera.zoom, 2.2f, 1.2f * GetFrameTime());
+                
+                // Smoothly follow player
+                float wantedX = player.x + player.width/2;
+                float wantedY = player.y + player.height/2;
+                camera.target.x += (wantedX - camera.target.x) * 0.15f;
+                camera.target.y += (wantedY - camera.target.y) * 0.15f;
+                
+                // --- STRICT CLAMPING (Prevent Outerscreen) ---
+                float minX = (screenWidth / 2.0f) / camera.zoom;
+                float maxX = screenWidth - (screenWidth / 2.0f) / camera.zoom;
+                float minY = (screenHeight / 2.0f) / camera.zoom;
+                float maxY = screenHeight - (screenHeight / 2.0f) / camera.zoom;
 
-            if (score >= 400)
-                diff = HARD;
-            else if (score >= 100)
-                diff = MEDIUM;
+                camera.target.x = Clamp(camera.target.x, minX, maxX);
+                camera.target.y = Clamp(camera.target.y, minY, maxY);
+
+                camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
+            }
             else
-                diff = EASY;
+            {
+                Difficulty prevDiff = diff;
+
+                if (score >= 400) {
+                    if (diff == MEDIUM) {
+                         isTransforming = true;
+                         transFrame = 0;
+                         transTimer = 0.0f;
+                         PushNotif(notifs, "SOMETHING IS HAPPENING...", PURPLE, 3.0f);
+                    } else {
+                        diff = HARD;
+                    }
+                }
+                else if (score >= 100)
+                    diff = MEDIUM;
+                else
+                    diff = EASY;
 
             if (diff != prevDiff) {
                 if (diff > prevDiff) {
@@ -982,7 +1035,11 @@ int main()
             {
                 // Instant flip: 180 degrees (upside down) if event is active, otherwise 0
                 camera.rotation = invertedScreen ? 180.0f : 0.0f;
-                camera.zoom = 1.30f; // Keep zoom simple and fixed
+                
+                // Only lerp back to normal if we aren't transforming
+                if (!isTransforming) {
+                    camera.zoom = Lerp(camera.zoom, 1.30f, 2.0f * GetFrameTime());
+                }
 
                 // Camera follows player vertical position
                 camera.target.y = player.y + player.height / 2;
@@ -2053,6 +2110,7 @@ int main()
             }
         }
     }
+}
 
         if (state == GAMEOVER_ANIM)
         {
@@ -2192,7 +2250,17 @@ int main()
             {0,0}, 0.0f, WHITE
             );
             
-            Texture2D texToDraw; 
+            if (isTransforming) {
+                // Cinematic focus overlay (covers world but not player)
+                DrawRectangle(
+                    camera.target.x - screenWidth, 
+                    camera.target.y - screenHeight, 
+                    screenWidth * 2, screenHeight * 2, 
+                    Fade(BLACK, 0.5f)
+                );
+            }
+            
+            Texture2D texToDraw = playerTex; 
             
             float scale = 0.85f;
 
@@ -2210,7 +2278,12 @@ int main()
             if (currentAnim == JUMP && playerFrame > 4) playerFrame = 4;
             if (playerFrame >= 6) playerFrame = 0;
 
-            if (diff == EASY || diff == MEDIUM) {
+            if (isTransforming) {
+                if (transFrame < (int)transFrames.size()) {
+                    texToDraw = transFrames[transFrame];
+                }
+            }
+            else if (diff == EASY || diff == MEDIUM) {
 
             switch (currentAnim) {
                 case WALK_RIGHT: texToDraw = RwalkFrames[playerFrame]; break;
@@ -2287,17 +2360,6 @@ int main()
                 if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY) DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);                   
                 
-                // DICE/MUSHROOM LABELS
-                if (it.type == DICE || it.type == MUSHROOM) {
-                    const char* itemText = (it.type == DICE) ? "DICE" : "MUSHROOM";
-                    Vector2 textSize = MeasureTextEx(tinyFont, itemText, 24, 0);
-                    Vector2 textPos = {
-                        it.rect.x + it.rect.width/2 - textSize.x/2,
-                        it.rect.y + it.rect.height + 5
-                    };
-                    DrawTextEx(tinyFont, itemText, {textPos.x + 2, textPos.y + 2}, 24, 0, Fade(BLACK, 0.7f));
-                    DrawTextEx(tinyFont, itemText, textPos, 24, 0, (it.type == DICE) ? WHITE : MAGENTA);
-                }
             }
 
             // draw pop effects
@@ -2778,6 +2840,8 @@ int main()
     for (auto &t : videoFrames3) UnloadTexture(t);
 
     for (auto &t : bgFrames) UnloadTexture(t);
+
+    for (auto &t : transFrames) UnloadTexture(t);
 
     UnloadBg1TransitionVideo();
     UnloadBg2TransitionVideo();
