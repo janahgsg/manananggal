@@ -382,6 +382,117 @@ void UnloadIntroVideo()
     videoFrames.clear();
 }
 
+// STORYLINE IMPLEMENTATION
+     static std::vector<Texture2D> storylineFrames;
+     static int currentStoryFrame = 0;
+     static float storyFrameTimer = 0.0f;
+     static float storyFrameDuration = 5.0f; // 5 seconds per image
+     static float storyFadeDuration = 1.0f;  // 1 second fade in/out
+     static bool storylineFinished = false;
+     
+     void InitStoryline()
+     {
+         storylineFrames.clear();
+         for (int i = 1; i <= 20; i++)
+         {
+             std::string filename = "assets/videos/storyline/" + std::to_string(i) + ".png";
+             Texture2D tex = LoadTexture(filename.c_str());
+             if (tex.id != 0)
+             {
+                 SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+                 storylineFrames.push_back(tex);
+             }
+         }
+         currentStoryFrame = 0;
+         storyFrameTimer = 0.0f;
+         storylineFinished = false;
+     }
+     
+     bool UpdateStoryline()
+     {
+         if (storylineFinished || storylineFrames.empty()) return true;
+     
+         storyFrameTimer += GetFrameTime();
+     
+         // Skip functionality
+         if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
+         {
+             storylineFinished = true;
+             return true;
+         }
+     
+         if (storyFrameTimer >= storyFrameDuration)
+         {
+             storyFrameTimer = 0.0f;
+             currentStoryFrame++;
+             if (currentStoryFrame >= (int)storylineFrames.size())
+             {
+                 storylineFinished = true;
+                 return true;
+             }
+         }
+     
+         return false;
+     }
+
+     void DrawStoryline()
+     {
+         if (storylineFinished || storylineFrames.empty()) return;
+     
+         int sw = GetScreenWidth();
+         int sh = GetScreenHeight();
+     
+         float alpha = storyFrameTimer / storyFadeDuration;
+        if (alpha > 1.0f) alpha = 1.0f;
+        
+        ClearBackground(BLACK);
+        // Draw the previous frame as a background if we are currently fading in the new one
+        if (currentStoryFrame > 0 && alpha < 1.0f)
+         {
+            Texture2D prevFrame = storylineFrames[currentStoryFrame - 1];
+            DrawTexturePro(
+                prevFrame,
+                {0, 0, (float)prevFrame.width, (float)prevFrame.height},
+                {0, 0, (float)sw, (float)sh},
+                {0, 0}, 0.0f, WHITE
+            );
+         }
+     
+         Texture2D frame = storylineFrames[currentStoryFrame];
+         
+         DrawTexturePro(
+             frame,
+             {0, 0, (float)frame.width, (float)frame.height},
+             {0, 0, (float)sw, (float)sh},
+             {0, 0}, 0.0f,
+             Fade(WHITE, alpha)
+         );
+     
+         // Skip Button/Prompt
+        const char* skipText = "SKIP (SPACE)";
+         int fontSize = 30;
+         int textWidth = MeasureText(skipText, fontSize);
+         Rectangle skipBtn = {(float)sw - textWidth - 40, (float)sh - fontSize - 40, (float)textWidth + 20,
+            (float)fontSize + 20};
+            
+            bool hover = CheckCollisionPointRec(GetMousePosition(), skipBtn);
+            DrawRectangleRounded(skipBtn, 0.3f, 6, Fade(hover ? GRAY : DARKGRAY, 0.6f));
+            DrawText(skipText, skipBtn.x + 10, skipBtn.y + 10, fontSize, WHITE);
+            if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                storylineFinished = true;
+            }
+     }
+     
+     void UnloadStoryline()
+     {
+         for (auto &tex : storylineFrames)
+         {
+             UnloadTexture(tex);
+         }
+         storylineFrames.clear();
+     }
+
 void InitIntroMusic()
 {
     introMusic = LoadMusicStream("assets/audio/intro.mp3");

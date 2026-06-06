@@ -1,4 +1,4 @@
-#include "intro.h" //.
+#include "intro.h" 
 #include "raylib.h"
 #include <vector>
 #include <cstdlib>
@@ -17,7 +17,6 @@ enum GameState
     TITLE_LOGO,
     MENU,
     STORYLINE,
-    TRANSITION,
     PLAYING,
     TROLL_VIDEO,
     PAUSED,
@@ -88,7 +87,9 @@ enum EventType
     MISFORTUNE,
     INVERTED_SCREEN,
     FOG_BLIND,
-    EARTHQUAKE
+    EARTHQUAKE,
+    SLIPPERY_ICE,
+    BAD_MAGNET
 };
 
 
@@ -166,6 +167,8 @@ string GetEventName(EventType e) {
     if (e == EARTHQUAKE)     return "EARTHQUAKE";
     if (e == LUCKY_PARTY)    return "JACKPOT";
     if (e == MISFORTUNE)     return "MISFORTUNE";
+    if (e == SLIPPERY_ICE)   return "SLIPPERY GROUND!";
+    if (e == BAD_MAGNET)     return "BAD MAGNET!";
     return "";
 }
 
@@ -177,7 +180,7 @@ int main()
     InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
-    Sound goodItemSound = LoadSound("assets/sounds/good_item2.mp3");
+    Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
     Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
 
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
@@ -565,15 +568,8 @@ int main()
 
     if (action == 1) // Play
     {
-        StopMusicStream(introMusic);
-        UnloadMusicStream(introMusic);
-
-         if (currentBg) {
-        SetMusicVolume(*currentBg, bgTargetVolume);
-        PlayMusicStream(*currentBg);
-    }
-
-    state = PLAYING;  // skip transition directly
+        InitStoryline();
+        state = STORYLINE;
 }
     else if (action == 2) // Exit
     {
@@ -590,9 +586,22 @@ int main()
 }
 
          else if (state == STORYLINE) {
-            //WORKING
-
+            UpdateMusicStream(introMusic);
+             bool done = UpdateStoryline();
+             
+             if (done) {
+                 UnloadStoryline();
+                 StopMusicStream(introMusic);
+                 UnloadMusicStream(introMusic);
+                
+                 if (currentBg) {
+                SetMusicVolume(*currentBg, bgTargetVolume);
+                PlayMusicStream(*currentBg);
+            }
             state = PLAYING;
+        }
+
+            
          }
 
 
@@ -799,7 +808,7 @@ int main()
 
             // movements 
             float accel = 2200.0f * move * baseMove;  // how fast player gains speed
-            float friction = 0.92f; // slows naturally
+            float friction = (currentEvent == SLIPPERY_ICE || secondEvent == SLIPPERY_ICE) ? 0.992f : 0.92f; // slows naturally
             float maxSpeed = 520.0f * move * baseMove * chiliBoost * eventBoost;
             // Gravity
             velocityY += gravity * GetFrameTime();
@@ -1087,12 +1096,12 @@ int main()
 
                     // 1. ITEM SELECTION LOGIC (Moved up to determine size)
                     if (currentEvent == LUCKY_PARTY) {
-                        int goodPool[] = {BABY, HEART, BLOOD, ATAY, DICE, CHILI};
-                        it.type = goodPool[rand() % 6];
+                        int goodPool[] = {BABY, HEART, BLOOD, ATAY, BABY, HEART, BLOOD, ATAY, DICE, CHILI};
+                        it.type = goodPool[rand() % 10];
                     }
                     else if (currentEvent == MISFORTUNE) {
-                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, BOMB, POISON};
-                        it.type = badPool[rand() % 9];
+                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, TROLLFACE, BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, BOMB, POISON};
+                        it.type = badPool[rand() % 15];
                     }
                     else {
                         // Priority: Medkit if hp is low
@@ -1102,7 +1111,7 @@ int main()
                         }
                         else if (hp < 3 && rand() % 100 < 5) it.type = BANDAGE;
                         else if (rand() % 100 < 3) it.type = TROLLFACE;
-                        else if (rand() % 100 < 2) it.type = DICE; 
+                        else if (rand() % 100 < 1) it.type = DICE; 
                         else if (diff == EASY) {
                             int pool[] = {POO, GARLIC, BABY, BLOOD, BABY, ATAY};
                             it.type = pool[rand() % 6];
@@ -1113,8 +1122,8 @@ int main()
                             if (rand() % 100 < 12) it.isIllusion = true; 
                         }
                         else { // HARD
-                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, MUSHROOM, DICE};
-                            it.type = pool[rand() % 10];
+                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, BABY, BLOOD, ATAY, POO, GARLIC, MUSHROOM, DICE};
+                            it.type = pool[rand() % 15];
                             if (rand() % 100 < 22) it.isIllusion = true; 
                         }
                     }
@@ -1179,6 +1188,29 @@ int main()
             // countdown before next event
             if (currentEvent == NONE)
             {
+                // DEBUG TRIGGER: Press F to force Fog event
+                if (IsKeyPressed(KEY_F))
+                {
+                    currentEvent = FOG_BLIND;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: CURSED FOG!", {200, 200, 200, 255}, eventTimer);
+                }
+                if (IsKeyPressed(KEY_S))
+                {
+                    currentEvent = SLIPPERY_ICE;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: SLIPPERY GROUND!", {150, 200, 255, 255}, eventTimer);
+                }
+                if (IsKeyPressed(KEY_B))
+                {
+                    currentEvent = BAD_MAGNET;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: BAD MAGNET!", {255, 100, 100, 255}, eventTimer);
+                }
+
                 eventCooldown -= GetFrameTime();
                 
                 // Show a warning when the event is about to start (3 seconds before)
@@ -1200,8 +1232,8 @@ int main()
                 if (diff == EASY)
                 {
                     // EASY MODE: Only Slowness and Swapped Controls
-                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS};
-                    EventType chosen = (EventType)easyEvents[rand() % 2];
+                    int easyEvents[] = {SLOW_BOOST, SWAP_CONTROLS, SPEED_BOOST, MISFORTUNE};
+                    EventType chosen = (EventType)easyEvents[rand() % 4];
 
                     currentEvent = chosen;
                     secondLastEvent = lastEvent;
@@ -1214,13 +1246,13 @@ int main()
                 }
                 else if (diff == MEDIUM)
                 {
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND, LOW_GRAVITY, SLIPPERY_ICE};
                     
                     // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)mediumEvents[rand() % 7];
+                        chosen = (EventType)mediumEvents[rand() % 10];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
                     
@@ -1231,19 +1263,38 @@ int main()
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
 
-                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
+                    if (currentEvent == FOG_BLIND)
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
+                    else
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
+
+                    // 30% chance for a second event in Medium
+                    if (rand() % 100 < 30)
+                    {
+                        secondEvent = (EventType)mediumEvents[rand() % 10];
+                        while (secondEvent == currentEvent || 
+                               (currentEvent == MISFORTUNE && secondEvent == LUCKY_PARTY) ||
+                               (currentEvent == LUCKY_PARTY && secondEvent == MISFORTUNE) ||
+                               (currentEvent == SPEED_BOOST && secondEvent == SLOW_BOOST) ||
+                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST) ||
+                               (currentEvent == FOG_BLIND && secondEvent == EARTHQUAKE) ||
+                               (currentEvent == EARTHQUAKE && secondEvent == FOG_BLIND))
+                        {
+                            secondEvent = (EventType)mediumEvents[rand() % 10];
+                        }
+                        PushNotif(notifs, GetEventName(secondEvent) + " TOO!", {255, 170, 34, 255}, eventTimer);
+                    }
                 }
 
                 else if (diff == HARD)
                 {
-                    // For Hard mode, LOW_GRAVITY is now a constant baseline, so removed from random events
-                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    int hardEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, FOG_BLIND, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, SLIPPERY_ICE, BAD_MAGNET};
 
                     // FAIRNESS: Same repeat-prevention for primary event
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)hardEvents[rand() % 8];
+                        chosen = (EventType)hardEvents[rand() % 10];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
 
@@ -1276,17 +1327,20 @@ int main()
                     else
                         PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
-                    if (rand() % 100 < 40)
+                    // 80% chance for a second event in Hard
+                    if (rand() % 100 < 80)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 8];
+                        secondEvent = (EventType)hardEvents[rand() % 10];
                         // prevent same event twice or contradicting events
                         while (secondEvent == currentEvent || 
                                (currentEvent == MISFORTUNE && secondEvent == LUCKY_PARTY) ||
                                (currentEvent == LUCKY_PARTY && secondEvent == MISFORTUNE) ||
                                (currentEvent == SPEED_BOOST && secondEvent == SLOW_BOOST) ||
-                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST))
+                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST) ||
+                               (currentEvent == FOG_BLIND && secondEvent == EARTHQUAKE) ||
+                               (currentEvent == EARTHQUAKE && secondEvent == FOG_BLIND))
                         {
-                            secondEvent = (EventType)hardEvents[rand() % 8];
+                            secondEvent = (EventType)hardEvents[rand() % 10];
                         }
                         
                         // Notify about the second event too!
@@ -1327,8 +1381,7 @@ int main()
                 ApplyEvent(secondEvent);
 
                 // event ended
-                if (eventTimer <= 0)
-                {
+                if (eventTimer <= 0) {
 
                     currentEvent = NONE;
                     secondEvent = NONE;
@@ -1361,7 +1414,7 @@ int main()
                 if (eventTimer > fadeStart)
                 {
                     // smooth fade in
-                    fogAlpha = Lerp(fogAlpha, 0.55f, 1.5f * GetFrameTime());
+                    fogAlpha = Lerp(fogAlpha, 0.65f, 1.2f * GetFrameTime());
                 }
                 else
                 {
@@ -1597,6 +1650,23 @@ int main()
                     );
                     if (dist < 180.0f) {
                         // Pull towards player
+                        Vector2 dir = Vector2Normalize(Vector2Subtract(
+                            {player.x + player.width/2, player.y + player.height/2},
+                            {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
+                        ));
+                        it.rect.x += dir.x * 500.0f * GetFrameTime();
+                        it.rect.y += dir.y * 500.0f * GetFrameTime();
+                    }
+                }
+
+                // EVENT: BAD MAGNET (Pull bad items towards player)
+                bool isBad = (it.type == BOMB || it.type == POISON || it.type == POO || it.type == GARLIC || it.type == SALT || it.type == MUSHROOM);
+                if (isBad && (currentEvent == BAD_MAGNET || secondEvent == BAD_MAGNET)) {
+                    float dist = Vector2Distance(
+                        {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2},
+                        {player.x + player.width/2, player.y + player.height/2}
+                    );
+                    if (dist < 200.0f) {
                         Vector2 dir = Vector2Normalize(Vector2Subtract(
                             {player.x + player.width/2, player.y + player.height/2},
                             {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
@@ -1993,6 +2063,13 @@ int main()
             continue;
         }
 
+        if (state == STORYLINE)
+        {
+            DrawStoryline();
+            EndDrawing();
+            continue;
+        }
+
        if (state == TROLL_VIDEO)
         {
             ClearBackground(BLACK);
@@ -2184,6 +2261,18 @@ int main()
                 if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY) DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);                   
+                
+                // DICE/MUSHROOM LABELS
+                if (it.type == DICE || it.type == MUSHROOM) {
+                    const char* itemText = (it.type == DICE) ? "DICE" : "MUSHROOM";
+                    Vector2 textSize = MeasureTextEx(tinyFont, itemText, 24, 0);
+                    Vector2 textPos = {
+                        it.rect.x + it.rect.width/2 - textSize.x/2,
+                        it.rect.y + it.rect.height + 5
+                    };
+                    DrawTextEx(tinyFont, itemText, {textPos.x + 2, textPos.y + 2}, 24, 0, Fade(BLACK, 0.7f));
+                    DrawTextEx(tinyFont, itemText, textPos, 24, 0, (it.type == DICE) ? WHITE : MAGENTA);
+                }
             }
 
             // draw pop effects
@@ -2215,14 +2304,14 @@ int main()
             // TEXTURE OF FOG EFFECT
             if(fogActive && fogAlpha > 0){
 
-                float camLeft  = camera.target.x - screenWidth / (2 * camera.zoom);
-                float camRight = camera.target.x + screenWidth / (2 * camera.zoom);
+                float camLeft   = camera.target.x - screenWidth / (2 * camera.zoom);
+                float camRight  = camera.target.x + screenWidth / (2 * camera.zoom);
+                float camTop    = camera.target.y - screenHeight / (2 * camera.zoom);
+                float camBottom = camera.target.y + screenHeight / (2 * camera.zoom);
             
-                for(int row = 0; row < 6; row++){
+                for(float y = camTop - 300; y < camBottom + 300; y += 180){
             
                     for(float x = camLeft - 300; x < camRight + 300; x += 240){
-            
-                        float y = row * 160;
             
                         DrawCircleGradient(
                             Vector2{x, y},
@@ -2324,44 +2413,6 @@ int main()
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
                 CheckCollisionPointRec(GetMousePosition(), pauseBtn)) {
                 state = PAUSED;
-            }
-
-            // --- MEME TESTING BUTTON (below pause button) ---
-            Rectangle memeBtn = {10, 150, 44, 44};
-            bool hoverMeme = CheckCollisionPointRec(GetMousePosition(), memeBtn);
-            DrawRectangleRounded(memeBtn, 0.2f, 6,
-                hoverMeme ? Color{255, 0, 0, 220} : Color{150, 0, 0, 180});
-            DrawTextEx(tinyFont, "F", {memeBtn.x + 15, memeBtn.y + 8}, 32, 0, WHITE);
-
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && hoverMeme) {
-                if (!currentMeme.active && !memeTextures.empty()) {
-                    int index;
-                    do {
-                        index = GetRandomValue(0, memeTextures.size() - 1);
-                    } while (index == currentMeme.lastIndex && memeTextures.size() > 1);
-
-                    currentMeme.tex = memeTextures[index];
-                    currentMeme.lastIndex = index;
-                    currentMeme.active = true;
-                    currentMeme.speed = (float)GetRandomValue(2200, 3200);
-
-                    if (index < memeSounds.size()) {
-                        currentMeme.soundIndex = index;
-                        PlaySound(memeSounds[currentMeme.soundIndex]);
-                    } else {
-                        currentMeme.soundIndex = -1;
-                    }
-
-                    bool fromLeft = GetRandomValue(0, 1) == 0;
-                    if (fromLeft) {
-                        currentMeme.pos.x = -(float)screenWidth * 1.5f;
-                    } else {
-                        currentMeme.pos.x = (float)screenWidth * 1.5f;
-                        currentMeme.speed = -currentMeme.speed;
-                    }
-                    currentMeme.pos.y = 0;
-                    PushNotif(notifs, "TESTING MEME!", RED, 1.5f);
-                }
             }
 
             // === DIFFICULTY BADGE ===
