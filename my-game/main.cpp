@@ -711,6 +711,38 @@ int main()
         // GAMEPLAY-----------------------------------------
         else if (state == PLAYING)
         {
+            // --- Music update + crossfade handling (Always active in PLAYING) ---
+            if (isCrossfading && currentBg && nextBg)
+            {
+                crossfadeTimer += GetFrameTime();
+                float t = crossfadeTimer / crossfadeDuration;
+                if (t > 1.0f) t = 1.0f;
+
+                float volOut = Lerp(bgTargetVolume, 0.0f, t);
+                float volIn  = Lerp(0.0f, bgTargetVolume, t);
+
+                SetMusicVolume(*currentBg, volOut);
+                SetMusicVolume(*nextBg, volIn);
+
+                UpdateMusicStream(*currentBg);
+                UpdateMusicStream(*nextBg);
+
+                if (t >= 1.0f)
+                {
+                    StopMusicStream(*currentBg);
+                    SetMusicVolume(*nextBg, bgTargetVolume);
+
+                    currentBg = nextBg;
+                    nextBg = nullptr;
+                    isCrossfading = false;
+                    crossfadeTimer = 0.0f;
+                }
+            }
+            else
+            {
+                if (currentBg) UpdateMusicStream(*currentBg);
+            }
+
             if (isTransforming)
             {
                 transTimer += GetFrameTime();
@@ -754,6 +786,16 @@ int main()
                          transFrame = 0;
                          transTimer = 0.0f;
                          PushNotif(notifs, "SOMETHING IS HAPPENING...", PURPLE, 3.0f);
+                         
+                         // Start Hard Music early!
+                         if (currentBg != &bgHard) {
+                            nextBg = &bgHard;
+                            isCrossfading = true;
+                            crossfadeTimer = 0.0f;
+                            SetMusicVolume(*nextBg, 0.0f);
+                            SeekMusicStream(*nextBg, 1.0f * 60.0f + 10.0f);
+                            PlayMusicStream(*nextBg);
+                         }
                     } else {
                         diff = HARD;
                     }
@@ -771,39 +813,7 @@ int main()
                     PushNotif(notifs, diff == MEDIUM ? "LEVEL: MEDIUM" : "LEVEL: HARD", diff == MEDIUM ? YELLOW : RED, 3.0f);
                 }
                 lastDiff = diff; 
-                gravity = (diff == HARD) ? 700.0f : 1800.0f;
-            }
-
-            // --- Music update + crossfade handling ---
-            if (isCrossfading && currentBg && nextBg)
-            {
-                crossfadeTimer += GetFrameTime();
-                float t = crossfadeTimer / crossfadeDuration;
-                if (t > 1.0f) t = 1.0f;
-
-                float volOut = Lerp(bgTargetVolume, 0.0f, t);
-                float volIn  = Lerp(0.0f, bgTargetVolume, t);
-
-                SetMusicVolume(*currentBg, volOut);
-                SetMusicVolume(*nextBg, volIn);
-
-                UpdateMusicStream(*currentBg);
-                UpdateMusicStream(*nextBg);
-
-                if (t >= 1.0f)
-                {
-                    StopMusicStream(*currentBg);
-                    SetMusicVolume(*nextBg, bgTargetVolume);
-
-                    currentBg = nextBg;
-                    nextBg = nullptr;
-                    isCrossfading = false;
-                    crossfadeTimer = 0.0f;
-                }
-            }
-            else
-            {
-                if (currentBg) UpdateMusicStream(*currentBg);
+                gravity = 1800.0f; // Reset to standard gravity baseline
             }
 
             if (diff != prevDiff)
@@ -813,7 +823,7 @@ int main()
                 else if (diff == MEDIUM) chosen = &bgMedium;
                 else /* HARD */      chosen = &bgHard;
 
-                if (chosen != nullptr && chosen != currentBg)
+                if (chosen != nullptr && chosen != currentBg && chosen != nextBg)
                 {
                     nextBg = chosen;
                     isCrossfading = true;
