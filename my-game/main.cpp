@@ -2488,10 +2488,11 @@ int main()
                 DrawTextEx(tinyFont, mileText, {screenWidth / 2.0f - mileSize.x / 2.0f, screenHeight / 2.0f - 100}, 80, 2, Fade(GOLD, alpha));
             }
 
-            // CHAOS LEVEL UI 
-            DrawRectangle(screenWidth - 220, 20, 200, 25, Fade(BLACK, 0.4f));
-            DrawRectangle(screenWidth - 215, 25, (int)(190 * chaosLevel), 15, ColorLerp(GREEN, RED, chaosLevel));
-            DrawTextEx(tinyFont, "CHAOS LEVEL", {(float)(screenWidth - 215), 50.0f}, 20, 0, RED);
+            
+            // CHAOS LEVEL UI (bigger)
+            DrawRectangle(screenWidth - 320, 20, 300, 38, Fade(BLACK, 0.55f));
+            DrawRectangle(screenWidth - 314, 26, (int)(288 * chaosLevel), 26, ColorLerp(GREEN, RED, chaosLevel));
+            DrawTextEx(tinyFont, "CHAOS LEVEL", {(float)(screenWidth - 314), 58.0f}, 30, 0, Fade(WHITE, 0.8f));
 
             //health
             float hpScale = 0.1f; 
@@ -2534,17 +2535,17 @@ int main()
                     GetTime() * (diff == HARD ? 5.0f : diff == MEDIUM ? 3.5f : 2.0f)
                 ));
 
-                Vector2 labelSize = MeasureTextEx(tinyFont, diffLabel, 30, 0);
-                float badgeW = labelSize.x + 20;
-                float badgeH = 38;
+                Vector2 labelSize = MeasureTextEx(tinyFont, diffLabel, 48, 0);
+                float badgeW = labelSize.x + 30;
+                float badgeH = 58;
                 float badgeX = screenWidth - badgeW - 14;
-                float badgeY = 75;
+                float badgeY = 95;
 
                 DrawRectangle((int)badgeX, (int)badgeY, (int)badgeW, (int)badgeH, Color{0, 0, 0, 200});
                 DrawRectangleLinesEx({ badgeX, badgeY, badgeW, badgeH }, 2, Fade(diffColor, pulse));
                 DrawTextEx(tinyFont, diffLabel,
-                    { badgeX + 10, badgeY + (badgeH - labelSize.y) / 2 },
-                    30, 0, Fade(diffColor, pulse));
+                    { badgeX + 15, badgeY + (badgeH - labelSize.y) / 2 },
+                    48, 0, Fade(diffColor, pulse));
             }
 
             //effect when the player fell into the pit
