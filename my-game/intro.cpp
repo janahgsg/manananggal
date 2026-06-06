@@ -747,12 +747,18 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
     {
         DrawRectangle(0,0,screenWidth,screenHeight, Fade(BLACK,0.85f));
 
-        float overlayW = screenWidth * 0.8f;
-        float overlayH = screenHeight * 0.75f;
+        Texture2D currentInfo = infoTextures[infoPage-1];
+        float maxW = screenWidth * 0.8f;
+        float maxH = screenHeight * 0.75f;
+        
+        float scale = fminf(maxW / currentInfo.width, maxH / currentInfo.height);
+        float overlayW = currentInfo.width * scale;
+        float overlayH = currentInfo.height * scale;
+
         Rectangle infoRect = { screenWidth/2.0f - overlayW/2.0f, screenHeight/2.0f - overlayH/2.0f, overlayW, overlayH };
 
-        DrawTexturePro(infoTextures[infoPage-1],
-                       {0,0,(float)infoTextures[infoPage-1].width,(float)infoTextures[infoPage-1].height},
+        DrawTexturePro(currentInfo,
+                       {0,0,(float)currentInfo.width,(float)currentInfo.height},
                        infoRect, {0,0}, 0.0f, WHITE);
 
         DrawButton(closeButtonTex, introButtons.close, &hClose);
