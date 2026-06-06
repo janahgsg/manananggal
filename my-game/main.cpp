@@ -176,7 +176,7 @@ int main()
     InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
 
-    Sound goodItemSound = LoadSound("assets/sounds/good_item2.mp3");
+    Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
     Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
 
     Sound walkSound = LoadSound("assets/sounds/walk.mp3");
@@ -1092,12 +1092,12 @@ int main()
 
                     // 1. ITEM SELECTION LOGIC (Moved up to determine size)
                     if (currentEvent == LUCKY_PARTY) {
-                        int goodPool[] = {BABY, HEART, BLOOD, ATAY, DICE, CHILI};
-                        it.type = goodPool[rand() % 6];
+                        int goodPool[] = {BABY, HEART, BLOOD, ATAY, BABY, HEART, BLOOD, ATAY, DICE, CHILI};
+                        it.type = goodPool[rand() % 10];
                     }
                     else if (currentEvent == MISFORTUNE) {
-                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, BOMB, POISON};
-                        it.type = badPool[rand() % 9];
+                        int badPool[] = {BOMB, POISON, POO, GARLIC, SALT, TROLLFACE, BOMB, POISON, POO, GARLIC, SALT, MUSHROOM, TROLLFACE, BOMB, POISON};
+                        it.type = badPool[rand() % 15];
                     }
                     else {
                         // Priority: Medkit if hp is low
@@ -1107,7 +1107,7 @@ int main()
                         }
                         else if (hp < 3 && rand() % 100 < 5) it.type = BANDAGE;
                         else if (rand() % 100 < 3) it.type = TROLLFACE;
-                        else if (rand() % 100 < 2) it.type = DICE; 
+                        else if (rand() % 100 < 1) it.type = DICE; 
                         else if (diff == EASY) {
                             int pool[] = {POO, GARLIC, BABY, BLOOD, BABY, ATAY};
                             it.type = pool[rand() % 6];
@@ -1118,8 +1118,8 @@ int main()
                             if (rand() % 100 < 12) it.isIllusion = true; 
                         }
                         else { // HARD
-                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, MUSHROOM, DICE};
-                            it.type = pool[rand() % 10];
+                            int pool[] = {POO, GARLIC, BABY, BLOOD, BOMB, POISON, ATAY, HEART, BABY, BLOOD, ATAY, POO, GARLIC, MUSHROOM, DICE};
+                            it.type = pool[rand() % 15];
                             if (rand() % 100 < 22) it.isIllusion = true; 
                         }
                     }
@@ -1184,6 +1184,15 @@ int main()
             // countdown before next event
             if (currentEvent == NONE)
             {
+                // DEBUG TRIGGER: Press F to force Fog event
+                if (IsKeyPressed(KEY_F))
+                {
+                    currentEvent = FOG_BLIND;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: CURSED FOG!", {200, 200, 200, 255}, eventTimer);
+                }
+
                 eventCooldown -= GetFrameTime();
                 
                 // Show a warning when the event is about to start (3 seconds before)
@@ -1219,13 +1228,13 @@ int main()
                 }
                 else if (diff == MEDIUM)
                 {
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE};
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND};
                     
                     // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)mediumEvents[rand() % 7];
+                        chosen = (EventType)mediumEvents[rand() % 8];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
                     
@@ -1236,7 +1245,10 @@ int main()
                     eventTimer = 18.0f;
                     eventCooldown = 15.0f;
 
-                    PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
+                    if (currentEvent == FOG_BLIND)
+                        PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
+                    else
+                        PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
                 }
 
                 else if (diff == HARD)
@@ -1365,7 +1377,7 @@ int main()
                 if (eventTimer > fadeStart)
                 {
                     // smooth fade in
-                    fogAlpha = Lerp(fogAlpha, 0.55f, 1.5f * GetFrameTime());
+                    fogAlpha = Lerp(fogAlpha, 0.65f, 1.2f * GetFrameTime());
                 }
                 else
                 {
@@ -2195,6 +2207,18 @@ int main()
                 if (it.type == POISON) DrawTexturePro(poisonTex, {0, 0, (float)poisonTex.width, (float)poisonTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == SALT) DrawTexturePro(saltTex, {0, 0, (float)saltTex.width, (float)saltTex.height}, smallRect, {0, 0}, 0.0f, col);
                 if (it.type == ATAY) DrawTexturePro(atayTex, {0, 0, (float)atayTex.width, (float)atayTex.height}, smallRect, {0, 0}, 0.0f, col);                   
+                
+                // DICE/MUSHROOM LABELS
+                if (it.type == DICE || it.type == MUSHROOM) {
+                    const char* itemText = (it.type == DICE) ? "DICE" : "MUSHROOM";
+                    Vector2 textSize = MeasureTextEx(tinyFont, itemText, 24, 0);
+                    Vector2 textPos = {
+                        it.rect.x + it.rect.width/2 - textSize.x/2,
+                        it.rect.y + it.rect.height + 5
+                    };
+                    DrawTextEx(tinyFont, itemText, {textPos.x + 2, textPos.y + 2}, 24, 0, Fade(BLACK, 0.7f));
+                    DrawTextEx(tinyFont, itemText, textPos, 24, 0, (it.type == DICE) ? WHITE : MAGENTA);
+                }
             }
 
             // draw pop effects
@@ -2226,14 +2250,14 @@ int main()
             // TEXTURE OF FOG EFFECT
             if(fogActive && fogAlpha > 0){
 
-                float camLeft  = camera.target.x - screenWidth / (2 * camera.zoom);
-                float camRight = camera.target.x + screenWidth / (2 * camera.zoom);
+                float camLeft   = camera.target.x - screenWidth / (2 * camera.zoom);
+                float camRight  = camera.target.x + screenWidth / (2 * camera.zoom);
+                float camTop    = camera.target.y - screenHeight / (2 * camera.zoom);
+                float camBottom = camera.target.y + screenHeight / (2 * camera.zoom);
             
-                for(int row = 0; row < 6; row++){
+                for(float y = camTop - 300; y < camBottom + 300; y += 180){
             
                     for(float x = camLeft - 300; x < camRight + 300; x += 240){
-            
-                        float y = row * 160;
             
                         DrawCircleGradient(
                             Vector2{x, y},
