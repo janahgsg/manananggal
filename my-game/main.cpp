@@ -120,6 +120,9 @@ float pframeDelay = 0.15f;
 
 // stores every frame (Texture2D frame1 and so on)
 vector<Texture2D> videoFrames;
+vector<Texture2D> videoFrames2;
+vector<Texture2D> videoFrames3;
+int activeTrollVideo = 0; // which video is playing: 0, 1, or 2
 int currentFrame = 0;
 float frameTimer = 0;
 
@@ -130,6 +133,8 @@ float bgFrameTimer = 0.0f;
 float bgFrameDelay = 0.05f;
 
 Sound trollSound;
+Sound trollSound2;
+Sound trollSound3;
 Music bgMusic;
 
 // Global Event History to prevent repeated events
@@ -179,6 +184,8 @@ int main()
 
     InitAudioDevice();
     trollSound = LoadSound("assets/sounds/trollFace.mp3");
+    trollSound2 = LoadSound("assets/sounds/trollface_02.mp3");
+    trollSound3 = LoadSound("assets/sounds/trollface_03.mp3");
 
     Sound goodItemSound = LoadSound("assets/sounds/good_item.mp3");
     Sound badItemSound  = LoadSound("assets/sounds/bad_item.mp3");
@@ -218,7 +225,10 @@ int main()
     PlayMusicStream(introMusic);
 
     // load frames
-    for (int i = 1; i <= 110; i++)  videoFrames.push_back(LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i)));
+   for (int i = 1; i <= 110; i++) {Texture2D t = LoadTexture(TextFormat("assets/videos/trollFace/ezgif-frame-%03d.png", i));
+    if (t.id > 0) videoFrames.push_back(t); }
+    for (int i = 138; i <= 300; i++) videoFrames2.push_back(LoadTexture(TextFormat("assets/videos/trollFace_2/ezgif-frame-%03d.png", i)));
+    for (int i = 38; i <= 180; i++) videoFrames3.push_back(LoadTexture(TextFormat("assets/videos/trollFace_3/ezgif-frame-%03d.png", i)));
 
     // Load background frames
     for (int i = 1; i <= 100; i++) bgFrames.push_back(LoadTexture(TextFormat("assets/videos/bg/ezgif-frame-%03d.png", i)));
@@ -676,28 +686,34 @@ int main()
        else if (state == TROLL_VIDEO)
         {
             frameTimer += GetFrameTime();
-
             if (frameTimer >= 0.2f)
             {
                 frameTimer = 0;
                 currentFrame++;
             }
 
-            if (currentFrame >= (int)videoFrames.size())
+            // pick the active video vector
+            vector<Texture2D>* activeFrames = &videoFrames;
+            if (activeTrollVideo == 1) activeFrames = &videoFrames2;
+            else if (activeTrollVideo == 2) activeFrames = &videoFrames3;
+
+            if (currentFrame >= (int)activeFrames->size())
             {
                 StopSound(trollSound);
+                StopSound(trollSound2);
+                StopSound(trollSound3);
                 currentFrame = 0;
                 state = PLAYING;
             }
-
             if (IsKeyPressed(KEY_ENTER))
             {
                 StopSound(trollSound);
+                StopSound(trollSound2);
+                StopSound(trollSound3);
                 currentFrame = 0;
                 state = PLAYING;
             }
-        }
-
+         }
         // GAMEPLAY-----------------------------------------
         else if (state == PLAYING)
         {
@@ -1804,13 +1820,17 @@ int main()
                         hp = 3;
                     }
                     // RANDOMNESS
-                    else if (it.type == TROLLFACE)
+                  else if (it.type == TROLLFACE)
                     {
                         pe.color = WHITE;
                         state = TROLL_VIDEO;
                         currentFrame = 0;
                         frameTimer = 0;
-                        PlaySound(trollSound);
+                        activeTrollVideo = rand() % 3;
+
+                        if (activeTrollVideo == 0)      PlaySound(trollSound);
+                        else if (activeTrollVideo == 1) PlaySound(trollSound2);
+                        else if (activeTrollVideo == 2) PlaySound(trollSound3);
                     }
                     else if (it.type == POISON)
                     {
@@ -2073,11 +2093,16 @@ int main()
        if (state == TROLL_VIDEO)
         {
             ClearBackground(BLACK);
-            if (currentFrame < (int)videoFrames.size())
+
+            vector<Texture2D>* activeFrames = &videoFrames;
+            if (activeTrollVideo == 1) activeFrames = &videoFrames2;
+            else if (activeTrollVideo == 2) activeFrames = &videoFrames3;
+
+            if (currentFrame < (int)activeFrames->size())
             {
                 DrawTexturePro(
-                    videoFrames[currentFrame],
-                    { 0, 0, (float)videoFrames[currentFrame].width, (float)videoFrames[currentFrame].height },
+                    (*activeFrames)[currentFrame],
+                    { 0, 0, (float)(*activeFrames)[currentFrame].width, (float)(*activeFrames)[currentFrame].height },
                     { 0, 0, (float)screenWidth, (float)screenHeight },
                     { 0, 0 }, 0.0f, WHITE
                 );
@@ -2749,6 +2774,8 @@ int main()
     }
 
     for (auto &t : videoFrames) UnloadTexture(t);
+    for (auto &t : videoFrames2) UnloadTexture(t);
+    for (auto &t : videoFrames3) UnloadTexture(t);
 
     for (auto &t : bgFrames) UnloadTexture(t);
 
@@ -2769,6 +2796,8 @@ int main()
 
     // unload
     UnloadSound(trollSound);
+    UnloadSound(trollSound2);
+    UnloadSound(trollSound3);
     UnloadSound(goodItemSound);
     UnloadSound(badItemSound);
     UnloadSound(walkSound);
