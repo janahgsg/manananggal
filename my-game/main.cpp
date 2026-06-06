@@ -1267,6 +1267,23 @@ int main()
                         PushNotif(notifs, "CURSED FOG!", {200, 200, 200, 255}, eventTimer);
                     else
                         PushNotif(notifs, GetEventName(currentEvent), {255, 221, 51, 255}, eventTimer);
+
+                    // 30% chance for a second event in Medium
+                    if (rand() % 100 < 30)
+                    {
+                        secondEvent = (EventType)mediumEvents[rand() % 10];
+                        while (secondEvent == currentEvent || 
+                               (currentEvent == MISFORTUNE && secondEvent == LUCKY_PARTY) ||
+                               (currentEvent == LUCKY_PARTY && secondEvent == MISFORTUNE) ||
+                               (currentEvent == SPEED_BOOST && secondEvent == SLOW_BOOST) ||
+                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST) ||
+                               (currentEvent == FOG_BLIND && secondEvent == EARTHQUAKE) ||
+                               (currentEvent == EARTHQUAKE && secondEvent == FOG_BLIND))
+                        {
+                            secondEvent = (EventType)mediumEvents[rand() % 10];
+                        }
+                        PushNotif(notifs, GetEventName(secondEvent) + " TOO!", {255, 170, 34, 255}, eventTimer);
+                    }
                 }
 
                 else if (diff == HARD)
@@ -1310,17 +1327,20 @@ int main()
                     else
                         PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
-                    if (rand() % 100 < 40)
+                    // 80% chance for a second event in Hard
+                    if (rand() % 100 < 80)
                     {
-                        secondEvent = (EventType)hardEvents[rand() % 8];
+                        secondEvent = (EventType)hardEvents[rand() % 10];
                         // prevent same event twice or contradicting events
                         while (secondEvent == currentEvent || 
                                (currentEvent == MISFORTUNE && secondEvent == LUCKY_PARTY) ||
                                (currentEvent == LUCKY_PARTY && secondEvent == MISFORTUNE) ||
                                (currentEvent == SPEED_BOOST && secondEvent == SLOW_BOOST) ||
-                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST))
+                               (currentEvent == SLOW_BOOST && secondEvent == SPEED_BOOST) ||
+                               (currentEvent == FOG_BLIND && secondEvent == EARTHQUAKE) ||
+                               (currentEvent == EARTHQUAKE && secondEvent == FOG_BLIND))
                         {
-                            secondEvent = (EventType)hardEvents[rand() % 8];
+                            secondEvent = (EventType)hardEvents[rand() % 10];
                         }
                         
                         // Notify about the second event too!
@@ -1646,13 +1666,13 @@ int main()
                         {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2},
                         {player.x + player.width/2, player.y + player.height/2}
                     );
-                    if (dist < 400.0f) {
+                    if (dist < 200.0f) {
                         Vector2 dir = Vector2Normalize(Vector2Subtract(
                             {player.x + player.width/2, player.y + player.height/2},
                             {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
                         ));
-                        it.rect.x += dir.x * 650.0f * GetFrameTime();
-                        it.rect.y += dir.y * 650.0f * GetFrameTime();
+                        it.rect.x += dir.x * 500.0f * GetFrameTime();
+                        it.rect.y += dir.y * 500.0f * GetFrameTime();
                     }
                 }
 
