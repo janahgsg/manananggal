@@ -1951,6 +1951,7 @@ int main()
                 gameOverAnimTimer = 0.0f;
                 gameOverFlash = 1.0f;
                 PlaySound(gameOverSound);
+                StopSound(pitSound); // Stop earthquake/pit sound
                 shakeTime = 0.5f;
                 shakePower = 20.0f;
                 StopMusicStream(bgEasy);
@@ -2218,8 +2219,12 @@ int main()
             }
 
             // WARNING BEFORE PIT OPENS
-            if (quakeTimer > 1.5f && quakeTimer < 3.5f)
+            if (quakeTimer > 1.5f && quakeTimer < 4.0f)
             {
+                float warnAlpha = 1.0f;
+                if (quakeTimer > 3.5f) warnAlpha = 1.0f - (quakeTimer - 3.5f) / 0.5f;
+                if (warnAlpha < 0) warnAlpha = 0;
+
                 for (int i = 0; i < pitCenters.size(); i++)
                 {
                     float pulse = (sinf(GetTime() * 15.0f) + 1.0f) / 2.0f;
@@ -2229,12 +2234,12 @@ int main()
                     Vector2 textPos = { pitCenters[i] - textSize.x / 2.0f, screenHeight * 0.72f - textSize.y / 2.0f };
                     
                     // Draw a subtle red glow behind it
-                    DrawCircleV({pitCenters[i], screenHeight * 0.72f}, 20 + pulse * 20, Fade(RED, 0.4f * pulse));
+                    DrawCircleV({pitCenters[i], screenHeight * 0.72f}, 20 + pulse * 20, Fade(RED, 0.4f * pulse * warnAlpha));
                     
                     // Shadow
-                    DrawTextEx(tinyFont, warnText, { textPos.x + 4, textPos.y + 4 }, fontSize, 0, Fade(BLACK, 0.6f));
+                    DrawTextEx(tinyFont, warnText, { textPos.x + 4, textPos.y + 4 }, fontSize, 0, Fade(BLACK, 0.6f * warnAlpha));
                     // Main Text
-                    DrawTextEx(tinyFont, warnText, textPos, fontSize, 0, RED);
+                    DrawTextEx(tinyFont, warnText, textPos, fontSize, 0, Fade(RED, warnAlpha));
                 }
             }
 
