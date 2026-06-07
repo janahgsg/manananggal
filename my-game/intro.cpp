@@ -9,6 +9,7 @@
 #include <iostream>
 #define BG2_TOTAL_FRAMES 41
 
+static Font scoreFont = { 0 };
 static float introAlpha = 0.0f; // starts fully transparent
 static bool fadeIn = true;
 static int bg2FrameIndex = 0;
@@ -389,6 +390,12 @@ void UnloadIntroVideo()
      static float storyFrameDuration = 5.0f; // 5 seconds per image
      static float storyFadeDuration = 1.0f;  // 1 second fade in/out
      static bool storylineFinished = false;
+
+     void InitScoreFont()
+    {
+        if (scoreFont.texture.id == 0)
+            scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
+    }
      
      void InitStoryline()
      {
@@ -436,19 +443,18 @@ void UnloadIntroVideo()
      }
 
      void DrawStoryline()
-     {
-         if (storylineFinished || storylineFrames.empty()) return;
-     
-         int sw = GetScreenWidth();
-         int sh = GetScreenHeight();
-     
-         float alpha = storyFrameTimer / storyFadeDuration;
+    {
+        if (storylineFinished || storylineFrames.empty()) return;
+
+        int sw = GetScreenWidth();
+        int sh = GetScreenHeight();
+
+        float alpha = storyFrameTimer / storyFadeDuration;
         if (alpha > 1.0f) alpha = 1.0f;
-        
+
         ClearBackground(BLACK);
-        // Draw the previous frame as a background if we are currently fading in the new one
         if (currentStoryFrame > 0 && alpha < 1.0f)
-         {
+        {
             Texture2D prevFrame = storylineFrames[currentStoryFrame - 1];
             DrawTexturePro(
                 prevFrame,
@@ -456,33 +462,48 @@ void UnloadIntroVideo()
                 {0, 0, (float)sw, (float)sh},
                 {0, 0}, 0.0f, WHITE
             );
-         }
-     
-         Texture2D frame = storylineFrames[currentStoryFrame];
-         
-         DrawTexturePro(
-             frame,
-             {0, 0, (float)frame.width, (float)frame.height},
-             {0, 0, (float)sw, (float)sh},
-             {0, 0}, 0.0f,
-             Fade(WHITE, alpha)
-         );
-     
-         // Skip Button/Prompt
-        const char* skipText = "SKIP (SPACE)";
-         int fontSize = 30;
-         int textWidth = MeasureText(skipText, fontSize);
-         Rectangle skipBtn = {(float)sw - textWidth - 40, (float)sh - fontSize - 40, (float)textWidth + 20,
-            (float)fontSize + 20};
-            
-            bool hover = CheckCollisionPointRec(GetMousePosition(), skipBtn);
-            DrawRectangleRounded(skipBtn, 0.3f, 6, Fade(hover ? GRAY : DARKGRAY, 0.6f));
-            DrawText(skipText, skipBtn.x + 10, skipBtn.y + 10, fontSize, WHITE);
-            if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                storylineFinished = true;
-            }
-     }
+        }
+
+        Texture2D frame = storylineFrames[currentStoryFrame];
+        DrawTexturePro(
+            frame,
+            {0, 0, (float)frame.width, (float)frame.height},
+            {0, 0, (float)sw, (float)sh},
+            {0, 0}, 0.0f,
+            Fade(WHITE, alpha)
+        );
+        
+            // skip button
+            const char* skipText = "SKIP (SPACE)";
+        float fontSize = 30.0f;
+
+        Vector2 textSize = MeasureTextEx(scoreFont, skipText, fontSize, 0);
+
+        float padX = 10.0f, padY = 8.0f;
+        Rectangle skipBtn = {
+            (float)sw - textSize.x - padX * 2 - 30,
+            (float)sh - textSize.y - padY * 2 - 30,
+            textSize.x + padX * 2,
+            textSize.y + padY * 2
+        };
+
+        bool hover = CheckCollisionPointRec(GetMousePosition(), skipBtn);
+        DrawRectangleRounded(skipBtn, 0.3f, 6, Fade(hover ? GRAY : DARKGRAY, 0.6f));
+
+        // Shadow
+        DrawTextEx(scoreFont, skipText,
+            {skipBtn.x + padX + 2, skipBtn.y + padY + 2},
+            fontSize, 0, Fade(BLACK, 0.5f));
+        // Text
+        DrawTextEx(scoreFont, skipText,
+            {skipBtn.x + padX, skipBtn.y + padY},
+            fontSize, 0, WHITE);
+
+        if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            storylineFinished = true;
+        }
+    }
      
      void UnloadStoryline()
      {
@@ -525,7 +546,6 @@ static Texture2D closeButtonTex;
 static Texture2D nextButtonTex;
 static Texture2D prevButtonTex;
 static Texture2D WallTex;
-static Font scoreFont;
 
 // This is the instance of your struct
 static IntroButtons introButtons;
@@ -581,6 +601,7 @@ void InitIntro()
     infoTextures[1] = LoadTexture("assets/images/info2.png");
     infoTextures[2] = LoadTexture("assets/images/info3.png");
 
+    if (scoreFont.texture.id == 0)
     scoreFont = LoadFontEx("assets/font/Quantico-Regular.ttf", 64, 0, 0);
     buttonClickSound = LoadSound("assets/sounds/button_click.mp3");
     hoverSound = LoadSound("assets/sounds/hoverSound.mp3");

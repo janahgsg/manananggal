@@ -589,6 +589,7 @@ int main()
 
     if (action == 1) // Play
     {
+        InitScoreFont();  
         InitStoryline();
         state = STORYLINE;
 }

@@ -58,3 +58,4 @@ void InitStoryline();
 bool UpdateStoryline(); // returns true when finished
 void DrawStoryline();
 void UnloadStoryline();
+void InitScoreFont();
