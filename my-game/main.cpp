@@ -988,7 +988,6 @@ int main()
                     hp = 0;
                 }
 
-                // GAME OVER LATER -- to be fixed
                 if (player.y > screenHeight + 350)
                 {
                     hp = 0;
@@ -1295,6 +1294,13 @@ int main()
                     eventCooldown = 15.0f;
                     PushNotif(notifs, "DEBUG: BAD MAGNET!", {255, 100, 100, 255}, eventTimer);
                 }
+                if (IsKeyPressed(KEY_E))
+                {
+                    currentEvent = EARTHQUAKE;
+                    eventTimer = 15.0f;
+                    eventCooldown = 15.0f;
+                    PushNotif(notifs, "DEBUG: EARTHQUAKE!", {255, 165, 0, 255}, eventTimer);
+                }
 
                 eventCooldown -= GetFrameTime();
                 
@@ -1331,13 +1337,13 @@ int main()
                 }
                 else if (diff == MEDIUM)
                 {
-                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, LUCKY_PARTY, MISFORTUNE, FOG_BLIND, LOW_GRAVITY, SLIPPERY_ICE};
+                    int mediumEvents[] = {SWAP_CONTROLS, SPEED_BOOST, SLOW_BOOST, INVERTED_SCREEN, EARTHQUAKE, MISFORTUNE, LOW_GRAVITY, SLIPPERY_ICE};
                     
                     // FAIRNESS: Loop to ensure we don't repeat the last 2 events immediately
                     EventType chosen;
                     int attempts = 0;
                     do {
-                        chosen = (EventType)mediumEvents[rand() % 10];
+                        chosen = (EventType)mediumEvents[rand() % 8];
                         attempts++;
                     } while ((chosen == lastEvent || chosen == secondLastEvent) && attempts < 10);
                     
@@ -1529,7 +1535,7 @@ int main()
                     shakePower = 6.0f;
                 }
                 // CREATE PIT
-                if (quakeTimer > 1.0f && !pitCreated)                {
+                if (quakeTimer > 1.0f && !pitCreated) {
                     pitCreated = true;
                     PlaySound(pitSound);
 
@@ -1581,14 +1587,11 @@ int main()
                                     break;
                                 }
                             }
-
-                        
-
                         } while (tooClose);
 
                         Rectangle newPit = {
                             randomX,
-                            screenHeight * 0.82f,
+                            screenHeight * 0.84f,
                             0,
                             220
                         };
@@ -1622,7 +1625,7 @@ int main()
 
                         pits[i] = {
                             pitCenters[i] - pitOpens[i] / 2,
-                            screenHeight * 0.82f,
+                            screenHeight * 0.84f,
                             pitOpens[i],
                             220
                         };
