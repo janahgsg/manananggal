@@ -2222,13 +2222,19 @@ int main()
             {
                 for (int i = 0; i < pitCenters.size(); i++)
                 {
-                    DrawText(
-                        "!",
-                        pitCenters[i] - 10,
-                        screenHeight * 0.75f,
-                        60,
-                        RED
-                    );
+                    float pulse = (sinf(GetTime() * 15.0f) + 1.0f) / 2.0f;
+                    float fontSize = 60.0f + pulse * 40.0f;
+                    const char* warnText = "!";
+                    Vector2 textSize = MeasureTextEx(tinyFont, warnText, fontSize, 0);
+                    Vector2 textPos = { pitCenters[i] - textSize.x / 2.0f, screenHeight * 0.72f - textSize.y / 2.0f };
+                    
+                    // Draw a subtle red glow behind it
+                    DrawCircleV({pitCenters[i], screenHeight * 0.72f}, 20 + pulse * 20, Fade(RED, 0.4f * pulse));
+                    
+                    // Shadow
+                    DrawTextEx(tinyFont, warnText, { textPos.x + 4, textPos.y + 4 }, fontSize, 0, Fade(BLACK, 0.6f));
+                    // Main Text
+                    DrawTextEx(tinyFont, warnText, textPos, fontSize, 0, RED);
                 }
             }
 
