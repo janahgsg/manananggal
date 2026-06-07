@@ -1215,9 +1215,9 @@ int main()
 
                     if (it.isIllusion) {
                         if (it.type == BABY || it.type == HEART || it.type == BLOOD || it.type == ATAY) 
-                            it.illusionTarget = BOMB;
+                            it.illusionTarget = GARLIC;
                         else if (it.type == BOMB || it.type == POISON || it.type == POO || it.type == GARLIC) 
-                            it.illusionTarget = HEART;
+                            it.illusionTarget = ATAY;
                         else 
                             it.isIllusion = false; 
                     }
@@ -1792,11 +1792,27 @@ int main()
                     if (isGoodItem) PlaySound(goodItemSound);
 
                     // BAD ITEMS
-                    if (it.type == POO || it.type == BOMB || it.type == SALT || it.type == GARLIC)
+                    if (it.type == POO || it.type == SALT || it.type == GARLIC)
                     {
                         pe.color = RED;
                         hitFlash = 0.4f;
                         hp--;
+                        shakeTime = 0.22f;
+                        shakePower = 14.0f;
+                        combo = 0;
+                        comboTime = 0;
+                        comboBroken = true;
+                        comboBrokenTimer = 1.5f;
+                        PushNotif(notifs, "STREAK BROKEN!", {255, 68, 68, 255}, 1.5f);
+
+                        // JUICE: Hit-Stop for impact
+                        hitStopTimer = 0.08f; 
+                    }
+                    if (it.type == BOMB)
+                    {
+                        pe.color = RED;
+                        hitFlash = 0.4f;
+                        hp -= 2;
                         shakeTime = 0.22f;
                         shakePower = 14.0f;
                         combo = 0;
