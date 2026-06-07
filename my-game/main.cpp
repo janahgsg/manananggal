@@ -604,7 +604,7 @@ int main()
         
     }
 
-    DrawIntro(highScore, introTex, titleTex);
+    DrawIntro(highScore, introTex, titleTex, tinyFont);
 }
 
          else if (state == STORYLINE) {

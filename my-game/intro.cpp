@@ -715,7 +715,7 @@ void SetupButtons(Rectangle wallRect, float startY)
 }
 
 
-void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
+void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex, Font tinyFont)
 {
     int screenWidth  = GetScreenWidth();
     int screenHeight = GetScreenHeight();
@@ -740,16 +740,16 @@ void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex)
 
     // 4. Optimal High Score Placement
     const char* scoreText = TextFormat("High Score: %d", highScore);
-    int scoreFontSize = 45; 
+    int scoreFontSize = 40; 
 
-    Vector2 scoreSize = MeasureTextEx(scoreFont, scoreText, (float)scoreFontSize, 0);
+    Vector2 scoreSize = MeasureTextEx(tinyFont, scoreText, (float)scoreFontSize, 0);
 
     float scoreX = wallRect.x + (wallRect.width / 2.0f) - (scoreSize.x / 2.0f);
     float scoreY = screenHeight * 0.41f; 
     
     
-    DrawTextEx(scoreFont, scoreText, {scoreX + 2, scoreY + 2}, (float)scoreFontSize, 0, BLACK);
-    DrawTextEx(scoreFont, scoreText, {scoreX, scoreY}, (float)scoreFontSize, 0, WHITE);
+    DrawTextEx(tinyFont, scoreText, {scoreX + 2, scoreY + 2}, (float)scoreFontSize, 0, BLACK);
+    DrawTextEx(tinyFont, scoreText, {scoreX, scoreY}, (float)scoreFontSize, 0, WHITE);
 
 
     

@@ -14,7 +14,7 @@ void InitIntro();
 void SetupButtons(Rectangle wallRect, float scoreY, float scoreHeight);
 void UnloadIntro();
 int UpdateIntro();
-void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex);
+void DrawIntro(int highScore, Texture2D introTex, Texture2D titleTex, Font tinyFont);
 
 void InitGroupLogo();
 bool UpdateGroupLogo();
