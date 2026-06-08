@@ -413,7 +413,7 @@ int main()
     bool showPauseMenu = false;
 
     // SCORE & HEALTH
-    int score = 400;
+    int score = 0;
     int highScore = 0;
     int hp = 3;
     //saved highScore
