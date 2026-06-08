@@ -1392,8 +1392,10 @@ int main()
                     else
                         PushNotif(notifs, GetEventName(currentEvent), {255, 170, 34, 255}, eventTimer);
 
-                    // Scaled chance for second event in Hard: 40% early, 80% after score 800
-                    int dualEventChance = (score >= 800) ? 80 : 40; 
+                    // Scaled chance for second event in Hard:
+                    // RARE (20%) early on to ease into Hard Mode.
+                    // After 1000 score, becomes more frequent (80%) as things get chaotic.
+                    int dualEventChance = (score >= 1000) ? 80 : 20; 
                     if (rand() % 100 < dualEventChance)
                     {
                         secondEvent = (EventType)hardEvents[rand() % 10];
