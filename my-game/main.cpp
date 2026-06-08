@@ -413,7 +413,7 @@ int main()
     bool showPauseMenu = false;
 
     // SCORE & HEALTH
-    int score = 0;
+    int score = 400;
     int highScore = 0;
     int hp = 3;
     //saved highScore
@@ -1458,6 +1458,7 @@ int main()
                     fogAlpha = 0.0f;
                     fogFadingOut = false;
 
+                    // reset gravity based on difficulty
                     gravity = (diff == HARD) ? 700.0f : 1800.0f;
                     eventBoost = 1.0f;
 
