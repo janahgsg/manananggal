@@ -1732,7 +1732,7 @@ int main()
                         {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2},
                         {player.x + player.width/2, player.y + player.height/2}
                     );
-                    if (dist < 200.0f) {
+                    if (dist < 180.0f) {
                         Vector2 dir = Vector2Normalize(Vector2Subtract(
                             {player.x + player.width/2, player.y + player.height/2},
                             {it.rect.x + it.rect.width/2, it.rect.y + it.rect.height/2}
