@@ -387,8 +387,8 @@ void UnloadIntroVideo()
      static std::vector<Texture2D> storylineFrames;
      static int currentStoryFrame = 0;
      static float storyFrameTimer = 0.0f;
-     static float storyFrameDuration = 5.0f; // 5 seconds per image
-     static float storyFadeDuration = 1.0f;  // 1 second fade in/out
+     static float storyFrameDuration = 3.0f; // 3 seconds per image
+     static float storyFadeDuration = 0.2f;  // 0.2 second fade in/out
      static bool storylineFinished = false;
 
      void InitScoreFont()
@@ -410,7 +410,7 @@ void UnloadIntroVideo()
                  storylineFrames.push_back(tex);
              }
          }
-         currentStoryFrame = 0;
+         currentStoryFrame = 1;
          storyFrameTimer = 0.0f;
          storylineFinished = false;
      }
@@ -449,7 +449,7 @@ void UnloadIntroVideo()
         int sw = GetScreenWidth();
         int sh = GetScreenHeight();
 
-        float alpha = storyFrameTimer / storyFadeDuration;
+        float alpha = (storyFadeDuration > 0.0f) ? (storyFrameTimer / storyFadeDuration) : 1.0f;
         if (alpha > 1.0f) alpha = 1.0f;
 
         ClearBackground(BLACK);

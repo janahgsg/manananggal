@@ -393,6 +393,8 @@ int main()
     InitGroupLogo();
      InitTitleLogo();
      InitIntro();
+     InitScoreFont();   
+     InitStoryline(); 
 
     // player
     Rectangle player;
@@ -589,8 +591,6 @@ int main()
 
     if (action == 1) // Play
     {
-        InitScoreFont();  
-        InitStoryline();
         state = STORYLINE;
 }
     else if (action == 2) // Exit
