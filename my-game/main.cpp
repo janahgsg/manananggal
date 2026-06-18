@@ -798,7 +798,7 @@ int main()
             {
                 Difficulty prevDiff = diff;
 
-                if (score >= 450) {
+                if (score >= 350) {
                     if (diff == MEDIUM) {
                          isTransforming = true;
                          transFrame = 0;
@@ -819,7 +819,7 @@ int main()
                         diff = HARD;
                     }
                 }
-                else if (score >= 120)
+                else if (score >= 90)
                     diff = MEDIUM;
                 else
                     diff = EASY;
